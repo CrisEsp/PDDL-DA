@@ -39,6 +39,7 @@
 
     (material-disponible clinker)
     (material-disponible puzolana-h)
+
     (material-disponible puzolana-s)
     (material-disponible yeso)
 
@@ -47,7 +48,8 @@
     (en-marcha mc3)
 
         ;; Duraciones
-    (= (duracion-llenado t1-clinker MC1-desde-Pretrit) 0.8)
+    (= (duracion-llenado t1-clinker MC1-desde-Pretrit) 3)
+    (= (duracion-llenado t2-clinker MC2-desde-Pretrit) 3)
     (= (duracion-llenado t3-clinker MC3-desde_Silo-Blanco) 0.1)
     (= (duracion-llenado t3-clinker Pretrit_a_Silo_Blanco) 0.2)
     (= (duracion-llenado t2-puzolana-h PH-a-426HO04-por-MC2) 0.3)
@@ -80,9 +82,13 @@
 
   (:goal (and
     (alimentado t1-clinker clinker)
+    ; (alimentado t2-clinker clinker)
+    (alimentado t3-clinker clinker)
     (alimentado t3-puzolana-s puzolana-s)
-    (alimentado t3-yeso yeso)
-    (alimentado t1-puzolana-h puzolana-h)
+    ; (alimentado t2-yeso yeso)
+    ;(alimentado t3-yeso yeso)
+    ; (alimentado t1-yeso yeso)
+    ; (alimentado t1-puzolana-h puzolana-h)
   ))
   (:metric minimize (total-cost))
 )

@@ -9,7 +9,7 @@
     clinker puzolana-h yeso puzolana-s - materia
     MC1-desde-Pretrit MC2-desde-Pretrit MC3-desde_Silo-Blanco Pretrit_a_Silo_Blanco 
     PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04 - ruta
-    MC1-por-MC1 MC2-por-MC2 MC1-por-MC3 MC2-por-MC3 - ruta
+    MC1-por-MC1 MC1-por-MC2 MC2-por-MC2 MC3-por-MC1 MC3-por-MC2 - ruta
   )
   (:init
     (libre t1-clinker) (libre t1-puzolana-h) (libre t1-yeso)
@@ -33,9 +33,10 @@
     (ruta-disponible mc3 t3-puzolana-s puzolana-s PS-a-MC3-por-MC2)
     (ruta-disponible mc2 t2-puzolana-s puzolana-s PS-a-426HO02-por-426HO04)
     (ruta-disponible mc1 t1-yeso yeso MC1-por-MC1)
+    (ruta-disponible mc1 t1-yeso yeso MC1-por-MC2)
     (ruta-disponible mc2 t2-yeso yeso MC2-por-MC2)
-    (ruta-disponible mc3 t3-yeso yeso MC1-por-MC3)
-    (ruta-disponible mc3 t3-yeso yeso MC2-por-MC3)
+    (ruta-disponible mc3 t3-yeso yeso MC3-por-MC1)
+    (ruta-disponible mc3 t3-yeso yeso MC3-por-MC2)
 
     (material-disponible clinker)
     (material-disponible puzolana-h)
@@ -49,18 +50,19 @@
 
         ;; Duraciones
     (= (duracion-llenado t1-clinker MC1-desde-Pretrit) 3)
-    (= (duracion-llenado t2-clinker MC2-desde-Pretrit) 3)
-    (= (duracion-llenado t3-clinker MC3-desde_Silo-Blanco) 0.1)
-    (= (duracion-llenado t3-clinker Pretrit_a_Silo_Blanco) 0.2)
-    (= (duracion-llenado t2-puzolana-h PH-a-426HO04-por-MC2) 0.3)
-    (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC2) 0.7)
-    (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC1) 0.5)
-    (= (duracion-llenado t3-puzolana-s PS-a-MC3-por-MC2) 0.6)
-    (= (duracion-llenado t2-puzolana-s PS-a-426HO02-por-426HO04) 0.7)
-    (= (duracion-llenado t1-yeso MC1-por-MC1) 0.8)
-    (= (duracion-llenado t2-yeso MC2-por-MC2) 0.9)
-    (= (duracion-llenado t3-yeso MC1-por-MC3) 7)
-    (= (duracion-llenado t3-yeso MC2-por-MC3) 6.1)
+    (= (duracion-llenado t2-clinker MC2-desde-Pretrit) 2.5)
+    (= (duracion-llenado t3-clinker MC3-desde_Silo-Blanco) 4)
+    (= (duracion-llenado t3-clinker Pretrit_a_Silo_Blanco) 3)
+    (= (duracion-llenado t2-puzolana-h PH-a-426HO04-por-MC2) 1.5)
+    (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC2) 4)
+    (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC1) 4)
+    (= (duracion-llenado t3-puzolana-s PS-a-MC3-por-MC2) 4)
+    (= (duracion-llenado t2-puzolana-s PS-a-426HO02-por-426HO04) 2)
+    (= (duracion-llenado t1-yeso MC1-por-MC1) 2)
+    (= (duracion-llenado t1-yeso MC1-por-MC2) 3)
+    (= (duracion-llenado t2-yeso MC2-por-MC2)2.5)
+    (= (duracion-llenado t3-yeso MC3-por-MC1) 3)
+    (= (duracion-llenado t3-yeso MC3-por-MC2) 6.1)
 
 
 
@@ -83,12 +85,19 @@
   (:goal (and
     (alimentado t1-clinker clinker)
     ; (alimentado t2-clinker clinker)
-    (alimentado t3-clinker clinker)
+    ;(alimentado t3-clinker clinker)
     (alimentado t3-puzolana-s puzolana-s)
-    ; (alimentado t2-yeso yeso)
-    ;(alimentado t3-yeso yeso)
-    ; (alimentado t1-yeso yeso)
-    ; (alimentado t1-puzolana-h puzolana-h)
+    (alimentado t3-yeso yeso)
+    (alimentado t2-yeso yeso)
+    
+    (alimentado t1-yeso yeso)
+    (alimentado t1-puzolana-h puzolana-h)
+
+    (alimentado t2-yeso yeso)
+    (alimentado t1-yeso yeso)
+    (alimentado t2-puzolana-h puzolana-h)
+    (alimentado t2-puzolana-s puzolana-s)
+
   ))
   (:metric minimize (total-cost))
 )

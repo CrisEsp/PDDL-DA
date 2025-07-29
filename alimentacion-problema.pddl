@@ -64,28 +64,13 @@
     (= (duracion-llenado t3-yeso MC3-por-MC1) 3)
     (= (duracion-llenado t3-yeso MC3-por-MC2) 6.1)
 
-
-
-    ; (= (costo-prioridad l1 clinker) 1.0)
-    ; (= (costo-prioridad l1 puzolana-h) 3.0)
-    ; (= (costo-prioridad l1 yeso) 1.0)
-    ; (= (costo-prioridad l2 clinker) 1.0)
-    ; (= (costo-prioridad l2 puzolana-h) 1.0)
-    ; (= (costo-prioridad l2 puzolana-s) 1.0)
-    ; (= (costo-prioridad l2 yeso) 1.0)
-    ; (= (costo-prioridad l3 clinker) 0.0284)
-    ; (= (costo-prioridad l3 puzolana-s) 0.0304)
-    ; (= (costo-prioridad l3 yeso) 0.3571)
-    ; (= (total-cost) 0)
     (not (ruta-bloqueada-MC1-desde-Pretrit)) ; Inicialmente, la ruta no est bloqueada
     (usando-ruta-mc1-pretrit MC1-desde-Pretrit)
-
   )
-
   (:goal (and
     (alimentado t1-clinker clinker)
-    ; (alimentado t2-clinker clinker)
-    ;(alimentado t3-clinker clinker)
+    (alimentado t2-clinker clinker)
+    (alimentado t3-clinker clinker)
     (alimentado t3-puzolana-s puzolana-s)
     (alimentado t3-yeso yeso)
     (alimentado t2-yeso yeso)
@@ -93,10 +78,11 @@
     (alimentado t1-yeso yeso)
     (alimentado t1-puzolana-h puzolana-h)
 
-    (alimentado t2-yeso yeso)
-    (alimentado t1-yeso yeso)
+    ; (alimentado t2-yeso yeso)
+    ; (alimentado t1-yeso yeso)
     (alimentado t2-puzolana-h puzolana-h)
     (alimentado t2-puzolana-s puzolana-s)
+    (alimentado t3-puzolana-s puzolana-s)
 
   ))
   (:metric minimize (total-cost))

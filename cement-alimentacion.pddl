@@ -1,6 +1,5 @@
 (define (domain cement-alimentacion)
   (:requirements :durative-actions :typing :numeric-fluents)
-
   (:types molino tolva materia ruta)
 
   (:predicates
@@ -60,103 +59,6 @@
       (at end (not (alimentando clinker ?m ?r))) ; se borra marca de alimentacion
     )
   )
-
-
-  ; ;; Alimentar puzolana (hmeda o seca)
-  ; (:durative-action alimentar-puzolana
-  ;   :parameters (?m - molino ?t - tolva ?mat - materia ?r - ruta)
-  ;   :duration (= ?duration (duracion-llenado ?t ?r))
-  ;   :condition (and
-  ;     (at start (en-marcha ?m))
-  ;     (at start (libre ?t))
-  ;     (at start (ruta-disponible ?m ?t ?mat ?r))
-  ;     (at start (material-disponible ?mat))
-  ;     (at start (not (puzolana-h-ocupado ?m ?r))) ; ahora chequea por molino
-  ;     (at start (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2))) ; ahora chequea por molino
-  ;     (at start (not (puzolana-s-ocupado ?m))) ; ahora chequea por molino
-  ;     (at start (or (= ?mat puzolana-h) (= ?mat puzolana-s)))
-  ;     ;; Bloqueo simultaneidad con yeso en MC1 (mantener)
-  ;     (over all (not(and (= ?m mc1)(alimentando yeso mc1))))
-  ;     (over all (not (clinker-ocupado2 mc3))) ; bloquea si mc3 tiene clinker activo
-  ;     ;; Bloqueo para MC2 tolvas: no puede alimentar puzolana si yeso se est alimentando en tolva mc2
-  ;     (at start (not (alimentando-yeso-mc2 ?t))))
-
-  ;   :effect (and
-
-  ;     (at start (not (libre ?t)))
-  ;     (at start (tolva-ocupada ?t ?mat))
-  ;     (at start (alimentando ?mat ?m))
-  ;     (at start (puzolana-h-ocupado ?m ?r)) ; se marca bandera individual de puzolana-h ocupado por molino
-  ;     (at start (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)) 
-  ;     (at end (not(puzolana-h-ocupado mc1 PH-a-MC1-por-MC2))) 
-  ;     (at end (not (puzolana-h-ocupado ?m ?r)))    ; <<< libera solo ese molino
-  ;     (at start (puzolana-s-ocupado ?m)) ; se marca bandera individual de puzolana-h ocupado por molino
-  ;     (at end (not (puzolana-s-ocupado ?m)))    ; <<< libera solo ese molino
-  ;     (at end (alimentado ?t ?mat))
-  ;     (at end (libre ?t))
-  ;     (at end (not (tolva-ocupada ?t ?mat)))
-  ;     (at end (not (alimentando ?mat ?m)))
-  ;   )
-  ; )
-    
-
-    
-  ; (:durative-action alimentar-puzolana-h-general
-  ;   :parameters (?m - molino ?t - tolva ?r - ruta)
-  ;   :duration (= ?duration (duracion-llenado ?t ?r))
-  ;   :condition (and
-  ;     (at start (en-marcha ?m))
-  ;     (at start (libre ?t))
-  ;     (at start (ruta-disponible ?m ?t puzolana-h ?r))
-  ;     (at start (material-disponible puzolana-h))
-  ;     (at start (not (puzolana-h-ocupado ?m ?r)))
-  ;     (over all (not (and (= ?m mc1) (alimentando yeso mc1))))
-  ;     (over all (not (clinker-ocupado2 mc3)))
-  ;     (at start (not (alimentando-yeso-mc2 ?t)))
-  ;   )
-  ;   :effect (and
-  ;     (at start (not (libre ?t)))
-  ;     (at start (tolva-ocupada ?t puzolana-h))
-  ;     (at start (alimentando puzolana-h ?m))
-  ;     (at start (puzolana-h-ocupado ?m ?r))
-  ;     (at end (not (puzolana-h-ocupado ?m ?r)))
-  ;     (at end (alimentado ?t puzolana-h))
-  ;     (at end (libre ?t))
-  ;     (at end (not (tolva-ocupada ?t puzolana-h)))
-  ;     (at end (not (alimentando puzolana-h ?m)))
-  ;   )
-  ; )
-
-    
-  ; (:durative-action alimentar-puzolana-h-mc2ruta
-  ;   :parameters (?m - molino ?t - tolva)
-  ;   :duration (= ?duration (duracion-llenado ?t PH-a-MC1-por-MC2))
-  ;   :condition (and
-  ;     (at start (en-marcha ?m))
-  ;     (at start (libre ?t))
-  ;     (at start (ruta-disponible ?m ?t puzolana-h PH-a-MC1-por-MC2))
-  ;     (at start (material-disponible puzolana-h))
-  ;     (at start (not (puzolana-h-ocupado ?m PH-a-MC1-por-MC2)))
-  ;     (at start (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)))
-  ;     (over all (not (and (= ?m mc1) (alimentando yeso mc1))))
-  ;     (over all (not (clinker-ocupado2 mc3)))
-  ;     (at start (not (alimentando-yeso-mc2 ?t)))
-  ;   )
-  ;   :effect (and
-  ;     (at start (not (libre ?t)))
-  ;     (at start (tolva-ocupada ?t puzolana-h))
-  ;     (at start (alimentando puzolana-h ?m))
-  ;     (at start (puzolana-h-ocupado ?m PH-a-MC1-por-MC2))
-  ;     (at start (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)) ;;  solo aqu
-  ;     (at end (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)))
-  ;     (at end (not (puzolana-h-ocupado ?m PH-a-MC1-por-MC2)))
-  ;     (at end (alimentado ?t puzolana-h))
-  ;     (at end (libre ?t))
-  ;     (at end (not (tolva-ocupada ?t puzolana-h)))
-  ;     (at end (not (alimentando puzolana-h ?m)))
-  ;   )
-  ; )
-
 
   (:durative-action alimentar-puzolana-h
     :parameters (?m - molino ?t - tolva ?r - ruta)
@@ -230,8 +132,6 @@
       (at end (not (alimentando puzolana-s ?m ?r)))
     )
   )
-
-    
 
   ;; Alimentar yeso
   (:durative-action alimentar-yeso

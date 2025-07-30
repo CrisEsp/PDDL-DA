@@ -121,8 +121,8 @@ estado_rutas = {
     "PS-a-MC3-por-MC2": True,      # P.S a MC3 por MC2
     "PS-a-426HO02-por-426HO04": True,  # P.S. a 426HO02 por 426HO04
     # Rutas de yeso
-    "MC2-por-MC3": True,
-    "MC1-por-MC3": True,
+    "MC3-por-MC1": True,  # Hacia MC3 por MC1
+    "MC3-por-MC2": True,
     "MC2-por-MC1": True,
     "MC1-por-MC1": True,
     "MC2-por-MC2": True
@@ -143,9 +143,23 @@ def generar_problema_pddl_dinamico(estado_rutas: Dict[str, bool],tolvas_criticas
         "t3-puzolana-s": ["PS-a-MC3-por-MC2"],
         "t1-yeso": ["MC1-por-MC1"],
         "t2-yeso": ["MC2-por-MC2"],
-        "t3-yeso": ["MC1-por-MC3", "MC2-por-MC3"]
+        "t3-yeso": ["MC3-por-MC1", "MC3-por-MC1"]
     }
 
+    # Mapeo de tolvas a materiales
+    tolva_a_material = {
+        "t1-clinker": "clinker",
+        "t1-puzolana-h": "puzolana-h",
+        "t1-yeso": "yeso",
+        "t2-clinker": "clinker",
+        "t2-puzolana-h": "puzolana-h",
+        "t2-puzolana-s": "puzolana-s",
+        "t2-yeso": "yeso",
+        "t3-clinker": "clinker",
+        "t3-puzolana-s": "puzolana-s",
+        "t3-yeso": "yeso"
+    }
+    
     # Validar que cada tolva crítica tenga al menos una ruta habilitada
     tolvas_validas = []
     for tolva in tolvas_criticas:
@@ -166,44 +180,56 @@ def generar_problema_pddl_dinamico(estado_rutas: Dict[str, bool],tolvas_criticas
 
     with open(path_output, "w", encoding="utf-8") as f:
         f.write("""(define (problem cement-production-problem)
-  (:domain cement-production)
+  (:domain cement-alimentacion)
 
   (:objects
     mc1 mc2 mc3 - molino
     t1-clinker t1-puzolana-h t1-yeso
     t2-clinker t2-puzolana-h t2-puzolana-s t2-yeso
     t3-clinker t3-puzolana-s t3-yeso - tolva
-    clinker puzolana-humeda puzolana-seca yeso - materia-prima
-    MC1-desde-Pretrit MC2-desde-Pretrit MC3-desde_Silo-Blanco Pretrit_a_Silo_Blanco
-    PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04
-    MC1-por-MC1 MC2-por-MC2 MC1-por-MC3 MC2-por-MC3 - ruta
+    clinker puzolana-h yeso puzolana-s - materia
+    MC1-desde-Pretrit MC2-desde-Pretrit MC3-desde_Silo-Blanco Pretrit_a_Silo_Blanco 
+    PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04 - ruta
+    MC1-por-MC1 MC1-por-MC2 MC2-por-MC2 MC3-por-MC1 MC3-por-MC2 - ruta
   )
 
   (:init
-    ;; Estado inicial de tolvas
-    (tolva-vacia t1-clinker) (tolva-vacia t1-puzolana-h) (tolva-vacia t1-yeso)
-    (tolva-vacia t2-clinker) (tolva-vacia t2-puzolana-h) (tolva-vacia t2-puzolana-s) (tolva-vacia t2-yeso)
-    (tolva-vacia t3-clinker) (tolva-vacia t3-puzolana-s) (tolva-vacia t3-yeso)
+    (libre t1-clinker) (libre t1-puzolana-h) (libre t1-yeso)
+    (libre t2-clinker) (libre t2-puzolana-h) (libre t2-puzolana-s) (libre t2-yeso)
+    (libre t3-clinker) (libre t3-puzolana-s) (libre t3-yeso)
 
-    ;; Conexiones molino-tolva
-    (conectado mc1 t1-clinker) (conectado mc1 t1-puzolana-h) (conectado mc1 t2-puzolana-h) (conectado mc1 t1-yeso)
-    (conectado mc2 t2-clinker) (conectado mc2 t2-puzolana-h) (conectado mc2 t2-puzolana-s) (conectado mc2 t2-yeso)
-    (conectado mc3 t3-clinker) (conectado mc3 t3-puzolana-s) (conectado mc3 t2-puzolana-s) (conectado mc3 t3-yeso)
+    ;; Compatibilidad
+    (compatible clinker t1-clinker) (compatible puzolana-h t1-puzolana-h) (compatible yeso t1-yeso)
+    (compatible clinker t2-clinker) (compatible puzolana-h t2-puzolana-h)
+    (compatible puzolana-s t2-puzolana-s) (compatible yeso t2-yeso)
+    (compatible clinker t3-clinker) (compatible puzolana-s t3-puzolana-s) (compatible yeso t3-yeso)
 
-    ;; Compatibilidad materiales con tolvas
-    (compatible clinker t1-clinker) (compatible puzolana-humeda t1-puzolana-h) (compatible yeso t1-yeso)
-    (compatible clinker t2-clinker) (compatible puzolana-humeda t2-puzolana-h)
-    (compatible puzolana-seca t2-puzolana-s) (compatible yeso t2-yeso)
-    (compatible clinker t3-clinker) (compatible puzolana-seca t3-puzolana-s) (compatible yeso t3-yeso)
+    (material-disponible clinker)
+    (material-disponible puzolana-h)
+    (material-disponible puzolana-s)
+    (material-disponible yeso)
 
-    ;; Disponibilidad de materiales
-    (disponible clinker)
-    (disponible puzolana-humeda)
-    (disponible puzolana-seca)
-    (disponible yeso)
-
+    (en-marcha mc1)
+    (en-marcha mc2)
+    (en-marcha mc3)
+                
+    ;; Duraciones
+    (= (duracion-llenado t1-clinker MC1-desde-Pretrit) 3)
+    (= (duracion-llenado t2-clinker MC2-desde-Pretrit) 2.5)
+    (= (duracion-llenado t3-clinker MC3-desde_Silo-Blanco) 4)
+    (= (duracion-llenado t3-clinker Pretrit_a_Silo_Blanco) 3)
+    (= (duracion-llenado t2-puzolana-h PH-a-426HO04-por-MC2) 1.5)
+    (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC2) 4)
+    (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC1) 4)
+    (= (duracion-llenado t3-puzolana-s PS-a-MC3-por-MC2) 4)
+    (= (duracion-llenado t2-puzolana-s PS-a-426HO02-por-426HO04) 2)
+    (= (duracion-llenado t1-yeso MC1-por-MC1) 2)
+    (= (duracion-llenado t1-yeso MC1-por-MC2) 3)
+    (= (duracion-llenado t2-yeso MC2-por-MC2)2.5)
+    (= (duracion-llenado t3-yeso MC3-por-MC1) 3)
+    (= (duracion-llenado t3-yeso MC3-por-MC2) 6.1)
+                
     ;; Rutas disponibles
-    ;; Clinker
 """)
 
         rutas = [
@@ -218,11 +244,12 @@ def generar_problema_pddl_dinamico(estado_rutas: Dict[str, bool],tolvas_criticas
             ("mc2", "t2-puzolana-s", "PS-a-426HO02-por-426HO04"),
             ("mc1", "t1-yeso", "MC1-por-MC1"),
             ("mc2", "t2-yeso", "MC2-por-MC2"),
-            ("mc3", "t3-yeso", "MC1-por-MC3"),
-            ("mc3", "t3-yeso", "MC2-por-MC3"),
+            ("mc3", "t3-yeso", "MC3-por-MC1"),
+            ("mc3", "t3-yeso", "MC3-por-MC2"),
         ]
 
         for i, (molino, tolva, ruta) in enumerate(rutas):
+            material = tolva_a_material.get(tolva, "unknown")
             if estado_rutas.get(ruta, False):
                 if i == 0:
                     f.write("    ;; Clinker\n")
@@ -230,7 +257,7 @@ def generar_problema_pddl_dinamico(estado_rutas: Dict[str, bool],tolvas_criticas
                     f.write("    ;; Puzolana\n")
                 elif i == 9:
                     f.write("    ;; Yeso\n")
-                f.write(f"    (ruta-disponible {molino} {tolva} {ruta})\n")
+                f.write(f"    (ruta-disponible {molino} {tolva} {material} {ruta})\n")
 
         # f.write("  )\n\n  (:goal (and\n")
         # for i, tolva in enumerate(tolvas_validas_ordenadas):
@@ -239,17 +266,21 @@ def generar_problema_pddl_dinamico(estado_rutas: Dict[str, bool],tolvas_criticas
         # f.write("  ))\n)")
 
 
-        f.write("    ;; Tiempos de vaciado\n")
-        for tolva in tolvas_validas:
-            tiempo = tiempos_por_tolva.get(tolva, float('inf'))
-            if tiempo != float('inf'):
-                f.write(f"    (= (tiempo-vaciado {tolva}) {tiempo})\n")
-        f.write("    ;; Duraciones de llenado (estimadas)\n")
-        for tolva in tolvas_validas:
-            f.write(f"    (= (duracion-llenado {tolva}) 0.1)\n")  # Ajusta según datos reales
+        # f.write("    ;; Tiempos de vaciado\n")
+        # for tolva in tolvas_validas:
+        #     tiempo = tiempos_por_tolva.get(tolva, float('inf'))
+        #     if tiempo != float('inf'):
+        #         f.write(f"    (= (tiempo-vaciado {tolva}) {tiempo})\n")
+
+        #f.write("    ;; Duraciones de llenado (estimadas)\n")
+        # for tolva in tolvas_validas:
+        #f.write(f"    (= (duracion-llenado {tolva}) 0.1)\n")  # Ajusta según datos reales
+
         f.write("  )\n\n  (:goal (and\n")
         for tolva in tolvas_validas_ordenadas:
-            f.write(f"    (tolva-llena {tolva})\n")
+            material = tolva_a_material.get(tolva, "unknown")
+            f.write(f"    (alimentado {tolva} {material})\n")
+            # f.write(f"    (alimentando {tolva})\n ")
         f.write("  ))\n  (:metric minimize (total-time))\n)")
 
 # ---------------------------------------------
@@ -261,16 +292,16 @@ def main():
     sistema.set_productos()
 
     # Configurar niveles iniciales
-    sistema.mc1.tolvas["clinker"].nivel_actual = 1
-    sistema.mc1.tolvas["puzolana"].nivel_actual = 1
+    sistema.mc1.tolvas["clinker"].nivel_actual = 10
+    sistema.mc1.tolvas["puzolana"].nivel_actual = 4
     sistema.mc1.tolvas["yeso"].nivel_actual = 6
 
     sistema.mc2.tolvas["clinker"].nivel_actual = 1
-    sistema.mc2.tolvas["puzolana_humeda"].nivel_actual = 1
+    sistema.mc2.tolvas["puzolana_humeda"].nivel_actual = 4
     sistema.mc2.tolvas["yeso"].nivel_actual = 6
 
-    sistema.mc3.tolvas["clinker"].nivel_actual = 1
-    sistema.mc3.tolvas["puzolana"].nivel_actual = 1
+    sistema.mc3.tolvas["clinker"].nivel_actual = 7
+    sistema.mc3.tolvas["puzolana"].nivel_actual = 8
     sistema.mc3.tolvas["yeso"].nivel_actual = 1
 
     # Definir material_por_tolva usando nombres_tolvas

@@ -213,21 +213,33 @@ def generar_problema_pddl_dinamico(estado_rutas: Dict[str, bool],tolvas_criticas
     (en-marcha mc2)
     (en-marcha mc3)
                 
+    ;; Costos de prioridad basados en tiempos de vaciado
+    (= (costo-prioridad t1-clinker) 166.67)    ;; 100 / (0.59 + 0.01)
+    (= (costo-prioridad t1-puzolana-h) 476.19) ;; 100 / (0.70 + 0.01)
+    (= (costo-prioridad t1-yeso) 270.27)       ;; 100 / (0.36 + 0.01)
+    (= (costo-prioridad t2-clinker) 47619.19)    ;; 100 / (0.20 + 0.01)
+    (= (costo-prioridad t2-puzolana-h) 142.86) ;; 100 / (0.70 + 0.01)
+    (= (costo-prioridad t2-puzolana-s) 400.00) ;; 100 / (0.24 + 0.01)
+    (= (costo-prioridad t2-yeso) 270.27)       ;; 100 / (0.36 + 0.01)
+    (= (costo-prioridad t3-clinker) 163.93)    ;; 100 / (0.60 + 0.01)
+    (= (costo-prioridad t3-puzolana-s) 400.00) ;; 100 / (0.24 + 0.01)
+    (= (costo-prioridad t3-yeso) 270.27)       ;; 100 / (0.36 + 0.01)
+
+
     ;; Duraciones
-    (= (duracion-llenado t1-clinker MC1-desde-Pretrit) 3)
-    (= (duracion-llenado t2-clinker MC2-desde-Pretrit) 2.5)
+    (= (duracion-llenado t1-clinker MC1-desde-Pretrit) 2)
+    (= (duracion-llenado t2-clinker MC2-desde-Pretrit) 3)
     (= (duracion-llenado t3-clinker MC3-desde_Silo-Blanco) 4)
-    (= (duracion-llenado t3-clinker Pretrit_a_Silo_Blanco) 3)
-    (= (duracion-llenado t2-puzolana-h PH-a-426HO04-por-MC2) 1.5)
-    (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC2) 4)
-    (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC1) 4)
-    (= (duracion-llenado t3-puzolana-s PS-a-MC3-por-MC2) 4)
-    (= (duracion-llenado t2-puzolana-s PS-a-426HO02-por-426HO04) 2)
-    (= (duracion-llenado t1-yeso MC1-por-MC1) 2)
-    (= (duracion-llenado t1-yeso MC1-por-MC2) 3)
-    (= (duracion-llenado t2-yeso MC2-por-MC2)2.5)
-    (= (duracion-llenado t3-yeso MC3-por-MC1) 3)
-    (= (duracion-llenado t3-yeso MC3-por-MC2) 6.1)
+    (= (duracion-llenado t3-clinker Pretrit_a_Silo_Blanco) 5)
+    (= (duracion-llenado t2-puzolana-h PH-a-426HO04-por-MC2) 6)
+    (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC2) 7)
+    (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC1) 6)
+    (= (duracion-llenado t3-puzolana-s PS-a-MC3-por-MC2) 5)
+    (= (duracion-llenado t2-puzolana-s PS-a-426HO02-por-426HO04) 4)
+    (= (duracion-llenado t1-yeso MC1-por-MC1) 3)
+    (= (duracion-llenado t2-yeso MC2-por-MC2) 5)
+    (= (duracion-llenado t3-yeso MC3-por-MC1) 2)
+    (= (duracion-llenado t3-yeso MC3-por-MC2) 6)
                 
     ;; Rutas disponibles
 """)
@@ -266,11 +278,11 @@ def generar_problema_pddl_dinamico(estado_rutas: Dict[str, bool],tolvas_criticas
         # f.write("  ))\n)")
 
 
-        # f.write("    ;; Tiempos de vaciado\n")
-        # for tolva in tolvas_validas:
-        #     tiempo = tiempos_por_tolva.get(tolva, float('inf'))
-        #     if tiempo != float('inf'):
-        #         f.write(f"    (= (tiempo-vaciado {tolva}) {tiempo})\n")
+        f.write("    ;; Tiempos de vaciado\n")
+        for tolva in tolvas_validas:
+            tiempo = tiempos_por_tolva.get(tolva, float('inf'))
+            if tiempo != float('inf'):
+                f.write(f"    (= (tiempo-vaciado {tolva}) {tiempo:.2f})\n")
 
         #f.write("    ;; Duraciones de llenado (estimadas)\n")
         # for tolva in tolvas_validas:

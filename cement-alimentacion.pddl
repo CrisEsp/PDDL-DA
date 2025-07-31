@@ -33,8 +33,9 @@
     :condition (and
       (at start (en-marcha ?m)) ; molino encendido
       (at start (libre ?t)) ; tolva libre
-      (at start (not (clinker-ocupado))) ; solo un molino puede alimentar clinker
-      (at start (not (clinker-ocupado2 ?m))) ; ahora chequea por molino
+      ;(at start (not (clinker-ocupado))) ; solo un molino puede alimentar clinker
+      (at start (not (clinker-ocupado2 mc2))) ; ahora chequea por molino
+      (at start (not (clinker-ocupado2 mc1))) ; ahora chequea por molino
       (at start (compatible clinker ?t)) ; la tolva acepta clinker
       (at start (ruta-disponible ?m ?t clinker ?r)) ; existe ruta disponible
       (at start (material-disponible clinker)) ; hay clinker disponible
@@ -49,8 +50,9 @@
       (at start (not (libre ?t))) ; tolva deja de estar libre
       (at start (tolva-ocupada ?t clinker)) ; tolva queda ocupada
       (at start (alimentando clinker ?m ?r)) ; se marca que el molino alimenta clinker
-      (at start (clinker-ocupado)) ; se marca bandera global de clinker ocupado
+      ;(at start (clinker-ocupado)) ; se marca bandera global de clinker ocupado
       (at start (clinker-ocupado2 ?m)) ; se marca bandera individual de clinker ocupado por molino
+      (at start (increase (total-cost) (costo-prioridad ?t)))
       (at end (not (clinker-ocupado2 ?m)))    ; <<< libera solo ese molino
       (at end (not (clinker-ocupado))) ; se libera la bandera
       (at end (alimentado ?t clinker)) ; se marca que fue alimentado
@@ -59,6 +61,7 @@
       (at end (not (alimentando clinker ?m ?r))) ; se borra marca de alimentacion
     )
   )
+
 
   (:durative-action alimentar-puzolana-h
     :parameters (?m - molino ?t - tolva ?r - ruta)
@@ -82,6 +85,7 @@
       (at start (alimentando puzolana-h ?m ?r))
       (at start (puzolana-h-ocupado ?m ?r))
       (at start (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2))
+      (at start (increase (total-cost) (costo-prioridad ?t)))
       (at end (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)))
       (at end (not (puzolana-h-ocupado ?m ?r)))
       (at end (alimentado ?t puzolana-h))
@@ -100,22 +104,16 @@
       (at start (ruta-disponible ?m ?t puzolana-s ?r))
       (at start (material-disponible puzolana-s))
       (at start (not (puzolana-s-ocupado)))
+      (at start (not (clinker-ocupado2 mc3)))
       ;; Restriccin de tolvas y rutas especficas
       (at start (or 
           (and (= ?m mc2) (= ?t t2-puzolana-s) (= ?r PS-a-426HO02-por-426HO04))
           (and (= ?m mc3) (= ?t t3-puzolana-s) (= ?r PS-a-MC3-por-MC2))
       ))
       ;; Exclusin mutua para evitar alimentacin simultnea de puzolana seca
-      (over all (not (and 
-          (= ?m mc2) 
-          (alimentando puzolana-s mc3 t3-puzolana-s PS-a-MC3-por-MC2)
-      )))
-      (over all (not (and 
-          (= ?m mc3) 
-          (alimentando puzolana-s mc2 t2-puzolana-s PS-a-426HO02-por-426HO04)
-      )))
+      (over all (not (and (= ?m mc2) (alimentando puzolana-s mc3 t3-puzolana-s PS-a-MC3-por-MC2))))
+      (over all (not (and (= ?m mc3) (alimentando puzolana-s mc2 t2-puzolana-s PS-a-426HO02-por-426HO04) )))
       (over all (not (and (= ?m mc1) (alimentando yeso mc1 ?r))))
-      ;(over all (not (and (= ?m mc2) (alimentando puzolana-s mc2 ?r))))
       (over all (not (clinker-ocupado2 mc3)))
       
       ;(at start (not (alimentando-yeso-mc2 ?t)))
@@ -125,6 +123,7 @@
       (at start (tolva-ocupada ?t puzolana-s))
       (at start (alimentando puzolana-s ?m ?r))
       (at start (puzolana-s-ocupado))
+      (at start (increase (total-cost) (costo-prioridad ?t)))
       (at end (not (puzolana-s-ocupado)))
       (at end (alimentado ?t puzolana-s))
       (at end (libre ?t))
@@ -164,6 +163,7 @@
       (at start (tolva-ocupada ?t yeso))
       (at start (alimentando yeso ?m ?r))
       (at start (yeso-ocupado ?m ?r))
+      (at start (increase (total-cost) (costo-prioridad ?t)))
       (at end (alimentado ?t yeso))
       (at end (libre ?t))
       (at end (not (tolva-ocupada ?t yeso)))
@@ -173,3 +173,458 @@
 )
 
 
+
+; (define (domain cement-alimentacion)
+;   (:requirements :durative-actions :typing :numeric-fluents :conditional-effects)
+;   (:types molino tolva materia ruta)
+
+;   (:predicates
+;     (en-marcha ?m - molino)
+;     (libre ?t - tolva)
+;     (compatible ?mat - materia ?t - tolva)
+;     (ruta-disponible ?m - molino ?t - tolva ?mat - materia ?r - ruta)
+;     (material-disponible ?mat - materia)
+;     (alimentado ?t - tolva ?mat - materia)
+;     (tolva-ocupada ?t - tolva ?mat - materia)
+;     (alimentando ?mat - materia ?m - molino ?r - ruta)
+;     (clinker-ocupado2 ?m - molino)
+;     (prioridad-bloqueada ?t - tolva)
+;   )
+
+;   (:functions
+;     (duracion-llenado ?t - tolva ?r - ruta)
+;     (costo-prioridad ?t - tolva)
+;     (total-cost)
+;   )
+
+;   (:durative-action alimentar-clinker
+;     :parameters (?m - molino ?t - tolva ?r - ruta)
+;     :duration (= ?duration (duracion-llenado ?t ?r))
+;     :condition (and
+;       (at start (en-marcha ?m))
+;       (at start (libre ?t))
+;       (at start (compatible clinker ?t))
+;       (at start (ruta-disponible ?m ?t clinker ?r))
+;       (at start (material-disponible clinker))
+;       (at start (not (clinker-ocupado2 mc1)))
+;       (at start (not (clinker-ocupado2 mc2)))
+;       (at start (not (clinker-ocupado2 mc3)))
+;       (at start (not (prioridad-bloqueada ?t)))  ;; Bloquea tolvas con menor prioridad
+;     )
+;     :effect (and
+;       (at start (not (libre ?t)))
+;       (at start (tolva-ocupada ?t clinker))
+;       (at start (alimentando clinker ?m ?r))
+;       (at start (clinker-ocupado2 ?m))
+;       (at start (increase (total-cost) (costo-prioridad ?t)))
+      
+;       ;; Desbloquea siguiente tolva segn prioridad
+;       ; (when (= ?t t1-clinker)
+;       ;   (at end (not (prioridad-bloqueada t2-clinker)))
+;       ; )
+;       ; (when (= ?t t2-clinker)
+;       ;   (at end (not (prioridad-bloqueada t3-clinker)))
+;       ; )
+
+;       (at end (not (clinker-ocupado2 ?m)))
+;       (at end (alimentado ?t clinker))
+;       (at end (libre ?t))
+;       (at end (not (tolva-ocupada ?t clinker)))
+;       (at end (not (alimentando clinker ?m ?r)))
+;     )
+;   )
+
+
+
+; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; ;; ACCIONES PARA CLINKER (v0, v1, v2)
+; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; ;; -------- V0 --------
+; (:durative-action alimentar-clinker-v0
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha ?m))
+;     (at start (libre ?t))
+;     (at start (compatible clinker ?t))
+;     (at start (ruta-disponible ?m ?t clinker ?r))
+;     (at start (material-disponible clinker))
+;     (at start (= (retraso) 0))
+;   )
+;   :effect (and
+;     (at start (increase (total-cost) (costo-prioridad ?t)))
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t clinker))
+;     (at start (alimentando clinker ?m ?r))
+;     (at end (alimentado ?t clinker))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t clinker)))
+;     (at end (not (alimentando clinker ?m ?r)))
+;     (at end (increase (retraso) 1))
+;   )
+; )
+
+; ;; -------- V1 --------
+; (:durative-action alimentar-clinker-v1
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha ?m))
+;     (at start (libre ?t))
+;     (at start (compatible clinker ?t))
+;     (at start (ruta-disponible ?m ?t clinker ?r))
+;     (at start (material-disponible clinker))
+;     (at start (= (retraso) 1))
+;   )
+;   :effect (and
+;     (at start (increase (total-cost) (+ (costo-prioridad ?t) (* 5 (tiempo-vaciado ?t)))))
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t clinker))
+;     (at start (alimentando clinker ?m ?r))
+;     (at end (alimentado ?t clinker))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t clinker)))
+;     (at end (not (alimentando clinker ?m ?r)))
+;     (at end (increase (retraso) 1))
+;   )
+; )
+
+; ;; -------- V2 --------
+; (:durative-action alimentar-clinker-v2
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha ?m))
+;     (at start (libre ?t))
+;     (at start (compatible clinker ?t))
+;     (at start (ruta-disponible ?m ?t clinker ?r))
+;     (at start (material-disponible clinker))
+;     (at start (>= (retraso) 2))
+;   )
+;   :effect (and
+;     (at start (increase (total-cost) (+ (costo-prioridad ?t) (* 10 (tiempo-vaciado ?t)))))
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t clinker))
+;     (at start (alimentando clinker ?m ?r))
+;     (at end (alimentado ?t clinker))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t clinker)))
+;     (at end (not (alimentando clinker ?m ?r)))
+;     (at end (increase (retraso) 1))
+;   )
+; )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ACCIONES PARA PUZOLANA HMEDA (v0, v1, v2)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; ;; -------- V0 --------
+; (:durative-action alimentar-puzolana-h-v0
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha ?m))
+;     (at start (libre ?t))
+;     (at start (ruta-disponible ?m ?t puzolana-h ?r))
+;     (at start (material-disponible puzolana-h))
+;     (at start (not (puzolana-h-ocupado ?m ?r)))
+;     (at start (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2))) ; segn dominio original
+;     (over all (not (clinker-ocupado2 mc3)))
+;     (over all (not (yeso-ocupado mc1 MC1-por-MC1)))
+;     (at start (not (alimentando-yeso-mc2 ?t)))
+;     (at start (= (retraso) 0))
+;   )
+;   :effect (and
+;     (at start (increase (total-cost) (costo-prioridad ?t)))
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t puzolana-h))
+;     (at start (alimentando puzolana-h ?m ?r))
+;     (at start (puzolana-h-ocupado ?m ?r))
+;     (at start (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2))
+;     (at end (alimentado ?t puzolana-h))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t puzolana-h)))
+;     (at end (not (alimentando puzolana-h ?m ?r)))
+;     (at end (not (puzolana-h-ocupado ?m ?r)))
+;     (at end (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)))
+;     (at end (increase (retraso) 1))
+;   )
+; )
+
+; ;; -------- V1 --------
+; (:durative-action alimentar-puzolana-h-v1
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha ?m))
+;     (at start (libre ?t))
+;     (at start (ruta-disponible ?m ?t puzolana-h ?r))
+;     (at start (material-disponible puzolana-h))
+;     (at start (not (puzolana-h-ocupado ?m ?r)))
+;     (at start (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)))
+;     (over all (not (clinker-ocupado2 mc3)))
+;     (over all (not (yeso-ocupado mc1 MC1-por-MC1)))
+;     (at start (not (alimentando-yeso-mc2 ?t)))
+;     (at start (= (retraso) 1))
+;   )
+;   :effect (and
+;     (at start (increase (total-cost) (+ (costo-prioridad ?t) (* 5 (tiempo-vaciado ?t)))))
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t puzolana-h))
+;     (at start (alimentando puzolana-h ?m ?r))
+;     (at start (puzolana-h-ocupado ?m ?r))
+;     (at start (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2))
+;     (at end (alimentado ?t puzolana-h))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t puzolana-h)))
+;     (at end (not (alimentando puzolana-h ?m ?r)))
+;     (at end (not (puzolana-h-ocupado ?m ?r)))
+;     (at end (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)))
+;     (at end (increase (retraso) 1))
+;   )
+; )
+
+; ;; -------- V2 --------
+; (:durative-action alimentar-puzolana-h-v2
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha ?m))
+;     (at start (libre ?t))
+;     (at start (ruta-disponible ?m ?t puzolana-h ?r))
+;     (at start (material-disponible puzolana-h))
+;     (at start (not (puzolana-h-ocupado ?m ?r)))
+;     (at start (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)))
+;     (over all (not (clinker-ocupado2 mc3)))
+;     (over all (not (yeso-ocupado mc1 MC1-por-MC1)))
+;     (at start (not (alimentando-yeso-mc2 ?t)))
+;     (at start (>= (retraso) 2))
+;   )
+;   :effect (and
+;     (at start (increase (total-cost) (+ (costo-prioridad ?t) (* 10 (tiempo-vaciado ?t)))))
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t puzolana-h))
+;     (at start (alimentando puzolana-h ?m ?r))
+;     (at start (puzolana-h-ocupado ?m ?r))
+;     (at start (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2))
+;     (at end (alimentado ?t puzolana-h))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t puzolana-h)))
+;     (at end (not (alimentando puzolana-h ?m ?r)))
+;     (at end (not (puzolana-h-ocupado ?m ?r)))
+;     (at end (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)))
+;     (at end (increase (retraso) 1))
+;   )
+; )
+
+; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; ;; ACCIONES PARA PUZOLANA SECA (v0, v1, v2)
+; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; ;; -------- V0 --------
+; (:durative-action alimentar-puzolana-s-v0
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha ?m))
+;     (at start (libre ?t))
+;     (at start (ruta-disponible ?m ?t puzolana-s ?r))
+;     (at start (material-disponible puzolana-s))
+;     (at start (not (puzolana-s-ocupado)))
+;     (at start (or 
+;       (and (= ?m mc2) (= ?t t2-puzolana-s) (= ?r PS-a-426HO02-por-426HO04))
+;       (and (= ?m mc3) (= ?t t3-puzolana-s) (= ?r PS-a-MC3-por-MC2))
+;     ))
+;     (over all (not (and (= ?m mc2) (alimentando puzolana-s mc3 t3-puzolana-s PS-a-MC3-por-MC2))))
+;     (over all (not (and (= ?m mc3) (alimentando puzolana-s mc2 t2-puzolana-s PS-a-426HO02-por-426HO04))))
+;     (over all (not (and (= ?m mc1) (alimentando yeso mc1 ?r))))
+;     (over all (not (clinker-ocupado2 mc3)))
+;     (at start (= (retraso) 0))
+;   )
+;   :effect (and
+;     (at start (increase (total-cost) (costo-prioridad ?t)))
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t puzolana-s))
+;     (at start (alimentando puzolana-s ?m ?r))
+;     (at start (puzolana-s-ocupado))
+;     (at end (alimentado ?t puzolana-s))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t puzolana-s)))
+;     (at end (not (alimentando puzolana-s ?m ?r)))
+;     (at end (not (puzolana-s-ocupado)))
+;     (at end (increase (retraso) 1))
+;   )
+; )
+
+; ;; -------- V1 --------
+; (:durative-action alimentar-puzolana-s-v1
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha ?m))
+;     (at start (libre ?t))
+;     (at start (ruta-disponible ?m ?t puzolana-s ?r))
+;     (at start (material-disponible puzolana-s))
+;     (at start (not (puzolana-s-ocupado)))
+;     (at start (or 
+;       (and (= ?m mc2) (= ?t t2-puzolana-s) (= ?r PS-a-426HO02-por-426HO04))
+;       (and (= ?m mc3) (= ?t t3-puzolana-s) (= ?r PS-a-MC3-por-MC2))
+;     ))
+;     (over all (not (and (= ?m mc2) (alimentando puzolana-s mc3 t3-puzolana-s PS-a-MC3-por-MC2))))
+;     (over all (not (and (= ?m mc3) (alimentando puzolana-s mc2 t2-puzolana-s PS-a-426HO02-por-426HO04))))
+;     (over all (not (and (= ?m mc1) (alimentando yeso mc1 ?r))))
+;     (over all (not (clinker-ocupado2 mc3)))
+;     (at start (= (retraso) 1))
+;   )
+;   :effect (and
+;     (at start (increase (total-cost) (+ (costo-prioridad ?t) (* 5 (tiempo-vaciado ?t)))))
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t puzolana-s))
+;     (at start (alimentando puzolana-s ?m ?r))
+;     (at start (puzolana-s-ocupado))
+;     (at end (alimentado ?t puzolana-s))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t puzolana-s)))
+;     (at end (not (alimentando puzolana-s ?m ?r)))
+;     (at end (not (puzolana-s-ocupado)))
+;     (at end (increase (retraso) 1))
+;   )
+; )
+
+; ;; -------- V2 --------
+; (:durative-action alimentar-puzolana-s-v2
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha ?m))
+;     (at start (libre ?t))
+;     (at start (ruta-disponible ?m ?t puzolana-s ?r))
+;     (at start (material-disponible puzolana-s))
+;     (at start (not (puzolana-s-ocupado)))
+;     (at start (or 
+;       (and (= ?m mc2) (= ?t t2-puzolana-s) (= ?r PS-a-426HO02-por-426HO04))
+;       (and (= ?m mc3) (= ?t t3-puzolana-s) (= ?r PS-a-MC3-por-MC2))
+;     ))
+;     (over all (not (and (= ?m mc2) (alimentando puzolana-s mc3 t3-puzolana-s PS-a-MC3-por-MC2))))
+;     (over all (not (and (= ?m mc3) (alimentando puzolana-s mc2 t2-puzolana-s PS-a-426HO02-por-426HO04))))
+;     (over all (not (and (= ?m mc1) (alimentando yeso mc1 ?r))))
+;     (over all (not (clinker-ocupado2 mc3)))
+;     (at start (>= (retraso) 2))
+;   )
+;   :effect (and
+;     (at start (increase (total-cost) (+ (costo-prioridad ?t) (* 10 (tiempo-vaciado ?t)))))
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t puzolana-s))
+;     (at start (alimentando puzolana-s ?m ?r))
+;     (at start (puzolana-s-ocupado))
+;     (at end (alimentado ?t puzolana-s))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t puzolana-s)))
+;     (at end (not (alimentando puzolana-s ?m ?r)))
+;     (at end (not (puzolana-s-ocupado)))
+;     (at end (increase (retraso) 1))
+;   )
+; )
+
+; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; ;; ACCIONES PARA YESO (v0, v1, v2)
+; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; ;; -------- V0 --------
+; (:durative-action alimentar-yeso-v0
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha ?m))
+;     (at start (libre ?t))
+;     (at start (ruta-disponible ?m ?t yeso ?r))
+;     (at start (material-disponible yeso))
+;     (at start (not (puzolana-s-ocupado)))
+;     (over all (not (and (= ?m mc1) (= ?r MC1-por-MC2) (puzolana-h-ocupado mc2 PH-a-426HO04-por-MC2))))
+;     (over all (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)))
+;     (over all (not (puzolana-h-ocupado mc2 ?r)))
+;     (over all (not (and (= ?m mc3) (alimentando puzolana-s mc3 ?r))))
+;     (over all (not (clinker-ocupado2 mc3)))
+;     (at start (= (retraso) 0))
+;   )
+;   :effect (and
+;     (at start (increase (total-cost) (costo-prioridad ?t)))
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t yeso))
+;     (at start (alimentando yeso ?m ?r))
+;     (at start (yeso-ocupado ?m ?r))
+;     (at end (alimentado ?t yeso))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t yeso)))
+;     (at end (not (alimentando yeso ?m ?r)))
+;     (at end (not (yeso-ocupado ?m ?r)))
+;     (at end (increase (retraso) 1))
+;   )
+; )
+
+; ;; -------- V1 --------
+; (:durative-action alimentar-yeso-v1
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha ?m))
+;     (at start (libre ?t))
+;     (at start (ruta-disponible ?m ?t yeso ?r))
+;     (at start (material-disponible yeso))
+;     (at start (not (puzolana-s-ocupado)))
+;     (over all (not (and (= ?m mc1) (= ?r MC1-por-MC2) (puzolana-h-ocupado mc2 PH-a-426HO04-por-MC2))))
+;     (over all (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)))
+;     (over all (not (puzolana-h-ocupado mc2 ?r)))
+;     (over all (not (and (= ?m mc3) (alimentando puzolana-s mc3 ?r))))
+;     (over all (not (clinker-ocupado2 mc3)))
+;     (at start (= (retraso) 1))
+;   )
+;   :effect (and
+;     (at start (increase (total-cost) (+ (costo-prioridad ?t) (* 5 (tiempo-vaciado ?t)))))
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t yeso))
+;     (at start (alimentando yeso ?m ?r))
+;     (at start (yeso-ocupado ?m ?r))
+;     (at end (alimentado ?t yeso))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t yeso)))
+;     (at end (not (alimentando yeso ?m ?r)))
+;     (at end (not (yeso-ocupado ?m ?r)))
+;     (at end (increase (retraso) 1))
+;   )
+; )
+
+; ;; -------- V2 --------
+; (:durative-action alimentar-yeso-v2
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha ?m))
+;     (at start (libre ?t))
+;     (at start (ruta-disponible ?m ?t yeso ?r))
+;     (at start (material-disponible yeso))
+;     (at start (not (puzolana-s-ocupado)))
+;     (over all (not (and (= ?m mc1) (= ?r MC1-por-MC2) (puzolana-h-ocupado mc2 PH-a-426HO04-por-MC2))))
+;     (over all (not (puzolana-h-ocupado mc1 PH-a-MC1-por-MC2)))
+;     (over all (not (puzolana-h-ocupado mc2 ?r)))
+;     (over all (not (and (= ?m mc3) (alimentando puzolana-s mc3 ?r))))
+;     (over all (not (clinker-ocupado2 mc3)))
+;     (at start (>= (retraso) 2))
+;   )
+;   :effect (and
+;     (at start (increase (total-cost) (+ (costo-prioridad ?t) (* 10 (tiempo-vaciado ?t)))))
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t yeso))
+;     (at start (alimentando yeso ?m ?r))
+;     (at start (yeso-ocupado ?m ?r))
+;     (at end (alimentado ?t yeso))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t yeso)))
+;     (at end (not (alimentando yeso ?m ?r)))
+;     (at end (not (yeso-ocupado ?m ?r)))
+;     (at end (increase (retraso) 1))
+;   )
+; )
+
+; )

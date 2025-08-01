@@ -279,7 +279,7 @@ def generar_problema_pddl_dinamico(estado_rutas: Dict[str, bool],tolvas_criticas
 
 
         f.write("    ;; Tiempos de vaciado\n")
-        for tolva in tolvas_validas:
+        for tolva in tolva_a_rutas:   #tolvas_validas:
             tiempo = tiempos_por_tolva.get(tolva, float('inf'))
             if tiempo != float('inf'):
                 f.write(f"    (= (tiempo-vaciado {tolva}) {tiempo:.2f})\n")
@@ -293,7 +293,7 @@ def generar_problema_pddl_dinamico(estado_rutas: Dict[str, bool],tolvas_criticas
             material = tolva_a_material.get(tolva, "unknown")
             f.write(f"    (alimentado {tolva} {material})\n")
             # f.write(f"    (alimentando {tolva})\n ")
-        f.write("  ))\n  (:metric minimize (total-time))\n)")
+        f.write("  ))\n  (:metric minimize (total-cost))\n)")
 
 # ---------------------------------------------
 # Main

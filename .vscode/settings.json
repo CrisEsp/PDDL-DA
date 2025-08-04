@@ -1,0 +1,9 @@
+{
+  "filewatcher.commands": [
+    {
+      "match": ".*\\.plan$",
+      "isAsync": true,
+      "cmd": "powershell -ExecutionPolicy Bypass -Command \"$fecha=Get-Date -Format 'yyyyMMdd_HHmmss'; $destino='${workspaceFolder}\\planes-generados\\plan_'+$fecha+'.plan'; Copy-Item '${file}' $destino; Write-Output 'Plan copiado en: '+$destino\""
+    }
+  ]
+}

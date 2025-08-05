@@ -33,11 +33,29 @@ class Molino:
         self.tipo_producto = None
         self.alimentacion_fresca = 0
         self.ratios = {}
+        self.productos_disponibles = {}  # Diccionario para almacenar productos y sus configuraciones
+        self.en_marcha = True  # Estado inicial: en marcha
 
     def set_producto(self, tipo_producto: TipoProducto, alimentacion_fresca: float, ratios: Dict[str, float]):
         self.tipo_producto = tipo_producto
         self.alimentacion_fresca = alimentacion_fresca
         self.ratios = ratios
+        self.productos_disponibles[tipo_producto] = {
+            "alimentacion_fresca": alimentacion_fresca,
+            "ratios": ratios
+        }
+
+    def set_alimentacion_fresca(self, alimentacion_fresca: float):
+        self.alimentacion_fresca = alimentacion_fresca
+
+    def set_estado(self, en_marcha: bool):
+        self.en_marcha = en_marcha
+
+    def cambiar_producto(self, tipo_producto: TipoProducto):
+            if tipo_producto in self.productos_disponibles:
+                self.tipo_producto = tipo_producto
+                self.alimentacion_fresca = self.productos_disponibles[tipo_producto]["alimentacion_fresca"]
+                self.ratios = self.productos_disponibles[tipo_producto]["ratios"]
 
     def tiempo_vaciado(self, material: str) -> float:
         if material not in self.ratios or material not in self.tolvas:
@@ -71,10 +89,58 @@ class SistemaAlimentacion:
         }, 0.5)
 
     def set_productos(self):
-        self.mc1.set_producto(TipoProducto.P40, 75, {"clinker": 68.5, "puzolana": 30, "yeso": 1.5})
-        self.mc2.set_producto(TipoProducto.P10, 65, {"clinker": 87, "puzolana_humeda": 10, "puzolana_seca": 10, "yeso": 3})
-        self.mc3.set_producto(TipoProducto.P30, 33.5, {"clinker": 63.1, "puzolana": 34.4, "yeso": 2.5})
+        # self.mc1.set_producto(TipoProducto.P40, 75, {"clinker": 68.5, "puzolana": 30, "yeso": 1.5})
+        # self.mc2.set_producto(TipoProducto.P10, 65, {"clinker": 87, "puzolana_humeda": 10, "puzolana_seca": 10, "yeso": 3})
+        # self.mc3.set_producto(TipoProducto.P30, 33.5, {"clinker": 63.1, "puzolana": 34.4, "yeso": 2.5})
 
+        # MC1: P30 y P40
+        self.mc1.set_producto(TipoProducto.P30, 72, {"clinker": 68.5, "puzolana": 30, "yeso": 1.5})
+        self.mc1.set_producto(TipoProducto.P40, 64, {"clinker": 58.5, "puzolana": 40, "yeso": 1.5})
+
+        # MC2: P10, P16, P20, P30
+        self.mc2.set_producto(TipoProducto.P10, 70, {"clinker": 87, "puzolana_humeda": 5, "puzolana_seca": 5, "yeso": 3})
+        self.mc2.set_producto(TipoProducto.P16, 80, {"clinker": 81.5, "puzolana_humeda": 8, "puzolana_seca": 8, "yeso": 2.5})
+        self.mc2.set_producto(TipoProducto.P20, 87, {"clinker": 85.5, "puzolana_humeda": 6, "puzolana_seca": 6, "yeso": 2.5})
+        self.mc2.set_producto(TipoProducto.P30, 110, {"clinker": 68, "puzolana_humeda": 15, "puzolana_seca": 15, "yeso": 2})
+
+        # MC3: P30
+        self.mc3.set_producto(TipoProducto.P30, 37, {"clinker": 67.5, "puzolana": 30, "yeso": 2.5})
+
+
+
+        # ---------------------------------------------
+# Funciones de actualización
+# ---------------------------------------------
+
+def update_feed_rate(molino: Molino, value: str):
+    try:
+        new_feed = float(value)
+        if new_feed >= 0:
+            molino.set_alimentacion_fresca(new_feed)
+            print(f"Alimentación fresca de {molino.nombre} actualizada a {new_feed} t/h")
+    except ValueError:
+        print(f"Valor inválido para alimentación fresca: {value}")
+
+def update_product_type(molino: Molino, value: str):
+    try:
+        tipo_producto = TipoProducto(value)
+        molino.cambiar_producto(tipo_producto)
+        print(f"Producto de {molino.nombre} cambiado a {value}")
+    except ValueError:
+        print(f"Tipo de producto inválido: {value}")
+
+# def update_running_state(molino: Molino, value: str):
+#     estado = value == "Marcha"
+#     molino.set_estado(estado)
+#     print(f"Estado de {molino.nombre} cambiado a {'Marcha' if estado else 'Parado'}")
+
+def update_running_state(molino: Molino, value: str, sistema: SistemaAlimentacion,page: ft.Page):
+    estado = value == "Encendido"
+    molino.set_estado(estado)
+    print(f"Estado de {molino.nombre} cambiado a {'Encendido' if estado else 'Apagado'}")
+    tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
+    pddl_content = generar_problema_pddl_dinamico(estado_rutas, tolvas_criticas, tiempos_por_tolva)
+    refresh_cards(pddl_content,sistema, page)  # Actualiza la UI
 # ---------------------------------------------
 # Funciones para vaciado y generación PDDL
 # ---------------------------------------------
@@ -275,6 +341,8 @@ def generar_problema_pddl_dinamico(estado_rutas: Dict[str, bool], tolvas_critica
         f.write(pddl_content)
     return pddl_content
 
+
+
 # ---------------------------------------------
 # Flet UI
 # ---------------------------------------------
@@ -312,7 +380,7 @@ def main(page: ft.Page):
             menu_column.controls = construir_column_rutas()
             tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
             pddl_content = generar_problema_pddl_dinamico(estado_rutas, tolvas_criticas, tiempos_por_tolva)
-            refresh_cards(pddl_content)
+            refresh_cards(pddl_content, page)
             page.update()
 
         return ft.Container(
@@ -373,12 +441,12 @@ def main(page: ft.Page):
                         tolva.nivel_actual = tolva.nivel_actual
         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
         pddl_content = generar_problema_pddl_dinamico(estado_rutas, tolvas_criticas, tiempos_por_tolva)
-        refresh_cards(pddl_content)
+        refresh_cards(pddl_content, page)
         page.snack_bar = ft.SnackBar(ft.Text("Problema.pddl creado correctamente"), open=True, duration=2000)
         page.snack_bar.open = True
         page.update()
 
-    def refresh_cards(pddl_content=None):
+    def refresh_cards(pddl_content=None ,page: ft.Page=None):
         page.controls.clear()
         cards = []
         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
@@ -421,10 +489,64 @@ def main(page: ft.Page):
                         ft.DataCell(ft.Text(f"{tiempo:.2f} h", size=14)),
                     ])
                 )
+
+
+            # Define product types based on mill
+            product_options = {
+                "MC1": [ft.dropdown.Option("P30"), ft.dropdown.Option("P40")],
+                "MC2": [ft.dropdown.Option("P10"), ft.dropdown.Option("P16"), ft.dropdown.Option("P20"), ft.dropdown.Option("P30")],
+                "MC3": [ft.dropdown.Option("P30")]
+            }.get(molino.nombre, [])
+
+
+
             card = ft.Card(
                 content=ft.Container(
                     content=ft.Column([
                         ft.Text(f"Molino {molino.nombre}", size=18, weight=ft.FontWeight.BOLD),
+                        ft.Row(
+                            controls=[
+                                ft.Dropdown(
+                                    options=[
+                                        ft.dropdown.Option("Encendido"),
+                                        ft.dropdown.Option("Apagado")
+                                    ],
+                                    value="Encendido" if molino.en_marcha  else "Apagado",
+                                    width=130,
+                                    filled=True,
+                                    text_size=14,
+                                    color=ft.Colors.GREEN if molino.en_marcha else ft.Colors.RED,
+                                    on_change=lambda e, m=molino: update_running_state(m, e.control.value,sistema,page),
+                                    tooltip="Estado de marcha"
+                                ),
+                                ft.Dropdown(
+                                    options=product_options,
+                                    value=molino.tipo_producto.value if molino.tipo_producto else product_options[0].key,
+                                    width=84,
+                                    #bgcolor=ft.Colors.GREY_700,  # Fondo del campo de selección
+                                    filled=True,  # Asegura que el bgcolor se aplique al campo
+                                    #dropdown_color=ft.Colors.WHITE,  # Color del desplegable
+                                    color=ft.Colors.WHITE,  # Texto negro para legibilidad
+                                    text_size=14,
+                                    on_change=lambda e, m=molino: update_product_type(m, e.control.value),
+                                    tooltip="Tipo de producto"
+                                ),
+                                #ft.Text("Rendiemiento:", size=14),
+                                ft.TextField(
+                                    prefix_text="Rendimiento: ",  # Texto antes del valor
+                                    value=f"{molino.alimentacion_fresca}",
+                                    width=180,
+                                    text_size=14,
+                                    filled=True,
+                                    text_align=ft.TextAlign.RIGHT,
+                                    suffix_text=" t/h",
+                                    on_submit=lambda e, m=molino: update_feed_rate(m, e.control.value,page),
+                                    tooltip="Alimentación fresca (t/h)"
+                                ),
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER
+                        ),
                         ft.DataTable(
                             columns=[
                                 ft.DataColumn(ft.Text("Material", size=14)),
@@ -434,16 +556,17 @@ def main(page: ft.Page):
                             ],
                             rows=rows,
                             column_spacing=35,
-                            data_row_min_height=25
+                            data_row_min_height=0
                         )
                     ]),
                     padding=8,
-                    width=430, #495
-                    height=300
+                    width=494, #430
+                    height=350
                 ),
                 elevation=5
             )
             cards.append(card)
+
 
         pddl_card = ft.Container(
             content=ft.Card(
@@ -469,6 +592,7 @@ def main(page: ft.Page):
                             expand=True,
                             height=240,
                             on_scroll=ft.ScrollMode.AUTO
+                            #auto_scroll=ft.ScrollMode.AUTO  # Enables scrollbar when content overflows
                         )
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER),
@@ -520,7 +644,8 @@ def main(page: ft.Page):
         page.update()
 
     # Inicializar la interfaz
-    refresh_cards()
+    #refresh_cards()
+    refresh_cards(page=page)  # Pasa el objeto page
 
 if __name__ == "__main__":
     ft.app(target=main)

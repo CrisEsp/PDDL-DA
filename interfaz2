@@ -2,6 +2,7 @@ import flet as ft
 import enum
 from typing import List, Dict, Tuple
 import os
+import uuid
 
 # ---------------------------------------------
 # Clases base
@@ -15,15 +16,19 @@ class TipoProducto(enum.Enum):
     P40 = "P40"
 
 class Tolva:
-    def __init__(self, material: str, capacidad: float, altura_max: float):
+    def __init__(self, material: str, capacidad: float, altura_max: float, nivel_ineficiente: float):
         self.material = material
         self.capacidad = capacidad
         self.altura_max = altura_max
+        self.nivel_ineficiente = nivel_ineficiente
         self.nivel_actual = 0
 
+    def toneladas_reales(self) -> float:
+        return ((self.nivel_actual - self.nivel_ineficiente) * self.capacidad) / self.altura_max
+
     def tiempo_vaciado(self, consumo_por_hora: float) -> float:
-        toneladas_reales = (self.nivel_actual * self.capacidad) / self.altura_max
-        return toneladas_reales / consumo_por_hora if consumo_por_hora > 0 else float('inf')
+        toneladas = self.toneladas_reales()
+        return toneladas / consumo_por_hora if consumo_por_hora > 0 else float('inf')
 
 class Molino:
     def __init__(self, nombre: str, tolvas: Dict[str, Tolva], rendimiento: float):
@@ -72,22 +77,22 @@ class Molino:
 class SistemaAlimentacion:
     def __init__(self):
         self.mc1 = Molino("MC1", {
-            "clinker": Tolva("Clinker", 500, 14),
-            "puzolana": Tolva("Puzolana", 300, 12),
-            "yeso": Tolva("Yeso", 300, 10)
-        }, 1)
+            "clinker": Tolva("Clinker", 500, 14, 2.8),
+            "puzolana": Tolva("Puzolana", 300, 12, 2.4),
+            "yeso": Tolva("Yeso", 300, 10, 2.0)
+        }, 0.8)
 
         self.mc2 = Molino("MC2", {
-            "clinker": Tolva("Clinker", 300, 9),
-            "puzolana_humeda": Tolva("Puzolana Húmeda", 500, 15),
-            "puzolana_seca": Tolva("Puzolana Seca", 100, 12),
-            "yeso": Tolva("Yeso", 120, 9)
+            "clinker": Tolva("Clinker", 300, 9, 1.8),
+            "puzolana_humeda": Tolva("Puzolana Húmeda", 500, 15, 3.0),
+            "puzolana_seca": Tolva("Puzolana Seca", 100, 12, 2.4),
+            "yeso": Tolva("Yeso", 120, 9, 1.8)
         }, 0.8)
 
         self.mc3 = Molino("MC3", {
-            "clinker": Tolva("Clinker", 60, 100),
-            "puzolana": Tolva("Puzolana", 35, 100),
-            "yeso": Tolva("Yeso", 30, 100)
+            "clinker": Tolva("Clinker", 60, 100, 50.0),
+            "puzolana": Tolva("Puzolana", 35, 100, 0),
+            "yeso": Tolva("Yeso", 30, 100, 0)
         }, 0.5)
 
     def set_productos(self):
@@ -126,12 +131,12 @@ estado_molinos = {
     "mc3": True
 }
 
-# Variables para los controles de UI
 status_dropdowns = {}
 level_fields = {}
 feed_rate_fields = {}
 menu_column = None
 pddl_display = None
+
 # ---------------------------------------------
 # Funciones de actualización
 # ---------------------------------------------
@@ -144,7 +149,7 @@ def update_feed_rate(molino: Molino, value: str, sistema: SistemaAlimentacion, p
             molino.set_alimentacion_fresca(new_feed)
             print(f"Después de actualizar: {molino.nombre} alimentacion_fresca = {molino.alimentacion_fresca}")
             tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
-            pddl_content = generar_problema_pddl_dinamico(estado_molinos,estado_rutas, tolvas_criticas, tiempos_por_tolva)
+            pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
             refresh_cards(pddl_content, sistema, page)
             page.snack_bar = ft.SnackBar(ft.Text(f"Alimentación fresca de {molino.nombre} actualizada a {new_feed} t/h"), open=True, duration=2000)
             page.update()
@@ -163,7 +168,7 @@ def update_product_type(molino: Molino, value: str, sistema: SistemaAlimentacion
         molino.cambiar_producto(tipo_producto)
         print(f"Producto de {molino.nombre} cambiado a {value}")
         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
-        pddl_content = generar_problema_pddl_dinamico(estado_molinos,estado_rutas, tolvas_criticas, tiempos_por_tolva)
+        pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
         refresh_cards(pddl_content, sistema, page)
     except ValueError:
         print(f"Tipo de producto inválido: {value}")
@@ -173,23 +178,17 @@ def update_product_type(molino: Molino, value: str, sistema: SistemaAlimentacion
 def update_running_state(molino: Molino, value: str, sistema: SistemaAlimentacion, page: ft.Page):
     estado = value == "Encendido"
     molino.set_estado(estado)
-    # Actualizar estado_molinos - CORREGIDO: usar nombre correcto
     estado_molinos[molino.nombre.lower()] = estado
     print(f"Estado de {molino.nombre} cambiado a {'Encendido' if estado else 'Apagado'}")
     
-    # Actualizar el dropdown correspondiente inmediatamente
     dropdown_key = f"{molino.nombre}_status"
     if dropdown_key in status_dropdowns:
         status_dropdowns[dropdown_key].value = value
         status_dropdowns[dropdown_key].color = ft.Colors.GREEN if estado else ft.Colors.RED
     
     tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
-    pddl_content = generar_problema_pddl_dinamico(estado_molinos,estado_rutas, tolvas_criticas, tiempos_por_tolva)
-    
-    # NO llamar refresh_cards aquí para evitar recrear todos los controles
-    # Solo actualizar el contenido PDDL y mostrar notificación
+    pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
     update_pddl_display(pddl_content, page)
-    
     page.snack_bar = ft.SnackBar(ft.Text(f"Estado de {molino.nombre} cambiado a {'Encendido' if estado else 'Apagado'}"), open=True, duration=2000)
     page.update()
 
@@ -214,6 +213,8 @@ def obtener_tolvas_a_llenar_por_tiempos(sistema: SistemaAlimentacion, umbral=3) 
         "mc3": {"clinker": "t3-clinker", "puzolana": "t3-puzolana-s", "yeso": "t3-yeso"},
     }
     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
+        if not molino.en_marcha:
+            continue
         tiempos = calcular_tiempos_vaciado(molino, imprimir=True)
         nombre_molino = molino.nombre.lower()
         for mat, tiempo in tiempos.items():
@@ -263,8 +264,6 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
     if not tolvas_validas:
         raise ValueError("No hay tolvas críticas válidas con rutas habilitadas para generar el objetivo.")
     pddl_content = """(define (problem cement-production-problem)
-
-
   (:domain cement-alimentacion)
   (:objects
     mc1 mc2 mc3 - molino
@@ -273,7 +272,7 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
     t3-clinker t3-puzolana-s t3-yeso - tolva
     clinker puzolana-h yeso puzolana-s - materia
     MC1-desde-Pretrit MC2-desde-Pretrit MC3-desde_Silo-Blanco Pretrit_a_Silo_Blanco 
-    PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04 - ruta
+    PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04
     MC1-por-MC1 MC1-por-MC2 MC2-por-MC2 MC3-por-MC1 MC3-por-MC2 - ruta
   )
   (:init
@@ -288,7 +287,6 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
     (material-disponible puzolana-h)
     (material-disponible puzolana-s)
     (material-disponible yeso)
-
     (= (costo-prioridad t1-clinker) 166.67)
     (= (costo-prioridad t1-puzolana-h) 476.19)
     (= (costo-prioridad t1-yeso) 270.27)
@@ -312,7 +310,6 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
     (= (duracion-llenado t2-yeso MC2-por-MC2) 5)
     (= (duracion-llenado t3-yeso MC3-por-MC1) 2)
     (= (duracion-llenado t3-yeso MC3-por-MC2) 6)
-
 """
     rutas = [
         ("mc1", "t1-clinker", "MC1-desde-Pretrit"),
@@ -353,7 +350,6 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
             pddl_content += f"    (= (tiempo-vaciado {tolva}) {tiempo:.2f})\n"
     pddl_content += "  )\n\n  (:goal (and\n"
     for tolva in tolvas_validas_ordenadas:
-        # Extraer el molino de la tolva (e.g., 't1-clinker' -> 'mc1')
         molino = tolva.split('-')[0].replace('t', 'mc')
         if estado_molinos.get(molino, False):
             material = tolva_a_material.get(tolva, "unknown")
@@ -366,57 +362,6 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
 # ---------------------------------------------
 # Flet UI
 # ---------------------------------------------
-
-# # Variable global para el display del PDDL
-# pddl_display = None
-# # Add a global variable to store menu_column
-# menu_column = None
-
-# def update_pddl_display(pddl_content, page):
-#     global pddl_display
-#     if pddl_display:
-#         pddl_display.controls[0].value = pddl_content
-#         page.update()
-
-# def crear_fila_ruta(nombre, estado, menu_column, sistema, page):
-#     def on_click(e):
-#         estado_rutas[nombre] = not estado_rutas[nombre]
-#         print(f"Ruta '{nombre}' actualizada a {estado_rutas[nombre]}")
-#         menu_column.controls = construir_column_rutas( sistema, page)
-#         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
-#         pddl_content = generar_problema_pddl_dinamico(estado_molinos,estado_rutas, tolvas_criticas, tiempos_por_tolva)
-#         refresh_cards(pddl_content, sistema, page)
-#         page.update()
-#     return ft.Container(
-#         content=ft.Text(f"{'✅' if estado else '❌'} {nombre}"),
-#         padding=5,
-#         on_click=on_click,
-#         width=245
-#     )
-
-# def construir_column_rutas(menu_column, sistema, page):
-#     controls = []
-#     def titulo(txt):
-#         return ft.Container(
-#             content=ft.Text(
-#                 txt,
-#                 weight="bold",
-#                 size=15,
-#                 color=ft.Colors.WHITE,
-#                 text_align=ft.TextAlign.CENTER
-#             ),
-#             alignment=ft.alignment.center,
-#             padding=0
-#         )
-#     controls.append(titulo("CLINKER"))
-#     controls.extend(crear_fila_ruta(n, e, menu_column, sistema, page) for n, e in list(estado_rutas.items())[:4])
-#     controls.append(ft.Divider())
-#     controls.append(titulo("PUZOLANA"))
-#     controls.extend(crear_fila_ruta(n, e, menu_column, sistema, page) for n, e in list(estado_rutas.items())[4:9])
-#     controls.append(ft.Divider())
-#     controls.append(titulo("YESO"))
-#     controls.extend(crear_fila_ruta(n, e, menu_column, sistema, page) for n, e in list(estado_rutas.items())[9:])
-#     return controls
 
 def update_pddl_display(pddl_content, page):
     global pddl_display
@@ -466,22 +411,11 @@ def construir_column_rutas(sistema, page):
     return controls
 
 def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft.Page=None):
-    global pddl_display,menu_column
+    global menu_column, pddl_display
     page.controls.clear()
     cards = []
     tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
     
-    # menu_column = ft.Column(controls=construir_column_rutas(None, sistema, page))
-    # menu_rutas = ft.PopupMenuButton(
-    #     icon=ft.Icons.MENU,
-    #     items=[
-    #         ft.PopupMenuItem(
-    #             content=menu_column
-    #         )
-    #     ]
-    # )
-
-
     if menu_column is None:
         menu_column = ft.Column(controls=construir_column_rutas(sistema, page))
     
@@ -493,7 +427,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             )
         ]
     )
-
+    
     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
         rows = []
         for material, tolva in molino.tolvas.items():
@@ -550,7 +484,6 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             tooltip="Alimentación fresca (t/h)"
         )
         
-        # Crear el dropdown de estado con referencia almacenada
         dropdown_key = f"{molino.nombre}_status"
         status_dropdowns[dropdown_key] = ft.Dropdown(
             options=[
@@ -607,7 +540,6 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
         )
         cards.append(card)
     
-    # Crear el display del PDDL
     pddl_display = ft.ListView(
         controls=[
             ft.Text(
@@ -659,7 +591,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                         color="white"
                     ),
                     ft.Image(
-                        src="G:/Mi unidad/TRABAJO UNACEM 2025/PROYECTO HEURISTICO 2025/Interfaz-alimentaciones/UNACEM_Logos_Finales-01-1600x1132.png",
+                        src="UNACEM_Logos_Finales-01-1600x1132.png",
                         width=100,
                         height=100,
                         fit=ft.ImageFit.CONTAIN
@@ -686,7 +618,6 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
 
 def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
-        # Actualizar niveles de tolvas
         for material, tolva in molino.tolvas.items():
             field_key = f"{molino.nombre}_{material}"
             if field_key in level_fields and level_fields[field_key].value:
@@ -698,7 +629,6 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                         tolva.nivel_actual = max(0, min(new_level, tolva.altura_max))
                 except ValueError:
                     tolva.nivel_actual = tolva.nivel_actual
-        # Actualizar alimentación fresca
         feed_rate_key = f"{molino.nombre}_feed_rate"
         if feed_rate_key in feed_rate_fields and feed_rate_fields[feed_rate_key].value:
             try:
@@ -707,11 +637,11 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                     molino.set_alimentacion_fresca(new_feed)
                     print(f"Alimentación fresca de {molino.nombre} actualizada a {new_feed} t/h")
                 else:
-                    print(f"Valor inválido para alimentación fresca de {molino.nombre}: {new_feed} (debe ser no negativo)")
+                    print(f"Valor inválido para alimentación fresca de {molino.nombre}: {new_feed}")
             except ValueError:
                 print(f"Valor inválido para alimentación fresca de {molino.nombre}: {feed_rate_fields[feed_rate_key].value}")
     tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
-    pddl_content = generar_problema_pddl_dinamico(estado_molinos,estado_rutas, tolvas_criticas, tiempos_por_tolva)
+    pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
     refresh_cards(pddl_content, sistema, page)
     page.snack_bar = ft.SnackBar(ft.Text("Problema.pddl creado correctamente"), open=True, duration=2000)
     page.update()
@@ -726,7 +656,6 @@ def main(page: ft.Page):
     sistema = SistemaAlimentacion()
     sistema.set_productos()
     
-    # Sincronizar estado_molinos con los molinos
     sistema.mc1.set_estado(estado_molinos["mc1"])
     sistema.mc2.set_estado(estado_molinos["mc2"])
     sistema.mc3.set_estado(estado_molinos["mc3"])
@@ -750,5 +679,4 @@ if __name__ == "__main__":
 
 
 
-############################################################################################
 

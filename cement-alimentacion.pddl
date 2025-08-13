@@ -152,7 +152,7 @@
       ;   (and (= ?m mc1)
       ;        (alimentando puzolana-h ?m))
       ; ))
-      (over all (not
+      (over all (not 
         (and (= ?m mc3)
              (alimentando puzolana-s ?m))
       ))
@@ -170,8 +170,8 @@
       (at end (not (alimentando yeso ?m)))
     )
   )
+  
 )
-
 
 
 ; (define (domain cement-alimentacion)

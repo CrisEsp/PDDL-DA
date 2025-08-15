@@ -1,7 +1,13 @@
+import os
+from pathlib import Path
+import requests
+import re
+import time
+from datetime import datetime
 import flet as ft
+from flet import Page, SnackBar, Text, Column, Card, Container, ListView, TextAlign, FontWeight, CrossAxisAlignment
 import enum
 from typing import List, Dict, Tuple
-import os
 
 # ---------------------------------------------
 # Clases base
@@ -128,10 +134,11 @@ estado_molinos = {
 
 # Variables para los controles de UI
 status_dropdowns = {}
-level_fields = {}
-feed_rate_fields = {}
 menu_column = None
 pddl_display = None
+level_fields = {}
+feed_rate_fields = {}
+
 # ---------------------------------------------
 # Funciones de actualización
 # ---------------------------------------------
@@ -144,9 +151,13 @@ def update_feed_rate(molino: Molino, value: str, sistema: SistemaAlimentacion, p
             molino.set_alimentacion_fresca(new_feed)
             print(f"Después de actualizar: {molino.nombre} alimentacion_fresca = {molino.alimentacion_fresca}")
             tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
-            pddl_content = generar_problema_pddl_dinamico(estado_molinos,estado_rutas, tolvas_criticas, tiempos_por_tolva)
-            refresh_cards(pddl_content, sistema, page)
-            page.snack_bar = ft.SnackBar(ft.Text(f"Alimentación fresca de {molino.nombre} actualizada a {new_feed} t/h"), open=True, duration=2000)
+            try:
+                pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
+                refresh_cards(pddl_content, sistema, page)
+                page.snack_bar = ft.SnackBar(ft.Text(f"Alimentación fresca de {molino.nombre} actualizada a {new_feed} t/h"), open=True, duration=2000)
+            except ValueError as e:
+                page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error al generar PDDL: {e}"), open=True, duration=2000)
+                pddl_display.controls[0].value = f"Error: {e}"
             page.update()
         else:
             print(f"Valor inválido para alimentación fresca: {value} (debe ser no negativo)")
@@ -163,8 +174,13 @@ def update_product_type(molino: Molino, value: str, sistema: SistemaAlimentacion
         molino.cambiar_producto(tipo_producto)
         print(f"Producto de {molino.nombre} cambiado a {value}")
         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
-        pddl_content = generar_problema_pddl_dinamico(estado_molinos,estado_rutas, tolvas_criticas, tiempos_por_tolva)
-        refresh_cards(pddl_content, sistema, page)
+        try:
+            pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
+            refresh_cards(pddl_content, sistema, page)
+        except ValueError as e:
+            page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error al generar PDDL: {e}"), open=True, duration=2000)
+            pddl_display.controls[0].value = f"Error: {e}"
+        page.update()
     except ValueError:
         print(f"Tipo de producto inválido: {value}")
         page.snack_bar = ft.SnackBar(ft.Text(f"Tipo de producto inválido: {value}"), open=True, duration=2000)
@@ -173,24 +189,21 @@ def update_product_type(molino: Molino, value: str, sistema: SistemaAlimentacion
 def update_running_state(molino: Molino, value: str, sistema: SistemaAlimentacion, page: ft.Page):
     estado = value == "Encendido"
     molino.set_estado(estado)
-    # Actualizar estado_molinos - CORREGIDO: usar nombre correcto
     estado_molinos[molino.nombre.lower()] = estado
     print(f"Estado de {molino.nombre} cambiado a {'Encendido' if estado else 'Apagado'}")
     
-    # Actualizar el dropdown correspondiente inmediatamente
     dropdown_key = f"{molino.nombre}_status"
     if dropdown_key in status_dropdowns:
         status_dropdowns[dropdown_key].value = value
         status_dropdowns[dropdown_key].color = ft.Colors.GREEN if estado else ft.Colors.RED
     
     tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
-    pddl_content = generar_problema_pddl_dinamico(estado_molinos,estado_rutas, tolvas_criticas, tiempos_por_tolva)
-    
-    # NO llamar refresh_cards aquí para evitar recrear todos los controles
-    # Solo actualizar el contenido PDDL y mostrar notificación
-    update_pddl_display(pddl_content, page)
-    
-    page.snack_bar = ft.SnackBar(ft.Text(f"Estado de {molino.nombre} cambiado a {'Encendido' if estado else 'Apagado'}"), open=True, duration=2000)
+    try:
+        pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
+        update_pddl_display(pddl_content, page)
+    except ValueError as e:
+        pddl_display.controls[0].value = f"Error: {e}"
+        page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error al generar PDDL: {e}"), open=True, duration=2000)
     page.update()
 
 # ---------------------------------------------
@@ -220,7 +233,7 @@ def obtener_tolvas_a_llenar_por_tiempos(sistema: SistemaAlimentacion, umbral=3) 
             nombre_tolva_pddl = nombres_tolvas[nombre_molino].get(mat)
             if nombre_tolva_pddl:
                 tiempos_por_tolva[nombre_tolva_pddl] = tiempo
-                if tiempo < umbral:
+                if tiempo < umbral and estado_molinos.get(nombre_molino, False):
                     tolvas_a_llenar.append(nombre_tolva_pddl)
     return tolvas_a_llenar, tiempos_por_tolva
 
@@ -263,8 +276,6 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
     if not tolvas_validas:
         raise ValueError("No hay tolvas críticas válidas con rutas habilitadas para generar el objetivo.")
     pddl_content = """(define (problem cement-production-problem)
-
-
   (:domain cement-alimentacion)
   (:objects
     mc1 mc2 mc3 - molino
@@ -288,7 +299,6 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
     (material-disponible puzolana-h)
     (material-disponible puzolana-s)
     (material-disponible yeso)
-
     (= (costo-prioridad t1-clinker) 166.67)
     (= (costo-prioridad t1-puzolana-h) 476.19)
     (= (costo-prioridad t1-yeso) 270.27)
@@ -312,7 +322,6 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
     (= (duracion-llenado t2-yeso MC2-por-MC2) 5)
     (= (duracion-llenado t3-yeso MC3-por-MC1) 2)
     (= (duracion-llenado t3-yeso MC3-por-MC2) 6)
-
 """
     rutas = [
         ("mc1", "t1-clinker", "MC1-desde-Pretrit"),
@@ -353,7 +362,6 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
             pddl_content += f"    (= (tiempo-vaciado {tolva}) {tiempo:.2f})\n"
     pddl_content += "  )\n\n  (:goal (and\n"
     for tolva in tolvas_validas_ordenadas:
-        # Extraer el molino de la tolva (e.g., 't1-clinker' -> 'mc1')
         molino = tolva.split('-')[0].replace('t', 'mc')
         if estado_molinos.get(molino, False):
             material = tolva_a_material.get(tolva, "unknown")
@@ -380,8 +388,12 @@ def crear_fila_ruta(nombre, estado, sistema, page):
         global menu_column
         menu_column.controls = construir_column_rutas(sistema, page)
         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
-        pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
-        refresh_cards(pddl_content, sistema, page)
+        try:
+            pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
+            update_pddl_display(pddl_content, page)
+        except ValueError as e:
+            pddl_display.controls[0].value = f"Error: {e}"
+            page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error al generar PDDL: {e}"), open=True, duration=2000)
         page.update()
     return ft.Container(
         content=ft.Text(f"{'✅' if estado else '❌'} {nombre}"),
@@ -415,7 +427,7 @@ def construir_column_rutas(sistema, page):
     return controls
 
 def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft.Page=None):
-    global pddl_display,menu_column
+    global pddl_display, menu_column
     page.controls.clear()
     cards = []
     tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
@@ -488,7 +500,6 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             tooltip="Alimentación fresca (t/h)"
         )
         
-        # Crear el dropdown de estado con referencia almacenada
         dropdown_key = f"{molino.nombre}_status"
         status_dropdowns[dropdown_key] = ft.Dropdown(
             options=[
@@ -545,28 +556,12 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
         )
         cards.append(card)
     
-    # Crear el display del PDDL
-    pddl_display = ft.ListView(
-        controls=[
-            ft.Text(
-                pddl_content if pddl_content else "Presione 'Generar Problema PDDL' para ver el contenido.",
-                color=ft.Colors.BLACK,
-                size=14,
-                expand=True,
-                no_wrap=False
-            )
-        ],
-        expand=True,
-        height=240,
-        auto_scroll=ft.ScrollMode.AUTO
-    )
-    
     pddl_card = ft.Container(
         content=ft.Card(
             content=ft.Container(
                 content=ft.Column([
                     ft.Text(
-                        "Problema PDDL Generado",
+                        "Plan Generado",
                         size=16,
                         weight=ft.FontWeight.BOLD,
                         color=ft.Colors.BLACK,
@@ -617,14 +612,291 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             spacing=5,
             alignment=ft.MainAxisAlignment.CENTER
         ),
-        ft.ElevatedButton("Generar Problema PDDL", on_click=lambda e: update_levels(e, sistema, page), bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE),
+        ft.ElevatedButton("Generar Plan", on_click=lambda e: update_levels(e, sistema, page), bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE),
         pddl_card
     )
     page.update()
 
+# ---------------------------------------------
+# PDDL Executor
+# ---------------------------------------------
+
+class PDDLExecutor:
+    def __init__(self, domain_path, problem_path, workspace_path):
+        self.domain_path = Path(domain_path.replace("\\", "/"))
+        self.problem_path = Path(problem_path.replace("\\", "/"))
+        self.workspace_path = Path(workspace_path.replace("\\", "/"))
+        self.vscode_path = None
+        self.output_dir = self.workspace_path / "generated_plans"
+        self.output_dir.mkdir(exist_ok=True)
+        self.delays = {
+            'open_vscode': 5,
+            'command_palette': 4,
+            'select_planner': 10,
+            'plan_generation': 60,
+            'monitor_interval': 3,
+            'max_attempts': 10
+        }
+
+    def _find_vscode(self):
+        print("⚠️ Método _find_vscode no utilizado en ejecución remota")
+        return None
+
+    def execute(self):
+        print("🚀 Iniciando proceso de planificación PDDL")
+        print(f"🔍 Usando servicio remoto: https://solver.planning.domains:5001/package/tfd/solve")
+        try:
+            if not self._open_vscode():
+                return False
+            if not self._run_tfd_planner():
+                return False
+            plan_path = self._capture_and_save_plan()
+            if plan_path:
+                print(f"✅ Plan generado exitosamente: {plan_path}")
+                self._display_clean_plan(plan_path)
+                return True
+            else:
+                print("❌ No se pudo generar el plan")
+                return False
+        except Exception as e:
+            print(f"❌ Error crítico: {e}")
+            return False
+
+    def _open_vscode(self):
+        try:
+            print("📂 Verificando archivos PDDL...")
+            print(f"📄 Dominio: {self.domain_path}")
+            print(f"📄 Problema: {self.problem_path}")
+            if not self.domain_path.exists():
+                print(f"❌ Archivo de dominio no encontrado: {self.domain_path}")
+                return False
+            if not self.problem_path.exists():
+                print(f"❌ Archivo de problema no encontrado: {self.problem_path}")
+                return False
+            time.sleep(self.delays['open_vscode'])
+            return True
+        except Exception as e:
+            print(f"❌ Error al verificar archivos: {e}")
+            return False
+
+    def _run_tfd_planner(self):
+        try:
+            print("⚙️ Iniciando planificador TFD remoto...")
+            with open(self.domain_path, 'r', encoding='utf-8') as f:
+                domain_content = f.read()
+            with open(self.problem_path, 'r', encoding='utf-8') as f:
+                problem_content = f.read()
+            url = "https://solver.planning.domains:5001/package/tfd/solve"
+            payload = {"domain": domain_content, "problem": problem_content}
+            print(f"📤 Enviando solicitud al servicio: {url}")
+            response = requests.post(url, json=payload, timeout=self.delays['plan_generation'])
+            print(f"📥 Respuesta cruda inicial: {response.text}")
+            if response.status_code != 200:
+                print(f"❌ Error en la solicitud al servicio: {response.status_code} - {response.text}")
+                return False
+            try:
+                initial_response = response.json()
+                print(f"📥 Respuesta JSON inicial: {initial_response}")
+            except json.JSONDecodeError:
+                print(f"⚠️ No se pudo parsear la respuesta inicial como JSON: {response.text}")
+                return False
+            check_url = initial_response.get('result', '')
+            if not check_url.startswith('/check/'):
+                print(f"❌ Respuesta inicial no contiene URL de verificación: {initial_response}")
+                return False
+            check_url = f"https://solver.planning.domains:5001{check_url}"
+            print(f"🔄 Consultando URL de verificación: {check_url}")
+            for attempt in range(self.delays['max_attempts']):
+                response = requests.get(check_url, timeout=self.delays['plan_generation'])
+                print(f"📥 Respuesta cruda (intento {attempt + 1}): {response.text}")
+                if response.status_code != 200:
+                    print(f"❌ Error en la solicitud de verificación: {response.status_code} - {response.text}")
+                    return False
+                try:
+                    check_response = response.json()
+                    print(f"📥 Respuesta JSON (intento {attempt + 1}): {check_response}")
+                    if check_response.get('status') == 'ok' and 'output' in check_response.get('result', {}):
+                        self._planner_response = check_response
+                        return True
+                except json.JSONDecodeError:
+                    print(f"⚠️ No se pudo parsear la respuesta de verificación como JSON: {response.text}")
+                time.sleep(self.delays['monitor_interval'])
+            print(f"❌ No se obtuvo un plan después de {self.delays['max_attempts']} intentos")
+            return False
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Error al conectar con el servicio remoto: {e}")
+            return False
+        except Exception as e:
+            print(f"❌ Error al ejecutar planificador: {e}")
+            return False
+
+    def _capture_and_save_plan(self):
+        try:
+            if not hasattr(self, '_planner_response'):
+                print("❌ No se encontró respuesta del planificador")
+                return None
+            result = self._planner_response.get('result', {})
+            plan_text = result.get('output', {}).get('plan', '') if isinstance(result.get('output'), dict) else ''
+            if not plan_text or 'Found new plan' not in plan_text:
+                print("❌ No se encontró un plan válido en la respuesta")
+                print(f"Respuesta completa: {self._planner_response}")
+                return None
+            plan_content = self._extract_most_recent_plan(plan_text)
+            if plan_content:
+                return self._save_clean_plan(plan_content)
+            return None
+        except Exception as e:
+            print(f"⚠️ Error al capturar plan: {e}")
+            return None
+
+    def _get_vscode_log_content(self):
+        print("⚠️ Método _get_vscode_log_content no utilizado en ejecución remota")
+        return None
+
+    def _extract_most_recent_plan(self, log_content):
+        plan_matches = list(re.finditer(
+            r"Found new plan:(.*?)(?=Rescheduled Plan:|Found new plan:|$)", 
+            log_content, 
+            re.DOTALL | re.IGNORECASE
+        ))
+        if not plan_matches:
+            print("❌ No se encontraron coincidencias de plan en la respuesta")
+            return None
+        last_plan = plan_matches[0].group(1).strip()
+        return self._clean_plan_text(last_plan)
+
+    def _clean_plan_text(self, plan_text):
+        cleaned_lines = []
+        seen_actions = set()
+        for line in plan_text.split('\n'):
+            line = line.strip()
+            if line and not any(s in line for s in ['Metric:', 'Makespan:', 'States evaluated:', 'Planner found', 'Rescheduled Plan:', 'Solution with original makespan', 'Plan length:', 'Search time:', 'Total time:']):
+                line = re.sub(r'^\d+\.\d+:\s*', '', line)
+                line = re.sub(r'\[\d+\.\d+\]$', '', line).strip()
+                if line and not line.startswith(';') and line not in seen_actions:
+                    cleaned_lines.append(line)
+                    seen_actions.add(line)
+        return '\n'.join(cleaned_lines)
+
+    def _save_clean_plan(self, plan_content):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"plan_{timestamp}.pddl"
+        filepath = self.output_dir / filename
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(f"; Plan generado automaticamente - {datetime.now()}\n")
+                f.write(f"; Dominio: {self.domain_path.name}\n")
+                f.write(f"; Problema: {self.problem_path.name}\n\n")
+                f.write(plan_content)
+            return filepath
+        except Exception as e:
+            print(f"⚠️ Error al guardar plan: {e}")
+            return None
+
+    def _display_clean_plan(self, plan_path):
+        try:
+            with open(plan_path, 'r') as f:
+                print("\n" + "="*50)
+                print("CONTENIDO DEL PLAN LIMPIO:")
+                print("="*50)
+                print(f.read())
+                print("="*50 + "\n")
+        except Exception as e:
+            print(f"⚠️ Error al mostrar plan: {e}")
+
+    def _focus_vscode(self):
+        print("⚠️ Método _focus_vscode no utilizado en ejecución remota")
+        return False
+
+    def get_latest_plan_path(self):
+        plan_files = list(self.output_dir.glob("plan_*.pddl"))
+        if plan_files:
+            return max(plan_files, key=os.path.getmtime)
+        return None
+
+# ---------------------------------------------
+# Main
+# ---------------------------------------------
+
+def main(page: ft.Page):
+    page.title = "Sistema de Alimentación de Molinos de Cemento"
+    page.theme_mode = ft.ThemeMode.DARK
+    page.bgcolor = ft.Colors.BLUE_GREY_900
+    page.padding = 5
+    page.window_width = 1200
+    page.window_height = 600
+    
+    try:
+        sistema = SistemaAlimentacion()
+        sistema.set_productos()
+        
+        # Sincronizar estado_molinos con los molinos
+        sistema.mc1.set_estado(estado_molinos["mc1"])
+        sistema.mc2.set_estado(estado_molinos["mc2"])
+        sistema.mc3.set_estado(estado_molinos["mc3"])
+        
+        # Configurar niveles iniciales de las tolvas
+        sistema.mc1.tolvas["clinker"].nivel_actual = 5.0
+        sistema.mc1.tolvas["puzolana"].nivel_actual = 4.0
+        sistema.mc1.tolvas["yeso"].nivel_actual = 6.0
+        sistema.mc2.tolvas["clinker"].nivel_actual = 1.5
+        sistema.mc2.tolvas["puzolana_humeda"].nivel_actual = 4.0
+        sistema.mc2.tolvas["puzolana_seca"].nivel_actual = 6.3
+        sistema.mc2.tolvas["yeso"].nivel_actual = 6.1
+        sistema.mc3.tolvas["clinker"].nivel_actual = 40.0
+        sistema.mc3.tolvas["puzolana"].nivel_actual = 35.0
+        sistema.mc3.tolvas["yeso"].nivel_actual = 30.5
+        
+        # Inicializar level_fields y feed_rate_fields
+        level_fields.update({
+            "MC1_clinker": ft.TextField(value="5.0"),
+            "MC1_puzolana": ft.TextField(value="4.0"),
+            "MC1_yeso": ft.TextField(value="6.0"),
+            "MC2_clinker": ft.TextField(value="1.5"),
+            "MC2_puzolana_humeda": ft.TextField(value="4.0"),
+            "MC2_puzolana_seca": ft.TextField(value="6.3"),
+            "MC2_yeso": ft.TextField(value="6.1"),
+            "MC3_clinker": ft.TextField(value="40.0"),
+            "MC3_puzolana": ft.TextField(value="35.0"),
+            "MC3_yeso": ft.TextField(value="30.5")
+        })
+        feed_rate_fields.update({
+            "MC1_feed_rate": ft.TextField(value="64.0"),
+            "MC2_feed_rate": ft.TextField(value="110.0"),
+            "MC3_feed_rate": ft.TextField(value="37.0")
+        })
+        
+        # Definir pddl_display globalmente
+        global pddl_display
+        pddl_display = ft.ListView(
+            controls=[
+                ft.Text(
+                    "Presione 'Generar Plan' para ver el contenido.",
+                    color=ft.Colors.BLACK,
+                    size=14,
+                    expand=True,
+                    no_wrap=False
+                )
+            ],
+            expand=True,
+            height=240,
+            auto_scroll=ft.ScrollMode.AUTO
+        )
+        
+        refresh_cards(sistema=sistema, page=page)
+        page.update()
+    
+    except Exception as e:
+        print(f"❌ Error en main: {e}")
+        page.snack_bar = ft.SnackBar(
+            Text(f"❌ Error al inicializar la aplicación: {e}"),
+            open=True,
+            duration=5000
+        )
+        page.update()
+
 def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
-        # Actualizar niveles de tolvas
         for material, tolva in molino.tolvas.items():
             field_key = f"{molino.nombre}_{material}"
             if field_key in level_fields and level_fields[field_key].value:
@@ -636,7 +908,6 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                         tolva.nivel_actual = max(0, min(new_level, tolva.altura_max))
                 except ValueError:
                     tolva.nivel_actual = tolva.nivel_actual
-        # Actualizar alimentación fresca
         feed_rate_key = f"{molino.nombre}_feed_rate"
         if feed_rate_key in feed_rate_fields and feed_rate_fields[feed_rate_key].value:
             try:
@@ -648,46 +919,84 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                     print(f"Valor inválido para alimentación fresca de {molino.nombre}: {new_feed} (debe ser no negativo)")
             except ValueError:
                 print(f"Valor inválido para alimentación fresca de {molino.nombre}: {feed_rate_fields[feed_rate_key].value}")
-    tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
-    pddl_content = generar_problema_pddl_dinamico(estado_molinos,estado_rutas, tolvas_criticas, tiempos_por_tolva)
-    refresh_cards(pddl_content, sistema, page)
-    page.snack_bar = ft.SnackBar(ft.Text("Problema.pddl creado correctamente"), open=True, duration=2000)
-    page.update()
-
-def main(page: ft.Page):
-    page.title = "Sistema de Alimentación de Molinos de Cemento"
-    page.theme_mode = ft.ThemeMode.DARK
-    page.bgcolor = ft.Colors.BLUE_GREY_900
-    page.padding = 5
-    page.window_width = 1200
-    page.window_height = 600
-    sistema = SistemaAlimentacion()
-    sistema.set_productos()
     
-    # Sincronizar estado_molinos con los molinos
-    sistema.mc1.set_estado(estado_molinos["mc1"])
-    sistema.mc2.set_estado(estado_molinos["mc2"])
-    sistema.mc3.set_estado(estado_molinos["mc3"])
-
-    sistema.mc1.tolvas["clinker"].nivel_actual = 5.0
-    sistema.mc1.tolvas["puzolana"].nivel_actual = 4.0
-    sistema.mc1.tolvas["yeso"].nivel_actual = 6.0
-    sistema.mc2.tolvas["clinker"].nivel_actual = 1.5
-    sistema.mc2.tolvas["puzolana_humeda"].nivel_actual = 4.0
-    sistema.mc2.tolvas["puzolana_seca"].nivel_actual = 6.3
-    sistema.mc2.tolvas["yeso"].nivel_actual = 6.1
-    sistema.mc3.tolvas["clinker"].nivel_actual = 40.0
-    sistema.mc3.tolvas["puzolana"].nivel_actual = 35.0
-    sistema.mc3.tolvas["yeso"].nivel_actual = 30.5
-    refresh_cards(sistema=sistema, page=page)
-
+    try:
+        tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
+        pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
+    except ValueError as e:
+        print(f"❌ Error al generar problema PDDL: {e}")
+        page.snack_bar = ft.SnackBar(
+            Text(f"❌ Error al generar problema PDDL: {e}"),
+            open=True,
+            duration=5000
+        )
+        pddl_display.controls[0].value = f"Error: {e}"
+        page.update()
+        return
+    
+    DOMAIN = r"G:\Mi unidad\TRABAJO UNACEM 2025\PROYECTO HEURISTICO 2025\PDDL-DA\cement-alimentacion.pddl"
+    PROBLEM = r"G:\Mi unidad\TRABAJO UNACEM 2025\PROYECTO HEURISTICO 2025\PDDL-DA\cement_problem.pddl"
+    WORKSPACE = r"G:\Mi unidad\TRABAJO UNACEM 2025\PROYECTO HEURISTICO 2025\PDDL-DA"
+    
+    try:
+        with open(PROBLEM, 'w', encoding='utf-8') as f:
+            f.write(pddl_content)
+        print(f"Problema PDDL guardado en {PROBLEM}")
+    except Exception as e:
+        print(f"Error al guardar el problema PDDL: {e}")
+        page.snack_bar = ft.SnackBar(Text(f"❌ Error al guardar el problema PDDL: {e}"), open=True, duration=5000)
+        pddl_display.controls[0].value = f"Error: {e}"
+        page.update()
+        return
+    
+    try:
+        executor = PDDLExecutor(DOMAIN, PROBLEM, WORKSPACE)
+        success = executor.execute()
+        
+        if success:
+            plan_path = executor.get_latest_plan_path()
+            if plan_path:
+                with open(plan_path, 'r', encoding='utf-8') as f:
+                    plan_content = f.read()
+                clean_plan = '\n'.join(
+                    line for line in plan_content.split('\n')
+                    if line.strip() and not line.startswith(';') and not any(s in line for s in ['Plan length:', 'Makespan:', 'Search time:', 'Total time:'])
+                )
+                print(f"📜 Contenido para pddl_display:\n{clean_plan}")
+                pddl_display.controls[0].value = f"Plan generado:\n{clean_plan}"
+                print(f"📜 Asignado a pddl_display.controls[0].value: {pddl_display.controls[0].value}")
+                page.snack_bar = ft.SnackBar(
+                    Text(f"✅ Plan generado con éxito:\n{clean_plan}"),
+                    open=True,
+                    duration=5000
+                )
+            else:
+                print("❌ No se encontraron planes generados")
+                pddl_display.controls[0].value = "Error: No se encontraron planes"
+                page.snack_bar = ft.SnackBar(
+                    Text("❌ No se encontraron planes generados"),
+                    open=True,
+                    duration=5000
+                )
+        else:
+            print("❌ Error al generar el plan")
+            pddl_display.controls[0].value = "Error: Falló la generación del plan"
+            page.snack_bar = ft.SnackBar(
+                Text("❌ Error al generar el plan"),
+                open=True,
+                duration=5000
+            )
+    
+    except Exception as e:
+        print(f"❌ Error inicial: {e}")
+        pddl_display.controls[0].value = f"Error: {e}"
+        page.snack_bar = ft.SnackBar(
+            Text(f"❌ Error inicial: {e}"),
+            open=True,
+            duration=5000
+        )
+    
+    page.update()
 
 if __name__ == "__main__":
     ft.app(target=main)
-
-
-
-
-
-############################################################################################
-

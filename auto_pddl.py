@@ -26,7 +26,7 @@ class PDDLExecutor:
         # Configuración de tiempos ajustables
         self.delays = {
             'open_vscode': 1,
-            'command_palette': 3,
+            'command_palette': 5,
             'select_planner': 4,
             'plan_generation': 12,
             'monitor_interval': 1

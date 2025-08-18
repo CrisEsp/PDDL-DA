@@ -631,11 +631,11 @@ class PDDLExecutor:
         self.output_dir = self.workspace_path / "generated_plans"
         self.output_dir.mkdir(exist_ok=True)
         self.delays = {
-            'open_vscode': 0,
-            'command_palette': 0,
-            'select_planner': 0,
-            'plan_generation': 2,
-            'monitor_interval': 0,
+            'open_vscode': 5,
+            'command_palette': 4,
+            'select_planner': 10,
+            'plan_generation': 60,
+            'monitor_interval': 3,
             'max_attempts': 10
         }
 

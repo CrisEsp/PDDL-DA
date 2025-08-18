@@ -57,6 +57,7 @@
     (ruta-disponible mc2 t2-puzolana-h puzolana-h PH-a-426HO04-por-MC2)
     (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC2)
     (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC1)
+    (ruta-disponible mc3 t3-puzolana-s puzolana-s PS-a-MC3-por-MC2)
     (ruta-disponible mc2 t2-puzolana-s puzolana-s PS-a-426HO02-por-426HO04)
     ;; Yeso
     (ruta-disponible mc1 t1-yeso yeso MC1-por-MC1)
@@ -64,7 +65,7 @@
     (ruta-disponible mc3 t3-yeso yeso MC3-por-MC1)
     (ruta-disponible mc3 t3-yeso yeso MC3-por-MC2)
     ;; Tiempos de vaciado
-    (= (tiempo-vaciado t1-clinker) 4.77)
+    (= (tiempo-vaciado t1-clinker) 5.72)
     (= (tiempo-vaciado t2-clinker) 0.67)
     (= (tiempo-vaciado t3-clinker) 0.96)
     (= (tiempo-vaciado t1-puzolana-h) 3.91)
@@ -79,6 +80,7 @@
   (:goal (and
     (alimentado t2-clinker clinker)
     (alimentado t3-clinker clinker)
+    (alimentado t3-puzolana-s puzolana-s)
   ))
   (:metric minimize (total-cost))
 )

@@ -507,7 +507,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                 ft.dropdown.Option("Apagado")
             ],
             value="Encendido" if estado_molinos[molino.nombre.lower()] else "Apagado",
-            width=133,
+            width=130,
             filled=True,
             text_size=14,
             color=ft.Colors.GREEN if estado_molinos[molino.nombre.lower()] else ft.Colors.RED,
@@ -525,7 +525,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                             ft.Dropdown(
                                 options=product_options,
                                 value=molino.tipo_producto.value if molino.tipo_producto else product_options[0].key,
-                                width=88,
+                                width=84,
                                 filled=True,
                                 text_size=14,
                                 on_change=lambda e, m=molino: update_product_type(m, e.control.value, sistema, page),
@@ -572,7 +572,6 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                 padding=10,
                 width=1000,
-                height=250,
                 bgcolor=ft.Colors.WHITE,
                 border_radius=10,
             ),
@@ -631,11 +630,11 @@ class PDDLExecutor:
         self.output_dir = self.workspace_path / "generated_plans"
         self.output_dir.mkdir(exist_ok=True)
         self.delays = {
-            'open_vscode': 0,
-            'command_palette': 0,
-            'select_planner': 0,
-            'plan_generation': 2,
-            'monitor_interval': 0,
+            'open_vscode': 5,
+            'command_palette': 4,
+            'select_planner': 10,
+            'plan_generation': 60,
+            'monitor_interval': 3,
             'max_attempts': 10
         }
 
@@ -815,8 +814,86 @@ class PDDLExecutor:
             return max(plan_files, key=os.path.getmtime)
         return None
 
+# ---------------------------------------------
+# Main
+# ---------------------------------------------
 
-
+def main(page: ft.Page):
+    page.title = "Sistema de Alimentación de Molinos de Cemento"
+    page.theme_mode = ft.ThemeMode.DARK
+    page.bgcolor = ft.Colors.BLUE_GREY_900
+    page.padding = 5
+    page.window_width = 1200
+    page.window_height = 600
+    
+    try:
+        sistema = SistemaAlimentacion()
+        sistema.set_productos()
+        
+        # Sincronizar estado_molinos con los molinos
+        sistema.mc1.set_estado(estado_molinos["mc1"])
+        sistema.mc2.set_estado(estado_molinos["mc2"])
+        sistema.mc3.set_estado(estado_molinos["mc3"])
+        
+        # Configurar niveles iniciales de las tolvas
+        sistema.mc1.tolvas["clinker"].nivel_actual = 5.0
+        sistema.mc1.tolvas["puzolana"].nivel_actual = 4.0
+        sistema.mc1.tolvas["yeso"].nivel_actual = 6.0
+        sistema.mc2.tolvas["clinker"].nivel_actual = 1.5
+        sistema.mc2.tolvas["puzolana_humeda"].nivel_actual = 4.0
+        sistema.mc2.tolvas["puzolana_seca"].nivel_actual = 6.3
+        sistema.mc2.tolvas["yeso"].nivel_actual = 6.1
+        sistema.mc3.tolvas["clinker"].nivel_actual = 40.0
+        sistema.mc3.tolvas["puzolana"].nivel_actual = 35.0
+        sistema.mc3.tolvas["yeso"].nivel_actual = 30.5
+        
+        # Inicializar level_fields y feed_rate_fields
+        level_fields.update({
+            "MC1_clinker": ft.TextField(value="5.0"),
+            "MC1_puzolana": ft.TextField(value="4.0"),
+            "MC1_yeso": ft.TextField(value="6.0"),
+            "MC2_clinker": ft.TextField(value="1.5"),
+            "MC2_puzolana_humeda": ft.TextField(value="4.0"),
+            "MC2_puzolana_seca": ft.TextField(value="6.3"),
+            "MC2_yeso": ft.TextField(value="6.1"),
+            "MC3_clinker": ft.TextField(value="40.0"),
+            "MC3_puzolana": ft.TextField(value="35.0"),
+            "MC3_yeso": ft.TextField(value="30.5")
+        })
+        feed_rate_fields.update({
+            "MC1_feed_rate": ft.TextField(value="64.0"),
+            "MC2_feed_rate": ft.TextField(value="110.0"),
+            "MC3_feed_rate": ft.TextField(value="37.0")
+        })
+        
+        # Definir pddl_display globalmente
+        global pddl_display
+        pddl_display = ft.ListView(
+            controls=[
+                ft.Text(
+                    "Presione 'Generar Plan' para ver el contenido.",
+                    color=ft.Colors.BLACK,
+                    size=14,
+                    expand=True,
+                    no_wrap=False
+                )
+            ],
+            expand=True,
+            height=240,
+            auto_scroll=ft.ScrollMode.AUTO
+        )
+        
+        refresh_cards(sistema=sistema, page=page)
+        page.update()
+    
+    except Exception as e:
+        print(f"❌ Error en main: {e}")
+        page.snack_bar = ft.SnackBar(
+            Text(f"❌ Error al inicializar la aplicación: {e}"),
+            open=True,
+            duration=5000
+        )
+        page.update()
 
 def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
@@ -846,13 +923,12 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
     try:
         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
         pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
-        refresh_cards(pddl_content, sistema, page)
     except ValueError as e:
         print(f"❌ Error al generar problema PDDL: {e}")
         page.snack_bar = ft.SnackBar(
             Text(f"❌ Error al generar problema PDDL: {e}"),
             open=True,
-            duration=0
+            duration=5000
         )
         pddl_display.controls[0].value = f"Error: {e}"
         page.update()
@@ -892,7 +968,7 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                 page.snack_bar = ft.SnackBar(
                     Text(f"✅ Plan generado con éxito:\n{clean_plan}"),
                     open=True,
-                    duration=0
+                    duration=5000
                 )
             else:
                 print("❌ No se encontraron planes generados")
@@ -900,7 +976,7 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                 page.snack_bar = ft.SnackBar(
                     Text("❌ No se encontraron planes generados"),
                     open=True,
-                    duration=0
+                    duration=5000
                 )
         else:
             print("❌ Error al generar el plan")
@@ -908,7 +984,7 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
             page.snack_bar = ft.SnackBar(
                 Text("❌ Error al generar el plan"),
                 open=True,
-                duration=0
+                duration=5000
             )
     
     except Exception as e:
@@ -917,75 +993,10 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
         page.snack_bar = ft.SnackBar(
             Text(f"❌ Error inicial: {e}"),
             open=True,
-            duration=0
+            duration=5000
         )
     
-    refresh_cards(sistema=sistema, page=page)
     page.update()
-# ---------------------------------------------
-# Main
-# ---------------------------------------------
-
-def main(page: ft.Page):
-    page.title = "Sistema de Alimentación de Molinos de Cemento"
-    page.theme_mode = ft.ThemeMode.DARK
-    page.bgcolor = ft.Colors.BLUE_GREY_900
-    page.padding = 5
-    page.window_width = 1200
-    page.window_height = 600
-    
-    try:
-        sistema = SistemaAlimentacion()
-        sistema.set_productos()
-        
-        # Sincronizar estado_molinos con los molinos
-        sistema.mc1.set_estado(estado_molinos["mc1"])
-        sistema.mc2.set_estado(estado_molinos["mc2"])
-        sistema.mc3.set_estado(estado_molinos["mc3"])
-        
-        # Configurar niveles iniciales de las tolvas
-        sistema.mc1.tolvas["clinker"].nivel_actual = 6.0
-        sistema.mc1.tolvas["puzolana"].nivel_actual = 4.0
-        sistema.mc1.tolvas["yeso"].nivel_actual = 6.0
-        sistema.mc2.tolvas["clinker"].nivel_actual = 1.5
-        sistema.mc2.tolvas["puzolana_humeda"].nivel_actual = 4.0
-        sistema.mc2.tolvas["puzolana_seca"].nivel_actual = 6.3
-        sistema.mc2.tolvas["yeso"].nivel_actual = 6.1
-        sistema.mc3.tolvas["clinker"].nivel_actual = 40.0
-        sistema.mc3.tolvas["puzolana"].nivel_actual = 35.0
-        sistema.mc3.tolvas["yeso"].nivel_actual = 30.5
-        
-        # Definir pddl_display globalmente
-        global pddl_display
-        pddl_display = ft.ListView(
-            controls=[
-                ft.Text(
-                    "Presione 'Generar Plan' para ver el contenido.",
-                    color=ft.Colors.BLACK,
-                    size=14,
-                    expand=True,
-                    no_wrap=False
-                )
-            ],
-            expand=True,
-            height=240,
-            auto_scroll=ft.ScrollMode.AUTO
-        )
-        
-        refresh_cards(sistema=sistema, page=page)
-        page.update()
-    
-    except Exception as e:
-        print(f"❌ Error en main: {e}")
-        page.snack_bar = ft.SnackBar(
-            Text(f"❌ Error al inicializar la aplicación: {e}"),
-            open=True,
-            duration=0
-        )
-        refresh_cards(sistema=sistema, page=page)
-        page.update()
-
-
 
 if __name__ == "__main__":
     ft.app(target=main)

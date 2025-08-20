@@ -9,6 +9,8 @@ from flet import Page, SnackBar, Text, Column, Card, Container, ListView, TextAl
 import enum
 from typing import List, Dict, Tuple
 
+from sympy import python
+
 # ---------------------------------------------
 # Clases base
 # ---------------------------------------------
@@ -128,7 +130,7 @@ estado_rutas = {
 
 estado_molinos = {
     "mc1": True,
-    "mc2": False,
+    "mc2": True,
     "mc3": True
 }
 
@@ -426,6 +428,7 @@ def construir_column_rutas(sistema, page):
     controls.extend(crear_fila_ruta(n, e, sistema, page) for n, e in list(estado_rutas.items())[9:])
     return controls
 
+
 def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft.Page=None):
     global pddl_display, menu_column
     page.controls.clear()
@@ -618,6 +621,8 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
     )
     page.update()
 
+
+
 # ---------------------------------------------
 # PDDL Executor
 # ---------------------------------------------
@@ -632,9 +637,9 @@ class PDDLExecutor:
         self.output_dir.mkdir(exist_ok=True)
         self.delays = {
             'open_vscode': 0,
-            'command_palette': 0,
-            'select_planner': 0,
-            'plan_generation': 2,
+            'command_palette': 5,
+            'select_planner': 5,
+            'plan_generation': 10,
             'monitor_interval': 0,
             'max_attempts': 10
         }
@@ -750,6 +755,7 @@ class PDDLExecutor:
             print(f"⚠️ Error al capturar plan: {e}")
             return None
 
+
     def _get_vscode_log_content(self):
         print("⚠️ Método _get_vscode_log_content no utilizado en ejecución remota")
         return None
@@ -779,6 +785,7 @@ class PDDLExecutor:
                     seen_actions.add(line)
         return '\n'.join(cleaned_lines)
 
+
     def _save_clean_plan(self, plan_content):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"plan_{timestamp}.pddl"
@@ -804,6 +811,23 @@ class PDDLExecutor:
                 print("="*50 + "\n")
         except Exception as e:
             print(f"⚠️ Error al mostrar plan: {e}")
+
+
+    def _extract_action_timestamps(self, plan_content):
+        """
+        Extrae los tiempos de inicio de las acciones a partir del plan limpio.
+        Retorna una lista de tuplas (tiempo, acción).
+        """
+        timestamps = []
+        for line in plan_content.split('\n'):
+            if line.strip():
+                time_match = re.match(r'^(\d+\.\d{1,8}):', line)
+                if time_match:
+                    time = float(time_match.group(1))
+                    action = line.split(':', 1)[1].split('[', 1)[0].strip()
+                    timestamps.append((time, action))
+        return timestamps
+
 
     def _focus_vscode(self):
         print("⚠️ Método _focus_vscode no utilizado en ejecución remota")

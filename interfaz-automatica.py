@@ -71,6 +71,7 @@ class Molino:
         if material not in self.ratios or material not in self.tolvas:
             return float('inf')
         consumo = (self.alimentacion_fresca * self.ratios[material]) / 100
+        #print(f"Consumo para {material} en {self.nombre}: {consumo} t/h")
         return self.tolvas[material].tiempo_vaciado(consumo)
 
 # ---------------------------------------------
@@ -152,6 +153,7 @@ def update_feed_rate(molino: Molino, value: str, sistema: SistemaAlimentacion, p
             print(f"Antes de actualizar: {molino.nombre} alimentacion_fresca = {molino.alimentacion_fresca}")
             molino.set_alimentacion_fresca(new_feed)
             print(f"Después de actualizar: {molino.nombre} alimentacion_fresca = {molino.alimentacion_fresca}")
+           
             tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
             try:
                 pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
@@ -565,7 +567,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                 content=ft.Column([
                     ft.Text(
                         "Plan Generado",
-                        size=16,
+                        size=24,
                         weight=ft.FontWeight.BOLD,
                         color=ft.Colors.BLACK,
                         text_align=ft.TextAlign.CENTER
@@ -772,18 +774,51 @@ class PDDLExecutor:
         last_plan = plan_matches[0].group(1).strip()
         return self._clean_plan_text(last_plan)
 
+    # def _clean_plan_text(self, plan_text):
+    #     cleaned_lines = []
+    #     seen_actions = set()
+    #     for line in plan_text.split('\n'):
+    #         line = line.strip()
+    #         if line and not any(s in line for s in ['Metric:', 'Makespan:', 'States evaluated:', 'Planner found', 'Rescheduled Plan:', 'Solution with original makespan', 'Plan length:', 'Search time:', 'Total time:']):
+    #             line = re.sub(r'^\d+\.\d+:\s*', '', line)
+    #             line = re.sub(r'\[\d+\.\d+\]$', '', line).strip()
+    #             if line and not line.startswith(';') and line not in seen_actions:
+    #                 cleaned_lines.append(line)
+    #                 seen_actions.add(line)
+    #     return '\n'.join(cleaned_lines)
+
+
     def _clean_plan_text(self, plan_text):
+        """
+        Limpia el texto del plan, preservando los tiempos de inicio y duraciones de las acciones con un máximo de 8 decimales.
+        - Extrae el tiempo (e.g., '0.001'), la acción y la duración (e.g., '[1.000]').
+        - Filtra metadatos irrelevantes y evita duplicados.
+        - Formatea cada línea como: '<tiempo>: <acción> [<duración>]' con tiempos y duraciones limitados a 8 decimales.
+        """
         cleaned_lines = []
         seen_actions = set()
         for line in plan_text.split('\n'):
             line = line.strip()
-            if line and not any(s in line for s in ['Metric:', 'Makespan:', 'States evaluated:', 'Planner found', 'Rescheduled Plan:', 'Solution with original makespan', 'Plan length:', 'Search time:', 'Total time:']):
-                line = re.sub(r'^\d+\.\d+:\s*', '', line)
-                line = re.sub(r'\[\d+\.\d+\]$', '', line).strip()
-                if line and not line.startswith(';') and line not in seen_actions:
-                    cleaned_lines.append(line)
-                    seen_actions.add(line)
+            # Filtrar líneas con metadatos irrelevantes o comentarios
+            if line and not any(s in line for s in ['Metric:', 'Makespan:', 'States evaluated:', 'Planner found', 'Rescheduled Plan:', 'Solution with original makespan', 'Plan length:', 'Search time:', 'Total time:']) and not line.startswith(';'):
+                # Extraer tiempo, acción y duración con expresión regular
+                time_match = re.match(r'^(\d+\.\d{1,8}):\s*(.*?)\s*(\[\d+\.\d{1,8}\])?$', line)
+                if time_match:
+                    time_prefix = float(time_match.group(1))  # Convertir tiempo a float
+                    action = time_match.group(2).strip()     # Acción (e.g., 'alimentar mc1 t1-clinker clinker MC1-desde-Pretrit')
+                    duration = time_match.group(3) if time_match.group(3) else '[0.00000000]'  # Default si no hay duración
+                    # Convertir duración a float, quitando los corchetes
+                    duration_value = float(duration[1:-1]) if duration != '[0.00000000]' else 0.0
+                    # Evitar duplicados basados en la acción sola
+                    if action not in seen_actions:
+                        # Formatear con 8 decimales
+                        formatted_line = f"{time_prefix:.3f}: {action} [{duration_value:.3f}]"
+                        cleaned_lines.append(formatted_line)
+                        seen_actions.add(action)
         return '\n'.join(cleaned_lines)
+
+
+
 
 
     def _save_clean_plan(self, plan_content):
@@ -911,7 +946,7 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                     if line.strip() and not line.startswith(';') and not any(s in line for s in ['Plan length:', 'Makespan:', 'Search time:', 'Total time:'])
                 )
                 print(f"📜 Contenido para pddl_display:\n{clean_plan}")
-                pddl_display.controls[0].value = f"Plan generado:\n{clean_plan}"
+                pddl_display.controls[0].value = f"{clean_plan}"
                 print(f"📜 Asignado a pddl_display.controls[0].value: {pddl_display.controls[0].value}")
                 page.snack_bar = ft.SnackBar(
                     Text(f"✅ Plan generado con éxito:\n{clean_plan}"),
@@ -986,7 +1021,7 @@ def main(page: ft.Page):
                 ft.Text(
                     "Presione 'Generar Plan' para ver el contenido.",
                     color=ft.Colors.BLACK,
-                    size=14,
+                    size=22,
                     expand=True,
                     no_wrap=False
                 )

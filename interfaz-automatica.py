@@ -738,6 +738,9 @@ class PDDLExecutor:
             print(f"❌ Error al ejecutar planificador: {e}")
             return False
 
+
+
+
     def _capture_and_save_plan(self):
         try:
             if not hasattr(self, '_planner_response'):
@@ -762,17 +765,101 @@ class PDDLExecutor:
         print("⚠️ Método _get_vscode_log_content no utilizado en ejecución remota")
         return None
 
+    # def _extract_most_recent_plan(self, log_content):
+    #     plan_matches = list(re.finditer(
+    #         r"Found new plan:(.*?)(?=Rescheduled Plan:|Found new plan:|$)", 
+    #         log_content, 
+    #         re.DOTALL | re.IGNORECASE
+    #     ))
+    #     if not plan_matches:
+    #         print("❌ No se encontraron coincidencias de plan en la respuesta")
+    #         return None
+    #     last_plan = plan_matches[0].group(1).strip()
+    #     return self._clean_plan_text(last_plan)
+
+
+    # def _extract_most_recent_plan(self, log_content):
+    #     # Buscar el bloque del Rescheduled Plan primero
+    #     rescheduled_match = re.search(
+    #         r"Rescheduled Plan:(.*?)(?:Solution with|Search time:|$)",
+    #         log_content,
+    #         re.DOTALL | re.IGNORECASE
+    #     )
+
+    #     if rescheduled_match:
+    #         print("✅ Se encontró un Rescheduled Plan, se prioriza sobre el Found new plan")
+    #         block = rescheduled_match.group(1).strip()
+    #         # Extraer solo las líneas de acciones
+    #         actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
+    #         return self._clean_plan_text(actions)
+
+    #     # Si no hay Rescheduled Plan, usar el bloque normal
+    #     plan_match = re.search(
+    #         r"Found new plan:(.*?)(?:Solution with|Search time:|$)",
+    #         log_content,
+    #         re.DOTALL | re.IGNORECASE
+    #     )
+    #     if plan_match:
+    #         print("⚠️ No hay Rescheduled Plan, se devuelve el Found new plan")
+    #         block = plan_match.group(1).strip()
+    #         actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
+    #         return self._clean_plan_text(actions)
+
+    #     print("❌ No se encontraron planes en el log")
+    #     return None
+
+
     def _extract_most_recent_plan(self, log_content):
-        plan_matches = list(re.finditer(
-            r"Found new plan:(.*?)(?=Rescheduled Plan:|Found new plan:|$)", 
-            log_content, 
+        # Buscar el bloque del Rescheduled Plan primero
+        rescheduled_match = re.search(
+            r"Rescheduled Plan:(.*?)(?:Solution with|Search time:|$)",
+            log_content,
             re.DOTALL | re.IGNORECASE
-        ))
-        if not plan_matches:
-            print("❌ No se encontraron coincidencias de plan en la respuesta")
-            return None
-        last_plan = plan_matches[0].group(1).strip()
-        return self._clean_plan_text(last_plan)
+        )
+
+        if rescheduled_match:
+            print("✅ Se encontró un Rescheduled Plan, se prioriza sobre el Found new plan")
+            block = rescheduled_match.group(1).strip()
+            actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
+
+            # Capturar el metric (Rescheduled Makespan o Makespan) después del bloque
+            after_block = log_content[rescheduled_match.end(): rescheduled_match.end() + 200]
+            metric_match = re.search(r"(Rescheduled Makespan|Makespan)\s*:\s*([\d\.]+)", after_block)
+            if metric_match:
+                metric_name = metric_match.group(1)
+                metric_value = metric_match.group(2)
+                print(f"📊 {metric_name} del plan final = {metric_value}")
+                actions = f"; {metric_name}: {metric_value}\n" + actions  # lo anexa arriba del plan
+
+            return self._clean_plan_text(actions)
+
+        # Si no hay Rescheduled, usar el bloque normal
+        plan_match = re.search(
+            r"Found new plan:(.*?)(?:Solution with|Search time:|$)",
+            log_content,
+            re.DOTALL | re.IGNORECASE
+        )
+        if plan_match:
+            print("⚠️ No hay Rescheduled Plan, se devuelve el Found new plan")
+            block = plan_match.group(1).strip()
+            actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
+
+            after_block = log_content[plan_match.end(): plan_match.end() + 200]
+            metric_match = re.search(r"(Makespan)\s*:\s*([\d\.]+)", after_block)
+            if metric_match:
+                metric_name = metric_match.group(1)
+                metric_value = metric_match.group(2)
+                print(f"📊 {metric_name} del plan final = {metric_value}")
+                actions = f"; {metric_name}: {metric_value}\n" + actions
+
+            return self._clean_plan_text(actions)
+
+        print("❌ No se encontraron planes en el log")
+        return None
+
+
+
+
 
     # def _clean_plan_text(self, plan_text):
     #     cleaned_lines = []
@@ -946,6 +1033,7 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                     if line.strip() and not line.startswith(';') and not any(s in line for s in ['Plan length:', 'Makespan:', 'Search time:', 'Total time:'])
                 )
                 print(f"📜 Contenido para pddl_display:\n{clean_plan}")
+                 #actions = f"; {metric_name}: {metric_value}\n" + actions  # lo anexa arriba del plan
                 pddl_display.controls[0].value = f"{clean_plan}"
                 print(f"📜 Asignado a pddl_display.controls[0].value: {pddl_display.controls[0].value}")
                 page.snack_bar = ft.SnackBar(
@@ -961,15 +1049,12 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                     open=True,
                     duration=0
                 )
-        else:
-            print("❌ Error al generar el plan")
-            pddl_display.controls[0].value = "Error: Falló la generación del plan"
-            page.snack_bar = ft.SnackBar(
-                Text("❌ Error al generar el plan"),
-                open=True,
-                duration=0
-            )
-    
+
+
+
+
+
+
     except Exception as e:
         print(f"❌ Error inicial: {e}")
         pddl_display.controls[0].value = f"Error: {e}"
@@ -981,6 +1066,11 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
     
     refresh_cards(sistema=sistema, page=page)
     page.update()
+
+
+
+
+
 # ---------------------------------------------
 # Main
 # ---------------------------------------------
@@ -1003,16 +1093,16 @@ def main(page: ft.Page):
         sistema.mc3.set_estado(estado_molinos["mc3"])
         
         # Configurar niveles iniciales de las tolvas
-        sistema.mc1.tolvas["clinker"].nivel_actual = 6.0
-        sistema.mc1.tolvas["puzolana"].nivel_actual = 4.0
-        sistema.mc1.tolvas["yeso"].nivel_actual = 6.0
+        sistema.mc1.tolvas["clinker"].nivel_actual = 1.0
+        sistema.mc1.tolvas["puzolana"].nivel_actual = 1.0
+        sistema.mc1.tolvas["yeso"].nivel_actual = 1.0
         sistema.mc2.tolvas["clinker"].nivel_actual = 1.5
-        sistema.mc2.tolvas["puzolana_humeda"].nivel_actual = 4.0
+        sistema.mc2.tolvas["puzolana_humeda"].nivel_actual = 1.0
         sistema.mc2.tolvas["puzolana_seca"].nivel_actual = 6.3
         sistema.mc2.tolvas["yeso"].nivel_actual = 6.1
-        sistema.mc3.tolvas["clinker"].nivel_actual = 40.0
-        sistema.mc3.tolvas["puzolana"].nivel_actual = 35.0
-        sistema.mc3.tolvas["yeso"].nivel_actual = 30.5
+        sistema.mc3.tolvas["clinker"].nivel_actual = 10.0
+        sistema.mc3.tolvas["puzolana"].nivel_actual = 15.0
+        sistema.mc3.tolvas["yeso"].nivel_actual = 10.5
         
         # Definir pddl_display globalmente
         global pddl_display

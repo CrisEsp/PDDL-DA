@@ -1,2 +1,0 @@
-(llenar t1_clinker)
-(llenar t2_clinker)

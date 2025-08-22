@@ -8,8 +8,19 @@ import flet as ft
 from flet import Page, SnackBar, Text, Column, Card, Container, ListView, TextAlign, FontWeight, CrossAxisAlignment
 import enum
 from typing import List, Dict, Tuple
-
 from sympy import python
+from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+# LOGO_PATH = "assets/logo.png"  # y asegúrate de que el archivo exista
+
+ASSETS_DIR = BASE_DIR / "assets"
+
+# Para desktop: ruta real en disco
+LOGO_PATH_DESKTOP = str(ASSETS_DIR / "logo.png")
+
+# Para web (cuando usas assets_dir="assets"): solo el nombre dentro de assets
+LOGO_PATH_WEB = "logo.png"
+
 
 # ---------------------------------------------
 # Clases base
@@ -463,7 +474,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             field_key = f"{molino.nombre}_{material}"
             level_fields[field_key] = ft.TextField(
                 value=str(current_level),
-                width=55,
+                width=57,
                 text_align=ft.TextAlign.CENTER,
                 border_color=None,
                 border=None,
@@ -526,14 +537,14 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
         card = ft.Card(
             content=ft.Container(
                 content=ft.Column([
-                    ft.Text(f"Molino {molino.nombre}", size=18, weight=ft.FontWeight.BOLD),
+                    ft.Text(f"Molino {molino.nombre}", size=18, weight=ft.FontWeight.BOLD,text_align=ft.TextAlign.CENTER),  # Centrar texto del título),
                     ft.Row(
                         controls=[
                             status_dropdowns[dropdown_key],
                             ft.Dropdown(
                                 options=product_options,
                                 value=molino.tipo_producto.value if molino.tipo_producto else product_options[0].key,
-                                width=88,
+                                width=90,
                                 filled=True,
                                 text_size=14,
                                 on_change=lambda e, m=molino: update_product_type(m, e.control.value, sistema, page),
@@ -541,7 +552,8 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                             ),
                             feed_rate_fields[feed_rate_key],
                         ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        alignment=ft.MainAxisAlignment.SPACE_EVENLY,  # Cambiado de SPACE_BETWEEN
+                        #alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER
                     ),
                     ft.DataTable(
@@ -552,12 +564,15 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                             ft.DataColumn(ft.Text("T. Vaciado", size=14)),
                         ],
                         rows=rows,
-                        column_spacing=35,
+                        column_spacing=30,
                         data_row_min_height=0
                     )
-                ]),
-                padding=8,
-                width=494,
+                ],
+                #alignment=ft.MainAxisAlignment.CENTER,  # Centrar contenido verticalmente
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Centrar contenido horizontalmente
+                ),
+                padding=4,
+                width=480,
                 height=350
             ),
             elevation=5
@@ -601,7 +616,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                         color="white"
                     ),
                     ft.Image(
-                        src="G:/Mi unidad/TRABAJO UNACEM 2025/PROYECTO HEURISTICO 2025/Interfaz-alimentaciones/UNACEM_Logos_Finales-01-1600x1132.png",
+                        src=LOGO_PATH_WEB, # "G:/Mi unidad/TRABAJO UNACEM 2025/PROYECTO HEURISTICO 2025/PDDL-DA/assets/logo.png",
                         width=100,
                         height=100,
                         fit=ft.ImageFit.CONTAIN
@@ -611,9 +626,12 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=1
             ),
-            padding=0,
-            margin=0,
-            expand=False
+            # padding=0,
+            # margin=0,
+            padding=ft.padding.only(top=0, bottom=0),  # Eliminar padding arriba y abajo
+            margin=ft.margin.only(top=0, bottom=0),    # Eliminar margin arriba y abajo
+            height=50,
+            expand=True
         ),
         ft.Row(
             controls=cards,
@@ -621,9 +639,26 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             spacing=5,
             alignment=ft.MainAxisAlignment.CENTER
         ),
-        ft.ElevatedButton("Generar Plan", on_click=lambda e: update_levels(e, sistema, page), bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE),
-        pddl_card
-    )
+
+        # ft.ElevatedButton("Generar Plan", on_click=lambda e: update_levels(e, sistema, page), bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE),
+        # pddl_card
+
+
+        ft.Row(  # Nuevo Row para botón y pddl_card
+        controls=[
+            ft.ElevatedButton(
+                "Generar Plan", 
+                on_click=lambda e: update_levels(e, sistema, page), 
+                bgcolor=ft.Colors.BLUE_700, 
+                color=ft.Colors.WHITE,
+                height=40  # Ajustar altura para que coincida con pddl_card
+            ),
+            pddl_card
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,
+        vertical_alignment=ft.CrossAxisAlignment.START,  # Alinear al inicio verticalmente
+        spacing=20  # Espacio entre botón y pddl_card
+    ))
     page.update()
 
 
@@ -634,9 +669,9 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
 
 class PDDLExecutor:
     def __init__(self, domain_path, problem_path, workspace_path):
-        self.domain_path = Path(domain_path.replace("\\", "/"))
-        self.problem_path = Path(problem_path.replace("\\", "/"))
-        self.workspace_path = Path(workspace_path.replace("\\", "/"))
+        self.domain_path = Path(str(domain_path).replace("\\", "/"))
+        self.problem_path = Path(str(problem_path).replace("\\", "/"))
+        self.workspace_path = Path(str(workspace_path).replace("\\", "/"))
         self.vscode_path = None
         self.output_dir = self.workspace_path / "generated_plans"
         self.output_dir.mkdir(exist_ok=True)
@@ -943,10 +978,17 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
         page.update()
         return
     
-    DOMAIN = r"G:\Mi unidad\TRABAJO UNACEM 2025\PROYECTO HEURISTICO 2025\PDDL-DA\cement-alimentacion.pddl"
-    PROBLEM = r"G:\Mi unidad\TRABAJO UNACEM 2025\PROYECTO HEURISTICO 2025\PDDL-DA\cement_problem.pddl"
-    WORKSPACE = r"G:\Mi unidad\TRABAJO UNACEM 2025\PROYECTO HEURISTICO 2025\PDDL-DA"
+    # DOMAIN = r"G:\Mi unidad\TRABAJO UNACEM 2025\PROYECTO HEURISTICO 2025\PDDL-DA\cement-alimentacion.pddl"
+    # PROBLEM = r"G:\Mi unidad\TRABAJO UNACEM 2025\PROYECTO HEURISTICO 2025\PDDL-DA\cement_problem.pddl"
+    # WORKSPACE = r"G:\Mi unidad\TRABAJO UNACEM 2025\PROYECTO HEURISTICO 2025\PDDL-DA"
     
+    # PDDL
+    DOMAIN   = BASE_DIR / "PDDL" / "cement-alimentacion.pddl"
+    PROBLEM  = BASE_DIR / "PDDL" / "cement_problem.pddl"
+    WORKSPACE= BASE_DIR / "PDDL"
+
+
+
     try:
         with open(PROBLEM, 'w', encoding='utf-8') as f:
             f.write(pddl_content)
@@ -1066,4 +1108,10 @@ def main(page: ft.Page):
         page.update()
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.app(
+    target=main,
+    view=ft.WEB_BROWSER,                         # imprescindible en servidor headless
+    port=int(os.getenv("PORT", "8080")),         # usa 8080 por defecto
+    assets_dir="assets"                          # para que cargue el logo
+    )
+    #ft.app(target=main)

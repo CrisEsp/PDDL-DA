@@ -23,14 +23,17 @@ class TipoProducto(enum.Enum):
     P40 = "P40"
 
 class Tolva:
-    def __init__(self, material: str, capacidad: float, altura_max: float):
+    def __init__(self, material: str, capacidad: float, altura_max: float,nivel_ineficiente:float):
         self.material = material
         self.capacidad = capacidad
         self.altura_max = altura_max
         self.nivel_actual = 0
+        self.nivel_ineficiente = nivel_ineficiente
 
     def tiempo_vaciado(self, consumo_por_hora: float) -> float:
-        toneladas_reales = (self.nivel_actual * self.capacidad) / self.altura_max
+        toneladas_reales = ((self.nivel_actual -self.nivel_ineficiente)* self.capacidad) / self.altura_max
+        print(f"Nivel actual de {self.material}: {self.nivel_actual} m, Capacidad: {self.capacidad} t, Altura máxima: {self.altura_max} m")
+        print(f"Toneladas reales en {self.material}: {toneladas_reales} t")
         return toneladas_reales / consumo_por_hora if consumo_por_hora > 0 else float('inf')
 
 class Molino:
@@ -71,7 +74,7 @@ class Molino:
         if material not in self.ratios or material not in self.tolvas:
             return float('inf')
         consumo = (self.alimentacion_fresca * self.ratios[material]) / 100
-        #print(f"Consumo para {material} en {self.nombre}: {consumo} t/h")
+        print(f"Consumo para {material} en {self.nombre}: {consumo} t/h")
         return self.tolvas[material].tiempo_vaciado(consumo)
 
 # ---------------------------------------------
@@ -81,22 +84,22 @@ class Molino:
 class SistemaAlimentacion:
     def __init__(self):
         self.mc1 = Molino("MC1", {
-            "clinker": Tolva("Clinker", 500, 14),
-            "puzolana": Tolva("Puzolana", 300, 12),
-            "yeso": Tolva("Yeso", 300, 10)
+            "clinker": Tolva("Clinker", 500, 14,2.8),
+            "puzolana": Tolva("Puzolana", 300, 12,2.4),
+            "yeso": Tolva("Yeso", 300, 10,2)
         }, 1)
 
         self.mc2 = Molino("MC2", {
-            "clinker": Tolva("Clinker", 300, 9),
-            "puzolana_humeda": Tolva("Puzolana Húmeda", 500, 15),
-            "puzolana_seca": Tolva("Puzolana Seca", 100, 12),
-            "yeso": Tolva("Yeso", 120, 9)
+            "clinker": Tolva("Clinker", 300, 9,1.8),
+            "puzolana_humeda": Tolva("Puzolana Húmeda", 500, 15,3),
+            "puzolana_seca": Tolva("Puzolana Seca", 100, 12,2.4),
+            "yeso": Tolva("Yeso", 120, 9,1.8)
         }, 0.8)
 
         self.mc3 = Molino("MC3", {
-            "clinker": Tolva("Clinker", 60, 100),
-            "puzolana": Tolva("Puzolana", 35, 100),
-            "yeso": Tolva("Yeso", 30, 100)
+            "clinker": Tolva("Clinker", 60, 100,50),
+            "puzolana": Tolva("Puzolana", 35, 100,50),
+            "yeso": Tolva("Yeso", 30, 100,50)
         }, 0.5)
 
     def set_productos(self):
@@ -765,50 +768,6 @@ class PDDLExecutor:
         print("⚠️ Método _get_vscode_log_content no utilizado en ejecución remota")
         return None
 
-    # def _extract_most_recent_plan(self, log_content):
-    #     plan_matches = list(re.finditer(
-    #         r"Found new plan:(.*?)(?=Rescheduled Plan:|Found new plan:|$)", 
-    #         log_content, 
-    #         re.DOTALL | re.IGNORECASE
-    #     ))
-    #     if not plan_matches:
-    #         print("❌ No se encontraron coincidencias de plan en la respuesta")
-    #         return None
-    #     last_plan = plan_matches[0].group(1).strip()
-    #     return self._clean_plan_text(last_plan)
-
-
-    # def _extract_most_recent_plan(self, log_content):
-    #     # Buscar el bloque del Rescheduled Plan primero
-    #     rescheduled_match = re.search(
-    #         r"Rescheduled Plan:(.*?)(?:Solution with|Search time:|$)",
-    #         log_content,
-    #         re.DOTALL | re.IGNORECASE
-    #     )
-
-    #     if rescheduled_match:
-    #         print("✅ Se encontró un Rescheduled Plan, se prioriza sobre el Found new plan")
-    #         block = rescheduled_match.group(1).strip()
-    #         # Extraer solo las líneas de acciones
-    #         actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
-    #         return self._clean_plan_text(actions)
-
-    #     # Si no hay Rescheduled Plan, usar el bloque normal
-    #     plan_match = re.search(
-    #         r"Found new plan:(.*?)(?:Solution with|Search time:|$)",
-    #         log_content,
-    #         re.DOTALL | re.IGNORECASE
-    #     )
-    #     if plan_match:
-    #         print("⚠️ No hay Rescheduled Plan, se devuelve el Found new plan")
-    #         block = plan_match.group(1).strip()
-    #         actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
-    #         return self._clean_plan_text(actions)
-
-    #     print("❌ No se encontraron planes en el log")
-    #     return None
-
-
     def _extract_most_recent_plan(self, log_content):
         # Buscar el bloque del Rescheduled Plan primero
         rescheduled_match = re.search(
@@ -856,24 +815,6 @@ class PDDLExecutor:
 
         print("❌ No se encontraron planes en el log")
         return None
-
-
-
-
-
-    # def _clean_plan_text(self, plan_text):
-    #     cleaned_lines = []
-    #     seen_actions = set()
-    #     for line in plan_text.split('\n'):
-    #         line = line.strip()
-    #         if line and not any(s in line for s in ['Metric:', 'Makespan:', 'States evaluated:', 'Planner found', 'Rescheduled Plan:', 'Solution with original makespan', 'Plan length:', 'Search time:', 'Total time:']):
-    #             line = re.sub(r'^\d+\.\d+:\s*', '', line)
-    #             line = re.sub(r'\[\d+\.\d+\]$', '', line).strip()
-    #             if line and not line.startswith(';') and line not in seen_actions:
-    #                 cleaned_lines.append(line)
-    #                 seen_actions.add(line)
-    #     return '\n'.join(cleaned_lines)
-
 
     def _clean_plan_text(self, plan_text):
         """
@@ -962,8 +903,6 @@ class PDDLExecutor:
         return None
 
 
-
-
 def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
         for material, tolva in molino.tolvas.items():
@@ -1050,11 +989,6 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                     duration=0
                 )
 
-
-
-
-
-
     except Exception as e:
         print(f"❌ Error inicial: {e}")
         pddl_display.controls[0].value = f"Error: {e}"
@@ -1066,9 +1000,6 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
     
     refresh_cards(sistema=sistema, page=page)
     page.update()
-
-
-
 
 
 # ---------------------------------------------
@@ -1133,8 +1064,6 @@ def main(page: ft.Page):
         )
         refresh_cards(sistema=sistema, page=page)
         page.update()
-
-
 
 if __name__ == "__main__":
     ft.app(target=main)

@@ -1110,10 +1110,12 @@ def main(page: ft.Page):
 if __name__ == "__main__":
     ft.app(
     target=main,
-    view=ft.WEB_BROWSER,                         # imprescindible en servidor headless
+    
+    view=ft.WEB_SERVER,                         # imprescindible en servidor headless
     port=int(os.getenv("PORT", "8080")),         # usa 8080 por defecto
     assets_dir="assets" ,                         # para que cargue el logo
     host="0.0.0.0"
     )
     
     #ft.app(target=main)
+    #view=ft.WEB_BROWSER

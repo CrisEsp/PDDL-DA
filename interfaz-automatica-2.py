@@ -604,6 +604,14 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
         alignment=ft.alignment.center
     )
     
+    # Ajustar tamaño de fuente según ancho de ventana
+    if page.window_width < 500:
+        font_size = 10  # móvil
+    elif page.window_width < 800:
+        font_size = 30  # tablet
+    else:
+        font_size = 40  # desktop
+
     page.add(
         ft.Container(
             content=ft.Row(
@@ -611,7 +619,8 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                     menu_rutas,
                     ft.Text(
                         "OPTIMIZACIÓN DE ALIMENTACIONES",
-                        size=40,
+                        size=font_size,
+                        # size=40,
                         weight=ft.FontWeight.BOLD,
                         color="white"
                     ),
@@ -622,27 +631,27 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                         fit=ft.ImageFit.CONTAIN
                     ),
                 ],
+                # wrap=True,             
                 alignment=ft.MainAxisAlignment.CENTER,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=1
             ),
-            # padding=0,
+            # padding=10,
             # margin=0,
             padding=ft.padding.only(top=0, bottom=0),  # Eliminar padding arriba y abajo
             margin=ft.margin.only(top=0, bottom=0),    # Eliminar margin arriba y abajo
             height=50,
-            expand=True
+            
         ),
+
+ 
         ft.Row(
             controls=cards,
             wrap=True,
             spacing=5,
-            alignment=ft.MainAxisAlignment.CENTER
+            alignment=ft.MainAxisAlignment.CENTER,
+            
         ),
-
-        # ft.ElevatedButton("Generar Plan", on_click=lambda e: update_levels(e, sistema, page), bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE),
-        # pddl_card
-
 
         ft.Row(  # Nuevo Row para botón y pddl_card
         controls=[
@@ -660,6 +669,8 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
         spacing=20  # Espacio entre botón y pddl_card
     ))
     page.update()
+
+
 
 
 
@@ -1045,13 +1056,15 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
 # ---------------------------------------------
 
 def main(page: ft.Page):
+
     page.title = "Sistema de Alimentación de Molinos de Cemento"
     page.theme_mode = ft.ThemeMode.DARK
     page.bgcolor = ft.Colors.BLUE_GREY_900
     page.padding = 5
     page.window_width = 1200
     page.window_height = 600
-    
+
+        
     try:
         sistema = SistemaAlimentacion()
         sistema.set_productos()

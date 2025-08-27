@@ -1,0 +1,47 @@
+# =========================
+# Archivos de Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# =========================
+# Entornos virtuales
+# =========================
+venv/
+.venv/
+env/
+ENV/
+.conda/
+*.egg-info/
+
+# =========================
+# Archivos de VS Code
+# =========================
+.vscode/
+.history/
+
+# =========================
+# Archivos temporales del sistema
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Archivos de logs
+# =========================
+*.log
+
+# =========================
+# Archivos de Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Archivos de pruebas
+# =========================
+.coverage
+.pytest_cache/
+.tox/

@@ -613,7 +613,8 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                         "OPTIMIZACIÓN DE ALIMENTACIONES",
                         size=40,
                         weight=ft.FontWeight.BOLD,
-                        color="white"
+                        color="white",
+                        text_align=ft.TextAlign.CENTER
                     ),
                     ft.Image(
                         src=LOGO_PATH_WEB, # "G:/Mi unidad/TRABAJO UNACEM 2025/PROYECTO HEURISTICO 2025/PDDL-DA/assets/logo.png",

@@ -907,17 +907,272 @@ def construir_column_rutas(sistema, page):
 
 
 
+# def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft.Page=None):
+#     global pddl_display, menu_column
+#     page.controls.clear()
+#     cards = []
+
+#     # Define font scaling function
+#     def get_font_size():
+#         if page.window_width < 600:  # Mobile
+#             return 14
+#         elif page.window_width < 900:  # Tablet
+#             return 16
+#         else:  # Desktop
+#             return 18
+
+#     # Navigation Drawer for routes on mobile
+#     drawer = ft.NavigationDrawer(
+#         controls=[
+#             ft.Container(
+#                 content=ft.Column(
+#                     controls=construir_column_rutas(sistema, page),
+#                     scroll=ft.ScrollMode.AUTO
+#                 ),
+#                 padding=10
+#             )
+#         ]
+#     )
+#     page.drawer = drawer
+
+#     # Header
+#     header_controls = [
+#         ft.IconButton(
+#             icon=ft.Icons.MENU,
+#             on_click=lambda e: page.show_drawer(drawer),
+#             visible=page.window_width < 600
+#         ),
+#         ft.Text(
+#             "OPTIMIZACIÓN DE ALIMENTACIONES",
+#             size=get_font_size() * 2,
+#             weight=ft.FontWeight.BOLD,
+#             color="white",
+#             text_align=ft.TextAlign.CENTER
+#         ),
+#         ft.Image(
+#             src=LOGO_PATH_WEB,
+#             width=page.window_width * 0.08,
+#             height=page.window_width * 0.08,
+#             fit=ft.ImageFit.CONTAIN
+#         ),
+#     ]
+
+#     # Cards for mills
+#     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
+#         rows = []
+#         for material, tolva in molino.tolvas.items():
+#             unit = "%" if molino.nombre == "MC3" else "m"
+#             max_level = tolva.altura_max
+#             current_level = tolva.nivel_actual
+#             progress = min(current_level / max_level, 1.0) if molino.nombre != "MC3" else min(current_level / 100, 1.0)
+#             tiempo = molino.tiempo_vaciado(material)
+#             field_key = f"{molino.nombre}_{material}"
+#             level_fields[field_key] = ft.TextField(
+#                 value=str(current_level),
+#                 width=page.window_width * 0.07,
+#                 text_align=ft.TextAlign.CENTER,
+#                 border_color=None,
+#                 border=None,
+#                 border_width=0,
+#                 bgcolor=ft.Colors.TRANSPARENT,
+#                 filled=True,
+#                 text_size=get_font_size(),
+#                 content_padding=10,
+#                 on_submit=lambda e: update_levels(e, sistema, page)
+#             )
+#             bar_color = ft.Colors.GREEN_ACCENT_700 if progress >= 0.5 else ft.Colors.YELLOW_700 if progress >= 0.2 else ft.Colors.RED_700
+#             rows.append(
+#                 ft.DataRow(cells=[
+#                     ft.DataCell(ft.Text(material.capitalize(), size=get_font_size())),
+#                     ft.DataCell(
+#                         ft.Row(
+#                             [
+#                                 level_fields[field_key],
+#                                 ft.Text(unit, size=get_font_size(), color=ft.Colors.WHITE),
+#                             ],
+#                             alignment=ft.MainAxisAlignment.CENTER,
+#                             spacing=5
+#                         )
+#                     ),
+#                     ft.DataCell(ft.ProgressBar(value=progress, width=page.window_width * 0.085, height=20, color=bar_color, border_radius=5)),
+#                     ft.DataCell(ft.Text(f"{tiempo:.2f} h", size=get_font_size())),
+#                 ])
+#             )
+#         product_options = {
+#             "MC1": [ft.dropdown.Option("P30"), ft.dropdown.Option("P40")],
+#             "MC2": [ft.dropdown.Option("P10"), ft.dropdown.Option("P16"), ft.dropdown.Option("P20"), ft.dropdown.Option("P30")],
+#             "MC3": [ft.dropdown.Option("P30")]
+#         }.get(molino.nombre, [])
+#         feed_rate_key = f"{molino.nombre}_feed_rate"
+#         feed_rate_fields[feed_rate_key] = ft.TextField(
+#             prefix_text="Rendimiento: ",
+#             value=f"{molino.alimentacion_fresca}",
+#             width=page.window_width * 0.18,
+#             text_size=get_font_size(),
+#             filled=True,
+#             text_align=ft.TextAlign.RIGHT,
+#             suffix_text=" t/h",
+#             content_padding=10,
+#             on_submit=lambda e, m=molino, s=sistema, p=page: update_feed_rate(m, e.control.value, s, p),
+#             tooltip="Alimentación fresca (t/h)"
+#         )
+#         dropdown_key = f"{molino.nombre}_status"
+#         status_dropdowns[dropdown_key] = ft.Dropdown(
+#             options=[
+#                 ft.dropdown.Option("Encendido"),
+#                 ft.dropdown.Option("Apagado")
+#             ],
+#             value="Encendido" if estado_molinos[molino.nombre.lower()] else "Apagado",
+#             width=page.window_width * 0.127,
+#             filled=True,
+#             text_size=get_font_size(),
+#             color=ft.Colors.GREEN if estado_molinos[molino.nombre.lower()] else ft.Colors.RED,
+#             on_change=lambda e, m=molino: update_running_state(m, e.control.value, sistema, page),
+#             tooltip="Estado de marcha"
+#         )
+#         card = ft.Card(
+#             content=ft.Container(
+#                 content=ft.Column([
+#                     ft.Text(
+#                         f"Molino {molino.nombre}",
+#                         size=get_font_size() * 1.2,
+#                         weight=ft.FontWeight.BOLD,
+#                         color=ft.Colors.WHITE,  # Ensure text is readable against card background
+#                         text_align=ft.TextAlign.CENTER
+#                     ),
+#                     ft.Row(
+#                         controls=[
+#                             status_dropdowns[dropdown_key],
+#                             ft.Dropdown(
+#                                 options=product_options,
+#                                 value=molino.tipo_producto.value if molino.tipo_producto else product_options[0].key,
+#                                 width=page.window_width * 0.08,
+#                                 filled=True,
+#                                 text_size=get_font_size(),
+#                                 on_change=lambda e, m=molino: update_product_type(m, e.control.value, sistema, page),
+#                                 tooltip="Tipo de producto"
+#                             ),
+#                             feed_rate_fields[feed_rate_key],
+#                         ],
+#                         alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+#                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
+#                         spacing=5,  # Increased spacing for better separation
+#                         wrap=True
+#                     ),
+#                     ft.DataTable(
+#                         columns=[
+#                             ft.DataColumn(ft.Text("Material", size=get_font_size())),
+#                             ft.DataColumn(ft.Text("Nivel Actual", size=get_font_size())),
+#                             ft.DataColumn(ft.Text("Estado Tolva", size=get_font_size())),
+#                             ft.DataColumn(ft.Text("T. Vaciado", size=get_font_size())),
+#                         ],
+#                         rows=rows,
+#                         column_spacing=page.window_width * 0.01,
+#                         data_row_min_height=0
+#                     )
+#                 ],
+#                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
+#                 ),
+#                 width=min(page.window_width * 1.3, 700),
+#                 height=min(page.window_height * 0.6, 400)
+#             ),
+#             elevation=5
+#         )
+#         cards.append(card)
+
+#     # PDDL Card
+#     pddl_card = ft.Card(
+#         content=ft.Container(
+#             content=ft.Column([
+#                 ft.Text(
+#                     "Plan Generado",
+#                     size=get_font_size() * 1.2,
+#                     weight=ft.FontWeight.BOLD,
+#                     color=ft.Colors.BLACK,
+#                     text_align=ft.TextAlign.CENTER
+#                 ),
+#                 pddl_display
+#             ],
+#             horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+#             padding=10,
+#             width=min(page.window_width * 0.9, 1000),
+#             height=min(page.window_height * 0.3, 300),
+#             bgcolor=ft.Colors.WHITE,
+#             border_radius=10
+#         ),
+#         elevation=5
+#     )
+
+#     # Layout with centered button and vertical stacking
+#     page.add(
+
+#         ft.Container(
+#             content=ft.Row(
+#                 header_controls,
+#                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,  # Distribute elements with space between
+#                 # alignment=ft.MainAxisAlignment.SPACE_EVENLY,  # Distribute evenly for centering
+#                 # alignment=ft.MainAxisAlignment.CENTER,
+#                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
+#                 expand=True,  # Allow row to expand and center contents
+#                 spacing=1,
+#                 wrap=True
+#             ),
+#             padding=ft.padding.symmetric(vertical=0),
+#             margin=0,
+#             alignment=ft.alignment.center  # Center the container itself
+#         ),
+#         ft.ResponsiveRow(
+#             controls=[ft.Column(col={"xs": 12, "sm": 6, "md": 4}, controls=[card]) for card in cards],
+#             alignment=ft.MainAxisAlignment.CENTER,
+#             spacing=10,  # Increased spacing to prevent overlap
+#             run_spacing=5
+#         ),
+#         ft.Container(
+#             content=ft.ElevatedButton(
+#                 "Generar Plan",
+#                 on_click=lambda e: update_levels(e, sistema, page),
+#                 bgcolor=ft.Colors.BLUE_700,
+#                 color=ft.Colors.WHITE,
+#                 height=40,
+#                 width=page.window_width * 0.2
+#             ),
+#             alignment=ft.alignment.center,
+#             padding=0
+#         ),
+#         ft.Container(
+#             content=pddl_card,
+#             alignment=ft.alignment.center,
+#             padding=0
+#         )
+#     )
+#     page.update()
+
+
+
+
 def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft.Page=None):
     global pddl_display, menu_column
     page.controls.clear()
     cards = []
 
+    if menu_column is None:
+        menu_column = ft.Column(controls=construir_column_rutas(sistema, page))
+    
+    menu_rutas = ft.PopupMenuButton(
+        icon=ft.Icons.MENU,
+        items=[
+            ft.PopupMenuItem(
+                content=menu_column
+            )
+        ]
+    )
+
     # Define font scaling function
     def get_font_size():
         if page.window_width < 600:  # Mobile
-            return 14
+            return 10
         elif page.window_width < 900:  # Tablet
-            return 16
+            return 14
         else:  # Desktop
             return 18
 
@@ -935,29 +1190,101 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
     )
     page.drawer = drawer
 
-    # Header
-    header_controls = [
-        ft.IconButton(
-            icon=ft.Icons.MENU,
-            on_click=lambda e: page.show_drawer(drawer),
-            visible=page.window_width < 600
-        ),
-        ft.Text(
-            "OPTIMIZACIÓN DE ALIMENTACIONES",
-            size=get_font_size() * 2,
-            weight=ft.FontWeight.BOLD,
-            color="white",
-            text_align=ft.TextAlign.CENTER
-        ),
-        ft.Image(
-            src=LOGO_PATH_WEB,
-            width=page.window_width * 0.08,
-            height=page.window_width * 0.08,
-            fit=ft.ImageFit.CONTAIN
-        ),
-    ]
+    # # Function to build route menu
+    # def construir_column_rutas(sistema, page):
+    #     routes = [
+    #         {"name": "MC1", "callback": lambda e: update_molino_view(sistema.mc1, sistema, page)},
+    #         {"name": "MC2", "callback": lambda e: update_molino_view(sistema.mc2, sistema, page)},
+    #         {"name": "MC3", "callback": lambda e: update_molino_view(sistema.mc3, sistema, page)},
+    #         {"name": "PDDL Plan", "callback": lambda e: update_pddl_view(sistema, page)}
+    #     ]
+    #     return [
+    #         ft.Text("Rutas", size=get_font_size() * 1.2, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+    #         ft.Divider(color=ft.Colors.WHITE),
+    #     ] + [
+    #         ft.ElevatedButton(
+    #             route["name"],
+    #             on_click=route["callback"],
+    #             bgcolor=ft.Colors.BLUE_GREY_800,
+    #             color=ft.Colors.WHITE,
+    #             style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=5)),
+    #             expand=True
+    #         ) for route in routes
+    #     ]
 
-    # Cards for mills
+    # Header with two-line title and route menu on mobile
+    if page.window_width < 300:  # Mobile layout
+        header_content = ft.Column(
+            controls=[
+                ft.Text(
+                    "OPTIMIZACIÓN DE",
+                    size=get_font_size() ,
+                    weight=ft.FontWeight.BOLD,
+                    color="white",
+                    text_align=ft.TextAlign.CENTER
+                ),
+                ft.Row(
+                    controls=[
+                        ft.IconButton(
+                            icon=ft.Icons.MENU,
+                            on_click=lambda e: page.show_drawer(drawer),
+                            visible=True
+                        ),
+                        ft.Image(
+                            src=LOGO_PATH_WEB,
+                            width=page.window_width * 0.06,
+                            height=page.window_width * 0.06,
+                            fit=ft.ImageFit.CONTAIN
+                        ),
+                    ],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=10
+                ),
+                ft.Text(
+                    "ALIMENTACIONES",
+                    size=get_font_size() * 0.8,
+                    weight=ft.FontWeight.BOLD,
+                    color="white",
+                    text_align=ft.TextAlign.CENTER
+                )
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=5
+        )
+    else:  # Desktop/Tablet layout with route menu
+        header_content = ft.Row(
+            
+            controls=[
+
+                menu_rutas,
+                ft.Text(
+                    "OPTIMIZACIÓN DE ALIMENTACIONES",
+                    size=get_font_size() * 1.5,
+                    weight=ft.FontWeight.BOLD,
+                    
+                    # height=30,
+                    color="white",
+                    text_align=ft.TextAlign.CENTER,
+                    expand=True
+                    
+                ),
+                ft.Image(
+                    src=LOGO_PATH_WEB,
+                    width=page.window_width * 0.06,
+                    height=page.window_width * 0.06,
+                    fit=ft.ImageFit.CONTAIN
+                ),
+                
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=1,
+            wrap=False,
+            height=70,
+            
+        )
+
+
     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
         rows = []
         for material, tolva in molino.tolvas.items():
@@ -969,35 +1296,35 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             field_key = f"{molino.nombre}_{material}"
             level_fields[field_key] = ft.TextField(
                 value=str(current_level),
-                width=page.window_width * 0.07,
+                width=57,
                 text_align=ft.TextAlign.CENTER,
                 border_color=None,
                 border=None,
                 border_width=0,
                 bgcolor=ft.Colors.TRANSPARENT,
                 filled=True,
-                text_size=get_font_size(),
-                content_padding=10,
                 on_submit=lambda e: update_levels(e, sistema, page)
             )
             bar_color = ft.Colors.GREEN_ACCENT_700 if progress >= 0.5 else ft.Colors.YELLOW_700 if progress >= 0.2 else ft.Colors.RED_700
             rows.append(
                 ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(material.capitalize(), size=get_font_size())),
+                    ft.DataCell(ft.Text(material.capitalize(), size=14)),
                     ft.DataCell(
                         ft.Row(
                             [
                                 level_fields[field_key],
-                                ft.Text(unit, size=get_font_size(), color=ft.Colors.WHITE),
+                                ft.Text(unit, size=14, color=ft.Colors.WHITE),
                             ],
                             alignment=ft.MainAxisAlignment.CENTER,
-                            spacing=5
+                            spacing=0
                         )
                     ),
-                    ft.DataCell(ft.ProgressBar(value=progress, width=page.window_width * 0.085, height=20, color=bar_color, border_radius=5)),
-                    ft.DataCell(ft.Text(f"{tiempo:.2f} h", size=get_font_size())),
+                    ft.DataCell(ft.ProgressBar(value=progress, width=page.window_width * 0.08, height=20, color=bar_color, border_radius=5)),
+                    ft.DataCell(ft.Text(f"{tiempo:.2f} h", size=14)),
                 ])
             )
+        
+        print("page.window_width",page.window_width)
         product_options = {
             "MC1": [ft.dropdown.Option("P30"), ft.dropdown.Option("P40")],
             "MC2": [ft.dropdown.Option("P10"), ft.dropdown.Option("P16"), ft.dropdown.Option("P20"), ft.dropdown.Option("P30")],
@@ -1007,15 +1334,15 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
         feed_rate_fields[feed_rate_key] = ft.TextField(
             prefix_text="Rendimiento: ",
             value=f"{molino.alimentacion_fresca}",
-            width=page.window_width * 0.18,
+            width=220,
             text_size=get_font_size(),
             filled=True,
             text_align=ft.TextAlign.RIGHT,
             suffix_text=" t/h",
-            content_padding=10,
             on_submit=lambda e, m=molino, s=sistema, p=page: update_feed_rate(m, e.control.value, s, p),
             tooltip="Alimentación fresca (t/h)"
         )
+        
         dropdown_key = f"{molino.nombre}_status"
         status_dropdowns[dropdown_key] = ft.Dropdown(
             options=[
@@ -1023,23 +1350,18 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                 ft.dropdown.Option("Apagado")
             ],
             value="Encendido" if estado_molinos[molino.nombre.lower()] else "Apagado",
-            width=page.window_width * 0.127,
+            width=152,
             filled=True,
             text_size=get_font_size(),
             color=ft.Colors.GREEN if estado_molinos[molino.nombre.lower()] else ft.Colors.RED,
             on_change=lambda e, m=molino: update_running_state(m, e.control.value, sistema, page),
             tooltip="Estado de marcha"
         )
+        
         card = ft.Card(
             content=ft.Container(
                 content=ft.Column([
-                    ft.Text(
-                        f"Molino {molino.nombre}",
-                        size=get_font_size() * 1.2,
-                        weight=ft.FontWeight.BOLD,
-                        color=ft.Colors.WHITE,  # Ensure text is readable against card background
-                        text_align=ft.TextAlign.CENTER
-                    ),
+                    ft.Text(f"Molino {molino.nombre}", size=18, weight=ft.FontWeight.BOLD,text_align=ft.TextAlign.CENTER),  # Centrar texto del título),
                     ft.Row(
                         controls=[
                             status_dropdowns[dropdown_key],
@@ -1054,31 +1376,44 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                             ),
                             feed_rate_fields[feed_rate_key],
                         ],
-                        alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                        alignment=ft.MainAxisAlignment.SPACE_EVENLY,  # Cambiado de SPACE_BETWEEN
+                        #alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=5,  # Increased spacing for better separation
                         wrap=True
                     ),
-                    ft.DataTable(
-                        columns=[
-                            ft.DataColumn(ft.Text("Material", size=get_font_size())),
-                            ft.DataColumn(ft.Text("Nivel Actual", size=get_font_size())),
-                            ft.DataColumn(ft.Text("Estado Tolva", size=get_font_size())),
-                            ft.DataColumn(ft.Text("T. Vaciado", size=get_font_size())),
-                        ],
-                        rows=rows,
-                        column_spacing=page.window_width * 0.01,
-                        data_row_min_height=0
-                    )
+
+                    ft.Container(
+                        content=ft.DataTable(
+                            columns=[
+                                ft.DataColumn(ft.Text("Material", size=get_font_size())),
+                                ft.DataColumn(ft.Text("Nivel", size=get_font_size())),
+                                ft.DataColumn(ft.Text("Tolva", size=get_font_size())),
+                                ft.DataColumn(ft.Text("T.V", size=get_font_size())),
+                            ],
+                            rows=rows,
+                            column_spacing=3,
+                            horizontal_margin=0,   # 👈 elimina el margen lateral
+                        ),
+                        expand=True,
+                        width=page.window_width * 0.9,
+                        bgcolor=ft.Colors.TRANSPARENT,
+                        
+                        )
                 ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER
+                #alignment=ft.MainAxisAlignment.CENTER,  # Centrar contenido verticalmente
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Centrar contenido horizontalmente
                 ),
-                width=min(page.window_width * 1.3, 700),
-                height=min(page.window_height * 0.6, 400)
+                padding=10,
+                # width=600,
+                # height=350
+                width=page.window_width * 10,
+                height=page.window_width * 0.302,
             ),
-            elevation=5
+            elevation=0,
+        
         )
         cards.append(card)
+
 
     # PDDL Card
     pddl_card = ft.Card(
@@ -1100,31 +1435,24 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             bgcolor=ft.Colors.WHITE,
             border_radius=10
         ),
-        elevation=5
+        elevation=0
     )
-
-    # Layout with centered button and vertical stacking
+    # Add header to page
     page.add(
-
         ft.Container(
-            content=ft.Row(
-                header_controls,
-                alignment=ft.MainAxisAlignment.SPACE_EVENLY,  # Distribute evenly for centering
-                # alignment=ft.MainAxisAlignment.CENTER,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                expand=True,  # Allow row to expand and center contents
-                spacing=1,
-                wrap=True
-            ),
+            
+            content=header_content,
             padding=ft.padding.symmetric(vertical=0),
             margin=0,
-            alignment=ft.alignment.center  # Center the container itself
+            alignment=ft.alignment.center,
+            
         ),
         ft.ResponsiveRow(
             controls=[ft.Column(col={"xs": 12, "sm": 6, "md": 4}, controls=[card]) for card in cards],
             alignment=ft.MainAxisAlignment.CENTER,
-            spacing=10,  # Increased spacing to prevent overlap
-            run_spacing=5
+            
+            spacing=0,
+            run_spacing=0
         ),
         ft.Container(
             content=ft.ElevatedButton(
@@ -1145,6 +1473,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
         )
     )
     page.update()
+
 # ---------------------------------------------
 # PDDL Executor
 # ---------------------------------------------
@@ -1586,6 +1915,15 @@ def main(page: ft.Page):
         )
         refresh_cards(sistema=sistema, page=page)
         page.update()
+
+
+# Add resize event listener
+    def on_resize(e):
+        page.update()
+
+    page.on_resize = on_resize
+    refresh_cards(sistema=sistema, page=page)
+    page.update()
 
 if __name__ == "__main__":
     ft.app(

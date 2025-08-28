@@ -814,8 +814,8 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             field_key = f"{molino.nombre}_{material}"
             level_fields[field_key] = ft.TextField(
                 value=str(current_level),
-                width=57,
-                text_align=ft.TextAlign.CENTER,
+                width=60,
+                text_align=ft.TextAlign.LEFT,
                 border_color=None,
                 border=None,
                 border_width=0,
@@ -909,19 +909,35 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                                 ft.DataColumn(ft.Text("T.V", size=get_font_size())),
                             ],
                             rows=rows,
-                            column_spacing=3,
+                            column_spacing=0,
                             horizontal_margin=0,   # 👈 elimina el margen lateral
+                            
                         ),
                         expand=True,
                         width=page.window_width * 0.9,
                         bgcolor=ft.Colors.TRANSPARENT,
-                        
+                        padding=ft.padding.only(left=0, right=0),  # Set left padding, remove right padding
+                        # alignment=ft.alignment.center_left,  # Align content to the left to avoid right-side spacing
                         )
+
+                    # ft.DataTable(
+                    #     columns=[
+                    #         ft.DataColumn(ft.Text("Material", size=14)),
+                    #         ft.DataColumn(ft.Text("Nivel Actual", size=14)),
+                    #         ft.DataColumn(ft.Text("Estado Tolva", size=14)),
+                    #         ft.DataColumn(ft.Text("T. Vaciado", size=14)),
+                    #     ],
+                    #     horizontal_margin=0,
+                        
+                    #     rows=rows,
+                    #     column_spacing=30,
+                    #     data_row_min_height=0
+                    # )
                 ],
                 #alignment=ft.MainAxisAlignment.CENTER,  # Centrar contenido verticalmente
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Centrar contenido horizontalmente
                 ),
-                padding=10,
+                padding=7,
                 # width=600,
                 # height=350
                 width=page.window_width * 10,
@@ -1382,7 +1398,7 @@ def main(page: ft.Page):
     page.padding = 5
     page.window_width = 1200
     page.window_height = 600
-    
+    page.scroll = ft.ScrollMode.AUTO  # Enable page-level scrolling
     try:
         sistema = SistemaAlimentacion()
         sistema.set_productos()

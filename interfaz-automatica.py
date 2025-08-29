@@ -827,7 +827,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             bar_color = ft.Colors.GREEN_ACCENT_700 if progress >= 0.5 else ft.Colors.YELLOW_700 if progress >= 0.2 else ft.Colors.RED_700
             rows.append(
                 ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(material.capitalize(), size=14)),
+                    ft.DataCell(ft.Text(material.capitalize(), size=12)),
                     ft.DataCell(
                         ft.Row(
                             [
@@ -858,7 +858,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             prefix_text="Rendimiento: ",
             value=f"{molino.alimentacion_fresca}",
             width=220,
-            text_size=get_font_size(),
+            text_size=14,
             filled=True,
             text_align=ft.TextAlign.RIGHT,
             suffix_text=" t/h",
@@ -875,7 +875,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             value="Encendido" if estado_molinos[molino.nombre.lower()] else "Apagado",
             width=152,
             filled=True,
-            text_size=get_font_size(),
+            text_size=14,
             color=ft.Colors.GREEN if estado_molinos[molino.nombre.lower()] else ft.Colors.RED,
             on_change=lambda e, m=molino: update_running_state(m, e.control.value, sistema, page),
             tooltip="Estado de marcha"
@@ -893,7 +893,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                                 value=molino.tipo_producto.value if molino.tipo_producto else product_options[0].key,
                                 width=page.window_width * 0.08,
                                 filled=True,
-                                text_size=get_font_size(),
+                                text_size=14,
                                 on_change=lambda e, m=molino: update_product_type(m, e.control.value, sistema, page),
                                 tooltip="Tipo de producto"
                             ),

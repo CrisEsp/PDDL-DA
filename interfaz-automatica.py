@@ -814,13 +814,14 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             field_key = f"{molino.nombre}_{material}"
             level_fields[field_key] = ft.TextField(
                 value=str(current_level),
-                width=60,
+                width=40,
                 text_align=ft.TextAlign.LEFT,
                 border_color=None,
                 border=None,
                 border_width=0,
                 bgcolor=ft.Colors.TRANSPARENT,
                 filled=True,
+                content_padding=0,  # 👈 elimina padding interno
                 on_submit=lambda e: update_levels(e, sistema, page)
             )
             bar_color = ft.Colors.GREEN_ACCENT_700 if progress >= 0.5 else ft.Colors.YELLOW_700 if progress >= 0.2 else ft.Colors.RED_700
@@ -833,13 +834,17 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                                 level_fields[field_key],
                                 ft.Text(unit, size=14, color=ft.Colors.WHITE),
                             ],
-                            alignment=ft.MainAxisAlignment.CENTER,
+                            alignment=ft.MainAxisAlignment.START,
                             spacing=0
                         )
+                        
                     ),
-                    ft.DataCell(ft.ProgressBar(value=progress, width=page.window_width * 0.08, height=20, color=bar_color, border_radius=5)),
+                    ft.DataCell(ft.ProgressBar(value=progress, width=page.window_width * 0.07, height=20, color=bar_color, border_radius=5)),
                     ft.DataCell(ft.Text(f"{tiempo:.2f} h", size=14)),
                 ])
+                
+
+
             )
         
         print("page.window_width",page.window_width)
@@ -903,21 +908,21 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                     ft.Container(
                         content=ft.DataTable(
                             columns=[
-                                ft.DataColumn(ft.Text("Material", size=get_font_size())),
-                                ft.DataColumn(ft.Text("Nivel", size=get_font_size())),
-                                ft.DataColumn(ft.Text("Tolva", size=get_font_size())),
-                                ft.DataColumn(ft.Text("T.V", size=get_font_size())),
+                                ft.DataColumn(ft.Text("  Material", size=get_font_size())),
+                                ft.DataColumn(ft.Text("  Nivel", size=get_font_size())),
+                                ft.DataColumn(ft.Text("  Tolva", size=get_font_size())),
+                                ft.DataColumn(ft.Text("  T.V", size=get_font_size())),
                             ],
                             rows=rows,
-                            column_spacing=0,
-                            horizontal_margin=0,   # 👈 elimina el margen lateral
+                            column_spacing=25,
+                            horizontal_margin=6,   # 👈 elimina el margen lateral
                             
                         ),
                         expand=True,
                         width=page.window_width * 0.9,
                         bgcolor=ft.Colors.TRANSPARENT,
                         padding=ft.padding.only(left=0, right=0),  # Set left padding, remove right padding
-                        # alignment=ft.alignment.center_left,  # Align content to the left to avoid right-side spacing
+                        
                         )
 
                     # ft.DataTable(
@@ -940,7 +945,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                 padding=7,
                 # width=600,
                 # height=350
-                width=page.window_width * 10,
+                # width=page.window_width * 10,
                 height=page.window_width * 0.302,
             ),
             elevation=0,

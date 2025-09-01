@@ -662,7 +662,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                     expand=True,
                     ),
                     padding=7,
-                    height=340,
+                    height=350,
                     
                     
                 ),

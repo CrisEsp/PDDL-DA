@@ -682,7 +682,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                 padding=10,
                 width=min(page.window_width * 0.9, 1000),
-                height=min(page.window_height * 0.4, 300),
+                height=min(page.window_height * 0.3, 300),
                 bgcolor=ft.Colors.WHITE,
                 border_radius=10
             ),

@@ -8,19 +8,10 @@ import flet as ft
 from flet import Page, SnackBar, Text, Column, Card, Container, ListView, TextAlign, FontWeight, CrossAxisAlignment
 import enum
 from typing import List, Dict, Tuple
-from sympy import python
-from pathlib import Path
+
 BASE_DIR = Path(__file__).resolve().parent
-# LOGO_PATH = "assets/logo.png"  # y asegúrate de que el archivo exista
-
 ASSETS_DIR = BASE_DIR / "assets"
-
-# Para desktop: ruta real en disco
-LOGO_PATH_DESKTOP = str(ASSETS_DIR / "logo.png")
-
-# Para web (cuando usas assets_dir="assets"): solo el nombre dentro de assets
 LOGO_PATH_WEB = "logo.png"
-
 
 # ---------------------------------------------
 # Clases base
@@ -34,7 +25,7 @@ class TipoProducto(enum.Enum):
     P40 = "P40"
 
 class Tolva:
-    def __init__(self, material: str, capacidad: float, altura_max: float,nivel_ineficiente:float):
+    def __init__(self, material: str, capacidad: float, altura_max: float, nivel_ineficiente: float):
         self.material = material
         self.capacidad = capacidad
         self.altura_max = altura_max
@@ -42,7 +33,7 @@ class Tolva:
         self.nivel_ineficiente = nivel_ineficiente
 
     def tiempo_vaciado(self, consumo_por_hora: float) -> float:
-        toneladas_reales = ((self.nivel_actual -self.nivel_ineficiente)* self.capacidad) / self.altura_max
+        toneladas_reales = ((self.nivel_actual - self.nivel_ineficiente) * self.capacidad) / self.altura_max
         print(f"Nivel actual de {self.material}: {self.nivel_actual} m, Capacidad: {self.capacidad} t, Altura máxima: {self.altura_max} m")
         print(f"Toneladas reales en {self.material}: {toneladas_reales} t")
         return toneladas_reales / consumo_por_hora if consumo_por_hora > 0 else float('inf')
@@ -95,22 +86,22 @@ class Molino:
 class SistemaAlimentacion:
     def __init__(self):
         self.mc1 = Molino("MC1", {
-            "clinker": Tolva("Clinker", 500, 14,2.8),
-            "puzolana": Tolva("Puzolana", 300, 12,2.4),
-            "yeso": Tolva("Yeso", 300, 10,2)
+            "clinker": Tolva("Clinker", 500, 14, 2.8),
+            "puzolana": Tolva("Puzolana", 300, 12, 2.4),
+            "yeso": Tolva("Yeso", 300, 10, 2)
         }, 1)
 
         self.mc2 = Molino("MC2", {
-            "clinker": Tolva("Clinker", 300, 9,1.8),
-            "puzolana_humeda": Tolva("Puzolana Húmeda", 500, 15,3),
-            "puzolana_seca": Tolva("Puzolana Seca", 100, 12,2.4),
-            "yeso": Tolva("Yeso", 120, 9,1.8)
+            "clinker": Tolva("Clinker", 300, 9, 1.8),
+            "puzolana_humeda": Tolva("Puzolana Húmeda", 500, 15, 3),
+            "puzolana_seca": Tolva("Puzolana Seca", 100, 12, 2.4),
+            "yeso": Tolva("Yeso", 120, 9, 1.8)
         }, 0.8)
 
         self.mc3 = Molino("MC3", {
-            "clinker": Tolva("Clinker", 60, 100,50),
-            "puzolana": Tolva("Puzolana", 35, 100,50),
-            "yeso": Tolva("Yeso", 30, 100,50)
+            "clinker": Tolva("Clinker", 60, 100, 50),
+            "puzolana": Tolva("Puzolana", 35, 100, 50),
+            "yeso": Tolva("Yeso", 30, 100, 50)
         }, 0.5)
 
     def set_productos(self):
@@ -123,59 +114,36 @@ class SistemaAlimentacion:
         self.mc3.set_producto(TipoProducto.P30, 37.0, {"clinker": 67.5, "puzolana": 30, "yeso": 2.5})
 
 # ---------------------------------------------
-# Variables globales
-# ---------------------------------------------
-
-estado_rutas = {
-    "MC1-desde-Pretrit": True,
-    "MC2-desde-Pretrit": True,
-    "MC3-desde_Silo-Blanco": True,
-    "Pretrit_a_Silo_Blanco": True,
-    "PH-a-426HO04-por-MC2": True,
-    "PH-a-MC1-por-MC2": True,
-    "PH-a-MC1-por-MC1": True,
-    "PS-a-MC3-por-MC2": True,
-    "PS-a-426HO02-por-426HO04": True,
-    "MC1-por-MC1": True,
-    "MC1-por-MC2": True,
-    "MC2-por-MC2": True,
-    "MC3-por-MC1": True,
-    "MC3-por-MC2": True
-}
-
-estado_molinos = {
-    "mc1": True,
-    "mc2": True,
-    "mc3": True
-}
-
-# Variables para los controles de UI
-status_dropdowns = {}
-menu_column = None
-pddl_display = None
-level_fields = {}
-feed_rate_fields = {}
-
-# ---------------------------------------------
 # Funciones de actualización
 # ---------------------------------------------
 
 def update_feed_rate(molino: Molino, value: str, sistema: SistemaAlimentacion, page: ft.Page):
+    session_state = page.session_state
     try:
         new_feed = float(value)
         if new_feed >= 0:
             print(f"Antes de actualizar: {molino.nombre} alimentacion_fresca = {molino.alimentacion_fresca}")
-            molino.set_alimentacion_fresca(new_feed)
-            print(f"Después de actualizar: {molino.nombre} alimentacion_fresca = {molino.alimentacion_fresca}")
-           
+            try:
+                molino.set_alimentacion_fresca(new_feed)
+                print(f"Después de actualizar: {molino.nombre} alimentacion_fresca = {molino.alimentacion_fresca}")
+            except AttributeError as e:
+                print(f"❌ Error: No se encontró el método set_alimentacion_fresca en {molino.nombre}: {e}")
+                page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error: No se pudo actualizar la alimentación fresca de {molino.nombre}"), open=True, duration=2000)
+                page.update()
+                return
             tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
             try:
-                pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
+                pddl_content = generar_problema_pddl_dinamico(
+                    session_state['estado_molinos'],
+                    session_state['estado_rutas'],
+                    tolvas_criticas,
+                    tiempos_por_tolva
+                )
                 refresh_cards(pddl_content, sistema, page)
                 page.snack_bar = ft.SnackBar(ft.Text(f"Alimentación fresca de {molino.nombre} actualizada a {new_feed} t/h"), open=True, duration=2000)
             except ValueError as e:
                 page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error al generar PDDL: {e}"), open=True, duration=2000)
-                pddl_display.controls[0].value = f"Error: {e}"
+                session_state['pddl_display'].controls[0].value = f"Error: {e}"
             page.update()
         else:
             print(f"Valor inválido para alimentación fresca: {value} (debe ser no negativo)")
@@ -187,17 +155,23 @@ def update_feed_rate(molino: Molino, value: str, sistema: SistemaAlimentacion, p
         page.update()
 
 def update_product_type(molino: Molino, value: str, sistema: SistemaAlimentacion, page: ft.Page):
+    session_state = page.session_state
     try:
         tipo_producto = TipoProducto(value)
         molino.cambiar_producto(tipo_producto)
         print(f"Producto de {molino.nombre} cambiado a {value}")
         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
         try:
-            pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
+            pddl_content = generar_problema_pddl_dinamico(
+                session_state['estado_molinos'],
+                session_state['estado_rutas'],
+                tolvas_criticas,
+                tiempos_por_tolva
+            )
             refresh_cards(pddl_content, sistema, page)
         except ValueError as e:
             page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error al generar PDDL: {e}"), open=True, duration=2000)
-            pddl_display.controls[0].value = f"Error: {e}"
+            session_state['pddl_display'].controls[0].value = f"Error: {e}"
         page.update()
     except ValueError:
         print(f"Tipo de producto inválido: {value}")
@@ -205,22 +179,28 @@ def update_product_type(molino: Molino, value: str, sistema: SistemaAlimentacion
         page.update()
 
 def update_running_state(molino: Molino, value: str, sistema: SistemaAlimentacion, page: ft.Page):
+    session_state = page.session_state
     estado = value == "Encendido"
     molino.set_estado(estado)
-    estado_molinos[molino.nombre.lower()] = estado
+    session_state['estado_molinos'][molino.nombre.lower()] = estado
     print(f"Estado de {molino.nombre} cambiado a {'Encendido' if estado else 'Apagado'}")
     
     dropdown_key = f"{molino.nombre}_status"
-    if dropdown_key in status_dropdowns:
-        status_dropdowns[dropdown_key].value = value
-        status_dropdowns[dropdown_key].color = ft.Colors.GREEN if estado else ft.Colors.RED
+    if dropdown_key in session_state['status_dropdowns']:
+        session_state['status_dropdowns'][dropdown_key].value = value
+        session_state['status_dropdowns'][dropdown_key].color = ft.Colors.GREEN if estado else ft.Colors.RED
     
     tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
     try:
-        pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
+        pddl_content = generar_problema_pddl_dinamico(
+            session_state['estado_molinos'],
+            session_state['estado_rutas'],
+            tolvas_criticas,
+            tiempos_por_tolva
+        )
         update_pddl_display(pddl_content, page)
     except ValueError as e:
-        pddl_display.controls[0].value = f"Error: {e}"
+        session_state['pddl_display'].controls[0].value = f"Error: {e}"
         page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error al generar PDDL: {e}"), open=True, duration=2000)
     page.update()
 
@@ -251,7 +231,7 @@ def obtener_tolvas_a_llenar_por_tiempos(sistema: SistemaAlimentacion, umbral=3) 
             nombre_tolva_pddl = nombres_tolvas[nombre_molino].get(mat)
             if nombre_tolva_pddl:
                 tiempos_por_tolva[nombre_tolva_pddl] = tiempo
-                if tiempo < umbral and estado_molinos.get(nombre_molino, False):
+                if tiempo < umbral and sistema.__dict__[nombre_molino].en_marcha:
                     tolvas_a_llenar.append(nombre_tolva_pddl)
     return tolvas_a_llenar, tiempos_por_tolva
 
@@ -394,23 +374,27 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
 # ---------------------------------------------
 
 def update_pddl_display(pddl_content, page):
-    global pddl_display
-    if pddl_display:
-        pddl_display.controls[0].value = pddl_content
-        page.update()
+    session_state = page.session_state
+    session_state['pddl_display'].controls[0].value = pddl_content
+    page.update()
 
 def crear_fila_ruta(nombre, estado, sistema, page):
+    session_state = page.session_state
     def on_click(e):
-        estado_rutas[nombre] = not estado_rutas[nombre]
-        print(f"Ruta '{nombre}' actualizada a {estado_rutas[nombre]}")
-        global menu_column
-        menu_column.controls = construir_column_rutas(sistema, page)
+        session_state['estado_rutas'][nombre] = not session_state['estado_rutas'][nombre]
+        print(f"Ruta '{nombre}' actualizada a {session_state['estado_rutas'][nombre]}")
+        session_state['menu_column'].controls = construir_column_rutas(sistema, page)
         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
         try:
-            pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
+            pddl_content = generar_problema_pddl_dinamico(
+                session_state['estado_molinos'],
+                session_state['estado_rutas'],
+                tolvas_criticas,
+                tiempos_por_tolva
+            )
             update_pddl_display(pddl_content, page)
         except ValueError as e:
-            pddl_display.controls[0].value = f"Error: {e}"
+            session_state['pddl_display'].controls[0].value = f"Error: {e}"
             page.snack_bar = ft.SnackBar(ft.Text(f"❌ Error al generar PDDL: {e}"), open=True, duration=2000)
         page.update()
     return ft.Container(
@@ -421,6 +405,7 @@ def crear_fila_ruta(nombre, estado, sistema, page):
     )
 
 def construir_column_rutas(sistema, page):
+    session_state = page.session_state
     controls = []
     def titulo(txt):
         return ft.Container(
@@ -435,585 +420,318 @@ def construir_column_rutas(sistema, page):
             padding=0
         )
     controls.append(titulo("CLINKER"))
-    controls.extend(crear_fila_ruta(n, e, sistema, page) for n, e in list(estado_rutas.items())[:4])
+    controls.extend(crear_fila_ruta(n, e, sistema, page) for n, e in list(session_state['estado_rutas'].items())[:4])
     controls.append(ft.Divider())
     controls.append(titulo("PUZOLANA"))
-    controls.extend(crear_fila_ruta(n, e, sistema, page) for n, e in list(estado_rutas.items())[4:9])
+    controls.extend(crear_fila_ruta(n, e, sistema, page) for n, e in list(session_state['estado_rutas'].items())[4:9])
     controls.append(ft.Divider())
     controls.append(titulo("YESO"))
-    controls.extend(crear_fila_ruta(n, e, sistema, page) for n, e in list(estado_rutas.items())[9:])
+    controls.extend(crear_fila_ruta(n, e, sistema, page) for n, e in list(session_state['estado_rutas'].items())[9:])
     return controls
 
-
-# def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft.Page=None):
-#     global pddl_display, menu_column
-#     page.controls.clear()
-#     cards = []
-#     tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
-    
-#     if menu_column is None:
-#         menu_column = ft.Column(controls=construir_column_rutas(sistema, page))
-    
-#     menu_rutas = ft.PopupMenuButton(
-#         icon=ft.Icons.MENU,
-#         items=[
-#             ft.PopupMenuItem(
-#                 content=menu_column
-#             )
-#         ]
-#     )
- 
-#     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
-#         rows = []
-#         for material, tolva in molino.tolvas.items():
-#             unit = "%" if molino.nombre == "MC3" else "m"
-#             max_level = tolva.altura_max
-#             current_level = tolva.nivel_actual
-#             progress = min(current_level / max_level, 1.0) if molino.nombre != "MC3" else min(current_level / 100, 1.0)
-#             tiempo = molino.tiempo_vaciado(material)
-#             field_key = f"{molino.nombre}_{material}"
-#             level_fields[field_key] = ft.TextField(
-#                 value=str(current_level),
-#                 width=57,
-#                 text_align=ft.TextAlign.CENTER,
-#                 border_color=None,
-#                 border=None,
-#                 border_width=0,
-#                 bgcolor=ft.Colors.TRANSPARENT,
-#                 filled=True,
-#                 on_submit=lambda e: update_levels(e, sistema, page)
-#             )
-#             bar_color = ft.Colors.GREEN_ACCENT_700 if progress >= 0.5 else ft.Colors.YELLOW_700 if progress >= 0.2 else ft.Colors.RED_700
-#             rows.append(
-#                 ft.DataRow(cells=[
-#                     ft.DataCell(ft.Text(material.capitalize(), size=14)),
-#                     ft.DataCell(
-#                         ft.Row(
-#                             [
-#                                 level_fields[field_key],
-#                                 ft.Text(unit, size=14, color=ft.Colors.WHITE),
-#                             ],
-#                             alignment=ft.MainAxisAlignment.CENTER,
-#                             spacing=5
-#                         )
-#                     ),
-#                     ft.DataCell(ft.ProgressBar(value=progress, width=100, height=20, color=bar_color, border_radius=5)),
-#                     ft.DataCell(ft.Text(f"{tiempo:.2f} h", size=14)),
-#                 ])
-#             )
-#         product_options = {
-#             "MC1": [ft.dropdown.Option("P30"), ft.dropdown.Option("P40")],
-#             "MC2": [ft.dropdown.Option("P10"), ft.dropdown.Option("P16"), ft.dropdown.Option("P20"), ft.dropdown.Option("P30")],
-#             "MC3": [ft.dropdown.Option("P30")]
-#         }.get(molino.nombre, [])
-#         feed_rate_key = f"{molino.nombre}_feed_rate"
-#         feed_rate_fields[feed_rate_key] = ft.TextField(
-#             prefix_text="Rendimiento: ",
-#             value=f"{molino.alimentacion_fresca}",
-#             width=180,
-#             text_size=14,
-#             filled=True,
-#             text_align=ft.TextAlign.RIGHT,
-#             suffix_text=" t/h",
-#             on_submit=lambda e, m=molino, s=sistema, p=page: update_feed_rate(m, e.control.value, s, p),
-#             tooltip="Alimentación fresca (t/h)"
-#         )
-        
-#         dropdown_key = f"{molino.nombre}_status"
-#         status_dropdowns[dropdown_key] = ft.Dropdown(
-#             options=[
-#                 ft.dropdown.Option("Encendido"),
-#                 ft.dropdown.Option("Apagado")
-#             ],
-#             value="Encendido" if estado_molinos[molino.nombre.lower()] else "Apagado",
-#             width=133,
-#             filled=True,
-#             text_size=14,
-#             color=ft.Colors.GREEN if estado_molinos[molino.nombre.lower()] else ft.Colors.RED,
-#             on_change=lambda e, m=molino: update_running_state(m, e.control.value, sistema, page),
-#             tooltip="Estado de marcha"
-#         )
-        
-#         card = ft.Card(
-#             content=ft.Container(
-#                 content=ft.Column([
-#                     ft.Text(f"Molino {molino.nombre}", size=18, weight=ft.FontWeight.BOLD,text_align=ft.TextAlign.CENTER),  # Centrar texto del título),
-#                     ft.Row(
-#                         controls=[
-#                             status_dropdowns[dropdown_key],
-#                             ft.Dropdown(
-#                                 options=product_options,
-#                                 value=molino.tipo_producto.value if molino.tipo_producto else product_options[0].key,
-#                                 width=90,
-#                                 filled=True,
-#                                 text_size=14,
-#                                 on_change=lambda e, m=molino: update_product_type(m, e.control.value, sistema, page),
-#                                 tooltip="Tipo de producto"
-#                             ),
-#                             feed_rate_fields[feed_rate_key],
-#                         ],
-#                         alignment=ft.MainAxisAlignment.SPACE_EVENLY,  # Cambiado de SPACE_BETWEEN
-#                         #alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-#                         vertical_alignment=ft.CrossAxisAlignment.CENTER
-#                     ),
-#                     ft.DataTable(
-#                         columns=[
-#                             ft.DataColumn(ft.Text("Material", size=14)),
-#                             ft.DataColumn(ft.Text("Nivel Actual", size=14)),
-#                             ft.DataColumn(ft.Text("Estado Tolva", size=14)),
-#                             ft.DataColumn(ft.Text("T. Vaciado", size=14)),
-#                         ],
-#                         rows=rows,
-#                         column_spacing=30,
-#                         data_row_min_height=0
-#                     )
-#                 ],
-#                 #alignment=ft.MainAxisAlignment.CENTER,  # Centrar contenido verticalmente
-#                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Centrar contenido horizontalmente
-#                 ),
-#                 padding=4,
-#                 width=480,
-#                 height=350
-#             ),
-#             elevation=5
-#         )
-#         cards.append(card)
-    
-#     pddl_card = ft.Container(
-#         content=ft.Card(
-#             content=ft.Container(
-#                 content=ft.Column([
-#                     ft.Text(
-#                         "Plan Generado",
-#                         size=24,
-#                         weight=ft.FontWeight.BOLD,
-#                         color=ft.Colors.BLACK,
-#                         text_align=ft.TextAlign.CENTER
-#                     ),
-#                     pddl_display
-#                 ],
-#                 horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-#                 padding=10,
-#                 width=1000,
-#                 height=250,
-#                 bgcolor=ft.Colors.WHITE,
-#                 border_radius=10,
-#             ),
-#             elevation=5
-#         ),
-#         alignment=ft.alignment.center
-#     )
-    
-#     page.add(
-#         ft.Container(
-#             content=ft.Row(
-#                 [
-#                     menu_rutas,
-#                     ft.Text(
-#                         "OPTIMIZACIÓN DE ALIMENTACIONES",
-#                         size=40,
-#                         weight=ft.FontWeight.BOLD,
-#                         color="white",
-#                         text_align=ft.TextAlign.CENTER
-#                     ),
-#                     ft.Image(
-#                         src=LOGO_PATH_WEB, # "G:/Mi unidad/TRABAJO UNACEM 2025/PROYECTO HEURISTICO 2025/PDDL-DA/assets/logo.png",
-#                         width=100,
-#                         height=100,
-#                         fit=ft.ImageFit.CONTAIN
-#                     ),
-#                 ],
-#                 alignment=ft.MainAxisAlignment.CENTER,
-#                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
-#                 spacing=1
-#             ),
-#             # padding=0,
-#             # margin=0,
-#             padding=ft.padding.only(top=0, bottom=0),  # Eliminar padding arriba y abajo
-#             margin=ft.margin.only(top=0, bottom=0),    # Eliminar margin arriba y abajo
-#             height=50,
-#             expand=True
-#         ),
-#         ft.Row(
-#             controls=cards,
-#             wrap=True,
-#             spacing=5,
-#             alignment=ft.MainAxisAlignment.CENTER
-#         ),
-
-#         # ft.ElevatedButton("Generar Plan", on_click=lambda e: update_levels(e, sistema, page), bgcolor=ft.Colors.BLUE_700, color=ft.Colors.WHITE),
-#         # pddl_card
-
-
-#         ft.Row(  # Nuevo Row para botón y pddl_card
-#         controls=[
-#             ft.ElevatedButton(
-#                 "Generar Plan", 
-#                 on_click=lambda e: update_levels(e, sistema, page), 
-#                 bgcolor=ft.Colors.BLUE_700, 
-#                 color=ft.Colors.WHITE,
-#                 height=40  # Ajustar altura para que coincida con pddl_card
-#             ),
-#             pddl_card
-#         ],
-#         alignment=ft.MainAxisAlignment.CENTER,
-#         vertical_alignment=ft.CrossAxisAlignment.START,  # Alinear al inicio verticalmente
-#         spacing=20  # Espacio entre botón y pddl_card
-#     ))
-#     page.update()
-
-
-
-
-
-
-
 def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft.Page=None):
-    global pddl_display, menu_column
-    page.controls.clear()
-    cards = []
+    try:
+        print(f"Starting refresh_cards for session {page.session_id}")
+        session_state = page.session_state
+        page.controls.clear()
+        cards = []
 
-    if menu_column is None:
-        menu_column = ft.Column(controls=construir_column_rutas(sistema, page))
-    
-    menu_rutas = ft.PopupMenuButton(
-        icon=ft.Icons.MENU,
-        items=[
-            ft.PopupMenuItem(
-                content=menu_column
-            )
-        ]
-    )
-
-    # Define font scaling function
-    def get_font_size():
-        if page.window_width < 600:  # Mobile
-            return 10
-        elif page.window_width < 900:  # Tablet
-            return 14
-        else:  # Desktop
-            return 18
-
-    # Navigation Drawer for routes on mobile
-    drawer = ft.NavigationDrawer(
-        controls=[
-            ft.Container(
-                content=ft.Column(
-                    controls=construir_column_rutas(sistema, page),
-                    scroll=ft.ScrollMode.AUTO
-                ),
-                padding=10
-            )
-        ]
-    )
-    page.drawer = drawer
-
-    # # Function to build route menu
-    # def construir_column_rutas(sistema, page):
-    #     routes = [
-    #         {"name": "MC1", "callback": lambda e: update_molino_view(sistema.mc1, sistema, page)},
-    #         {"name": "MC2", "callback": lambda e: update_molino_view(sistema.mc2, sistema, page)},
-    #         {"name": "MC3", "callback": lambda e: update_molino_view(sistema.mc3, sistema, page)},
-    #         {"name": "PDDL Plan", "callback": lambda e: update_pddl_view(sistema, page)}
-    #     ]
-    #     return [
-    #         ft.Text("Rutas", size=get_font_size() * 1.2, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
-    #         ft.Divider(color=ft.Colors.WHITE),
-    #     ] + [
-    #         ft.ElevatedButton(
-    #             route["name"],
-    #             on_click=route["callback"],
-    #             bgcolor=ft.Colors.BLUE_GREY_800,
-    #             color=ft.Colors.WHITE,
-    #             style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=5)),
-    #             expand=True
-    #         ) for route in routes
-    #     ]
-
-    # Header with two-line title and route menu on mobile
-    if page.window_width < 300:  # Mobile layout
-        header_content = ft.Column(
-            controls=[
-                ft.Text(
-                    "OPTIMIZACIÓN DE",
-                    size=get_font_size() ,
-                    weight=ft.FontWeight.BOLD,
-                    color="white",
-                    text_align=ft.TextAlign.CENTER
-                ),
-                ft.Row(
-                    controls=[
-                        ft.IconButton(
-                            icon=ft.Icons.MENU,
-                            on_click=lambda e: page.show_drawer(drawer),
-                            visible=True
-                        ),
-                        ft.Image(
-                            src=LOGO_PATH_WEB,
-                            width=page.window_width * 0.06,
-                            height=page.window_width * 0.06,
-                            fit=ft.ImageFit.CONTAIN
-                        ),
-                    ],
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    spacing=10
-                ),
-                ft.Text(
-                    "ALIMENTACIONES",
-                    size=get_font_size() * 0.8,
-                    weight=ft.FontWeight.BOLD,
-                    color="white",
-                    text_align=ft.TextAlign.CENTER
+        if session_state['menu_column'] is None:
+            session_state['menu_column'] = ft.Column(controls=construir_column_rutas(sistema, page))
+        
+        menu_rutas = ft.PopupMenuButton(
+            icon=ft.Icons.MENU,
+            items=[
+                ft.PopupMenuItem(
+                    content=session_state['menu_column']
                 )
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=5
+            ]
         )
-    else:  # Desktop/Tablet layout with route menu
-        header_content = ft.Row(
-            
+
+        def get_font_size():
+            if page.window_width < 600:
+                return 14
+            elif page.window_width < 900:
+                return 14
+            else:
+                return 14
+
+        drawer = ft.NavigationDrawer(
             controls=[
-
-                menu_rutas,
-                ft.Text(
-                    "OPTIMIZACIÓN DE ALIMENTACIONES",
-                    size=get_font_size() * 1.5,
-                    weight=ft.FontWeight.BOLD,
-                    
-                    # height=30,
-                    color="white",
-                    text_align=ft.TextAlign.CENTER,
-                    expand=True
-                    
-                ),
-                ft.Image(
-                    src=LOGO_PATH_WEB,
-                    width=page.window_width * 0.06,
-                    height=page.window_width * 0.06,
-                    fit=ft.ImageFit.CONTAIN
-                ),
-                
-            ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=1,
-            wrap=False,
-            height=70,
-            
-        )
-
-
-    for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
-        rows = []
-        for material, tolva in molino.tolvas.items():
-            unit = "%" if molino.nombre == "MC3" else "m"
-            max_level = tolva.altura_max
-            current_level = tolva.nivel_actual
-            progress = min(current_level / max_level, 1.0) if molino.nombre != "MC3" else min(current_level / 100, 1.0)
-            tiempo = molino.tiempo_vaciado(material)
-            field_key = f"{molino.nombre}_{material}"
-            level_fields[field_key] = ft.TextField(
-                value=str(current_level),
-                width=40,
-                text_align=ft.TextAlign.LEFT,
-                border_color=None,
-                border=None,
-                border_width=0,
-                bgcolor=ft.Colors.TRANSPARENT,
-                filled=True,
-                content_padding=0,  # 👈 elimina padding interno
-                on_submit=lambda e: update_levels(e, sistema, page)
-            )
-            bar_color = ft.Colors.GREEN_ACCENT_700 if progress >= 0.5 else ft.Colors.YELLOW_700 if progress >= 0.2 else ft.Colors.RED_700
-            rows.append(
-                ft.DataRow(cells=[
-                    ft.DataCell(ft.Text(material.capitalize(), size=12)),
-                    ft.DataCell(
-                        ft.Row(
-                            [
-                                level_fields[field_key],
-                                ft.Text(unit, size=14, color=ft.Colors.WHITE),
-                            ],
-                            alignment=ft.MainAxisAlignment.START,
-                            spacing=0
-                        )
-                        
+                ft.Container(
+                    content=ft.Column(
+                        controls=construir_column_rutas(sistema, page),
+                        scroll=ft.ScrollMode.AUTO
                     ),
-                    ft.DataCell(ft.ProgressBar(value=progress, width=page.window_width * 0.07, height=20, color=bar_color, border_radius=5)),
-                    ft.DataCell(ft.Text(f"{tiempo:.2f} h", size=14)),
-                ])
-                
-
-
-            )
-        
-        print("page.window_width",page.window_width)
-        product_options = {
-            "MC1": [ft.dropdown.Option("P30"), ft.dropdown.Option("P40")],
-            "MC2": [ft.dropdown.Option("P10"), ft.dropdown.Option("P16"), ft.dropdown.Option("P20"), ft.dropdown.Option("P30")],
-            "MC3": [ft.dropdown.Option("P30")]
-        }.get(molino.nombre, [])
-        feed_rate_key = f"{molino.nombre}_feed_rate"
-        feed_rate_fields[feed_rate_key] = ft.TextField(
-            prefix_text="Rendimiento: ",
-            value=f"{molino.alimentacion_fresca}",
-            width=220,
-            text_size=14,
-            filled=True,
-            text_align=ft.TextAlign.RIGHT,
-            suffix_text=" t/h",
-            on_submit=lambda e, m=molino, s=sistema, p=page: update_feed_rate(m, e.control.value, s, p),
-            tooltip="Alimentación fresca (t/h)"
+                    padding=10
+                )
+            ]
         )
-        
-        dropdown_key = f"{molino.nombre}_status"
-        status_dropdowns[dropdown_key] = ft.Dropdown(
-            options=[
-                ft.dropdown.Option("Encendido"),
-                ft.dropdown.Option("Apagado")
-            ],
-            value="Encendido" if estado_molinos[molino.nombre.lower()] else "Apagado",
-            width=152,
-            filled=True,
-            text_size=14,
-            color=ft.Colors.GREEN if estado_molinos[molino.nombre.lower()] else ft.Colors.RED,
-            on_change=lambda e, m=molino: update_running_state(m, e.control.value, sistema, page),
-            tooltip="Estado de marcha"
-        )
-        
-        card = ft.Card(
-            content=ft.Container(
-                content=ft.Column([
-                    ft.Text(f"Molino {molino.nombre}", size=18, weight=ft.FontWeight.BOLD,text_align=ft.TextAlign.CENTER),  # Centrar texto del título),
+        page.drawer = drawer
+
+        if page.window_width < 300:
+            header_content = ft.Column(
+                controls=[
+                    ft.Text(
+                        "OPTIMIZACIÓN DE",
+                        size=get_font_size(),
+                        weight=ft.FontWeight.BOLD,
+                        color="white",
+                        text_align=ft.TextAlign.CENTER
+                    ),
                     ft.Row(
                         controls=[
-                            status_dropdowns[dropdown_key],
-                            ft.Dropdown(
-                                options=product_options,
-                                value=molino.tipo_producto.value if molino.tipo_producto else product_options[0].key,
-                                width=page.window_width * 0.08,
-                                filled=True,
-                                text_size=14,
-                                on_change=lambda e, m=molino: update_product_type(m, e.control.value, sistema, page),
-                                tooltip="Tipo de producto"
+                            ft.IconButton(
+                                icon=ft.Icons.MENU,
+                                on_click=lambda e: page.show_drawer(drawer),
+                                visible=True
                             ),
-                            feed_rate_fields[feed_rate_key],
+                            ft.Image(
+                                src=LOGO_PATH_WEB,
+                                width=page.window_width * 0.06,
+                                height=page.window_width * 0.06,
+                                fit=ft.ImageFit.CONTAIN
+                            ),
                         ],
-                        alignment=ft.MainAxisAlignment.SPACE_EVENLY,  # Cambiado de SPACE_BETWEEN
-                        #alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        wrap=True
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        spacing=10
                     ),
-
-                    ft.Container(
-                        content=ft.DataTable(
-                            columns=[
-                                ft.DataColumn(ft.Text("  Material", size=get_font_size())),
-                                ft.DataColumn(ft.Text("  Nivel", size=get_font_size())),
-                                ft.DataColumn(ft.Text("  Tolva", size=get_font_size())),
-                                ft.DataColumn(ft.Text("  T.V", size=get_font_size())),
-                            ],
-                            rows=rows,
-                            column_spacing=25,
-                            horizontal_margin=6,   # 👈 elimina el margen lateral
-                            
-                        ),
-                        expand=True,
-                        width=page.window_width * 0.9,
-                        bgcolor=ft.Colors.TRANSPARENT,
-                        padding=ft.padding.only(left=0, right=0),  # Set left padding, remove right padding
-                        
-                        )
-
-                    # ft.DataTable(
-                    #     columns=[
-                    #         ft.DataColumn(ft.Text("Material", size=14)),
-                    #         ft.DataColumn(ft.Text("Nivel Actual", size=14)),
-                    #         ft.DataColumn(ft.Text("Estado Tolva", size=14)),
-                    #         ft.DataColumn(ft.Text("T. Vaciado", size=14)),
-                    #     ],
-                    #     horizontal_margin=0,
-                        
-                    #     rows=rows,
-                    #     column_spacing=30,
-                    #     data_row_min_height=0
-                    # )
+                    ft.Text(
+                        "ALIMENTACIONES",
+                        size=get_font_size() * 0.8,
+                        weight=ft.FontWeight.BOLD,
+                        color="white",
+                        text_align=ft.TextAlign.CENTER
+                    )
                 ],
-                #alignment=ft.MainAxisAlignment.CENTER,  # Centrar contenido verticalmente
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Centrar contenido horizontalmente
-                ),
-                padding=7,
-                # width=600,
-                # height=350
-                # width=page.window_width * 10,
-                height=page.window_width * 0.302,
-            ),
-            elevation=0,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=5
+            )
+        else:
+            header_content = ft.Row(
+                controls=[
+                    menu_rutas,
+                    ft.Text(
+                        "OPTIMIZACIÓN DE ALIMENTACIONES",
+                        size=get_font_size() * 2,
+                        weight=ft.FontWeight.BOLD,
+                        color="white",
+                        text_align=ft.TextAlign.CENTER,
+                        expand=True
+                    ),
+                    ft.Image(
+                        src=LOGO_PATH_WEB,
+                        width=page.window_width * 0.06,
+                        height=page.window_width * 0.06,
+                        fit=ft.ImageFit.CONTAIN
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=0,
+                wrap=False,
+                height=70,
+            )
+
+        for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
+            rows = []
+            for material, tolva in molino.tolvas.items():
+                unit = "%" if molino.nombre == "MC3" else "m"
+                max_level = tolva.altura_max
+                current_level = tolva.nivel_actual
+                progress = min(current_level / max_level, 1.0) if molino.nombre != "MC3" else min(current_level / 100, 1.0)
+                tiempo = molino.tiempo_vaciado(material)
+                field_key = f"{molino.nombre}_{material}"
+                session_state['level_fields'][field_key] = ft.TextField(
+                    value=str(current_level),
+                    width=40,
+                    text_align=ft.TextAlign.LEFT,
+                    border_color=None,
+                    border=None,
+                    border_width=0,
+                    bgcolor=ft.Colors.TRANSPARENT,
+                    filled=True,
+                    text_size=get_font_size(),
+                    content_padding=0,
+                    on_submit=lambda e: update_levels(e, sistema, page)
+                )
+                bar_color = ft.Colors.GREEN_ACCENT_700 if progress >= 0.5 else ft.Colors.YELLOW_700 if progress >= 0.2 else ft.Colors.RED_700
+                rows.append(
+                    ft.DataRow(cells=[
+                        ft.DataCell(ft.Text(material.capitalize(), size=get_font_size())),
+                        ft.DataCell(
+                            ft.Row(
+                                [
+                                    session_state['level_fields'][field_key],
+                                    ft.Text(unit, size=13, color=ft.Colors.WHITE),
+                                ],
+                                alignment=ft.MainAxisAlignment.START,
+                                spacing=0
+                            )
+                        ),
+                        ft.DataCell(ft.ProgressBar(value=progress, width=page.window_width * 0.07, height=15, color=bar_color, border_radius=5)),
+                        ft.DataCell(ft.Text(f"{tiempo:.2f} h", size=get_font_size())),
+                    ])
+                )
+
+            product_options = {
+                "MC1": [ft.dropdown.Option("P30"), ft.dropdown.Option("P40")],
+                "MC2": [ft.dropdown.Option("P10"), ft.dropdown.Option("P16"), ft.dropdown.Option("P20"), ft.dropdown.Option("P30")],
+                "MC3": [ft.dropdown.Option("P30")]
+            }.get(molino.nombre, [])
+            feed_rate_key = f"{molino.nombre}_feed_rate"
+            session_state['feed_rate_fields'][feed_rate_key] = ft.TextField(
+                prefix_text="Rendimiento: ",
+                value=f"{molino.alimentacion_fresca}",
+                width=page.window_width * 0.155,
+                text_size=get_font_size(),
+                filled=True,
+                text_align=ft.TextAlign.RIGHT,
+                suffix_text=" t/h",
+                on_submit=lambda e, m=molino, s=sistema, p=page: update_feed_rate(m, e.control.value, s, p),
+                tooltip="Alimentación fresca (t/h)"
+            )
+            
+            dropdown_key = f"{molino.nombre}_status"
+            session_state['status_dropdowns'][dropdown_key] = ft.Dropdown(
+                options=[
+                    ft.dropdown.Option("Encendido"),
+                    ft.dropdown.Option("Apagado")
+                ],
+                value="Encendido" if session_state['estado_molinos'][molino.nombre.lower()] else "Apagado",
+                width=page.window_width * 0.12,
+                filled=True,
+                text_size=get_font_size(),
+                color=ft.Colors.GREEN if session_state['estado_molinos'][molino.nombre.lower()] else ft.Colors.RED,
+                on_change=lambda e, m=molino: update_running_state(m, e.control.value, sistema, page),
+                tooltip="Estado de marcha"
+            )
+
+            def calculate_card_height(molinos_list):
+                max_materials = max(len(molino.tolvas) for molino in molinos_list) if molinos_list else 1
+                base_height = 150
+                material_height = 45
+                return base_height + (max_materials * material_height)
         
-        )
-        cards.append(card)
-
-
-    # PDDL Card
-    pddl_card = ft.Card(
-        content=ft.Container(
-            content=ft.Column([
-                ft.Text(
-                    "Plan Generado",
-                    size=get_font_size() * 1.2,
-                    weight=ft.FontWeight.BOLD,
-                    color=ft.Colors.BLACK,
-                    text_align=ft.TextAlign.CENTER
+            molinos_list = [sistema.mc1, sistema.mc2, sistema.mc3]
+            card_height = calculate_card_height(molinos_list)
+            
+            card = ft.Card(
+                content=ft.Container(
+                    content=ft.Column([
+                        ft.Text(f"Molino {molino.nombre}", size=18, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
+                        ft.Row(
+                            controls=[
+                                session_state['status_dropdowns'][dropdown_key],
+                                ft.Dropdown(
+                                    options=product_options,
+                                    value=molino.tipo_producto.value if molino.tipo_producto else product_options[0].key,
+                                    width=page.window_width * 0.075,
+                                    filled=True,
+                                    text_size=get_font_size(),
+                                    on_change=lambda e, m=molino: update_product_type(m, e.control.value, sistema, page),
+                                    tooltip="Tipo de producto"
+                                ),
+                                session_state['feed_rate_fields'][feed_rate_key],
+                            ],
+                            alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                            wrap=True,
+                        ),
+                        ft.Container(
+                            content=ft.DataTable(
+                                columns=[
+                                    ft.DataColumn(ft.Text("   Material", size=get_font_size())),
+                                    ft.DataColumn(ft.Text("   Nivel", size=get_font_size())),
+                                    ft.DataColumn(ft.Text("    Tolva", size=get_font_size())),
+                                    ft.DataColumn(ft.Text("   T.V", size=get_font_size())),
+                                ],
+                                rows=rows,
+                                column_spacing=7,
+                                horizontal_margin=6,
+                            ),
+                            expand=True,
+                            width=page.window_width * 0.9,
+                            bgcolor=ft.Colors.TRANSPARENT,
+                            padding=ft.padding.only(left=0, right=0),
+                        )
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=0,
+                    expand=True,
+                    ),
+                    padding=7,
+                    height=card_height,
                 ),
-                pddl_display
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-            padding=10,
-            width=min(page.window_width * 0.9, 1000),
-            height=min(page.window_height * 0.3, 300),
-            bgcolor=ft.Colors.WHITE,
-            border_radius=10
-        ),
-        elevation=0
-    )
-    # Add header to page
-    page.add(
-        ft.Container(
-            
-            content=header_content,
-            padding=ft.padding.symmetric(vertical=0),
-            margin=0,
-            alignment=ft.alignment.center,
-            
-        ),
-        ft.ResponsiveRow(
-            controls=[ft.Column(col={"xs": 12, "sm": 6, "md": 4}, controls=[card]) for card in cards],
-            alignment=ft.MainAxisAlignment.CENTER,
-            
-            spacing=0,
-            run_spacing=0
-        ),
-        ft.Container(
-            content=ft.ElevatedButton(
-                "Generar Plan",
-                on_click=lambda e: update_levels(e, sistema, page),
-                bgcolor=ft.Colors.BLUE_700,
-                color=ft.Colors.WHITE,
-                height=40,
-                width=page.window_width * 0.2
+                elevation=0,
+            )
+            cards.append(card)
+
+        pddl_card = ft.Card(
+            content=ft.Container(
+                content=ft.Column([
+                    ft.Text(
+                        "Plan Generado",
+                        size=get_font_size() * 1.2,
+                        weight=ft.FontWeight.BOLD,
+                        color=ft.Colors.BLACK,
+                        text_align=ft.TextAlign.CENTER
+                    ),
+                    session_state['pddl_display']
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                padding=10,
+                width=min(page.window_width * 0.9, 1000),
+                height=min(page.window_height * 0.4, 300),
+                bgcolor=ft.Colors.WHITE,
+                border_radius=10
             ),
-            alignment=ft.alignment.center,
-            padding=0
-        ),
-        ft.Container(
-            content=pddl_card,
-            alignment=ft.alignment.center,
-            padding=0
+            elevation=0
         )
-    )
-    page.update()
 
-
+        print(f"Cards created: {len(cards)}")
+        print(f"Page controls before adding: {len(page.controls)}")
+        page.add(
+            ft.Container(
+                content=header_content,
+                padding=ft.padding.only(bottom=6),
+                margin=0,
+                alignment=ft.alignment.center,
+            ),
+            ft.ResponsiveRow(
+                controls=[ft.Column(col={"xs": 12, "sm": 6, "md": 4}, controls=[card]) for card in cards],
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=0,
+                run_spacing=0
+            ),
+            ft.Container(
+                content=ft.ElevatedButton(
+                    "Generar Plan",
+                    on_click=lambda e: update_levels(e, sistema, page),
+                    bgcolor=ft.Colors.BLUE_700,
+                    color=ft.Colors.WHITE,
+                    height=40,
+                    width=page.window_width * 0.2
+                ),
+                alignment=ft.alignment.center,
+                padding=0
+            ),
+            ft.Container(
+                content=pddl_card,
+                alignment=ft.alignment.center,
+                padding=0
+            )
+        )
+        print(f"Page controls after adding: {len(page.controls)}")
+        page.update()
+    except Exception as e:
+        print(f"❌ Error en refresh_cards: {e}")
+        page.snack_bar = ft.SnackBar(
+            Text(f"❌ Error al renderizar tarjetas: {e}"),
+            open=True,
+            duration=0
+        )
+        page.update()
 
 # ---------------------------------------------
 # PDDL Executor
@@ -1024,7 +742,6 @@ class PDDLExecutor:
         self.domain_path = Path(str(domain_path).replace("\\", "/"))
         self.problem_path = Path(str(problem_path).replace("\\", "/"))
         self.workspace_path = Path(str(workspace_path).replace("\\", "/"))
-        self.vscode_path = None
         self.output_dir = self.workspace_path / "generated_plans"
         self.output_dir.mkdir(exist_ok=True)
         self.delays = {
@@ -1035,10 +752,6 @@ class PDDLExecutor:
             'monitor_interval': 0,
             'max_attempts': 10
         }
-
-    def _find_vscode(self):
-        print("⚠️ Método _find_vscode no utilizado en ejecución remota")
-        return None
 
     def execute(self):
         print("🚀 Iniciando proceso de planificación PDDL")
@@ -1128,9 +841,6 @@ class PDDLExecutor:
             print(f"❌ Error al ejecutar planificador: {e}")
             return False
 
-
-
-
     def _capture_and_save_plan(self):
         try:
             if not hasattr(self, '_planner_response'):
@@ -1150,13 +860,7 @@ class PDDLExecutor:
             print(f"⚠️ Error al capturar plan: {e}")
             return None
 
-
-    def _get_vscode_log_content(self):
-        print("⚠️ Método _get_vscode_log_content no utilizado en ejecución remota")
-        return None
-
     def _extract_most_recent_plan(self, log_content):
-        # Buscar el bloque del Rescheduled Plan primero
         rescheduled_match = re.search(
             r"Rescheduled Plan:(.*?)(?:Solution with|Search time:|$)",
             log_content,
@@ -1167,19 +871,15 @@ class PDDLExecutor:
             print("✅ Se encontró un Rescheduled Plan, se prioriza sobre el Found new plan")
             block = rescheduled_match.group(1).strip()
             actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
-
-            # Capturar el metric (Rescheduled Makespan o Makespan) después del bloque
             after_block = log_content[rescheduled_match.end(): rescheduled_match.end() + 200]
             metric_match = re.search(r"(Rescheduled Makespan|Makespan)\s*:\s*([\d\.]+)", after_block)
             if metric_match:
                 metric_name = metric_match.group(1)
                 metric_value = metric_match.group(2)
                 print(f"📊 {metric_name} del plan final = {metric_value}")
-                actions = f"; {metric_name}: {metric_value}\n" + actions  # lo anexa arriba del plan
-
+                actions = f"; {metric_name}: {metric_value}\n" + actions
             return self._clean_plan_text(actions)
 
-        # Si no hay Rescheduled, usar el bloque normal
         plan_match = re.search(
             r"Found new plan:(.*?)(?:Solution with|Search time:|$)",
             log_content,
@@ -1189,7 +889,6 @@ class PDDLExecutor:
             print("⚠️ No hay Rescheduled Plan, se devuelve el Found new plan")
             block = plan_match.group(1).strip()
             actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
-
             after_block = log_content[plan_match.end(): plan_match.end() + 200]
             metric_match = re.search(r"(Makespan)\s*:\s*([\d\.]+)", after_block)
             if metric_match:
@@ -1197,36 +896,24 @@ class PDDLExecutor:
                 metric_value = metric_match.group(2)
                 print(f"📊 {metric_name} del plan final = {metric_value}")
                 actions = f"; {metric_name}: {metric_value}\n" + actions
-
             return self._clean_plan_text(actions)
 
         print("❌ No se encontraron planes en el log")
         return None
 
     def _clean_plan_text(self, plan_text):
-        """
-        Limpia el texto del plan, preservando los tiempos de inicio y duraciones de las acciones con un máximo de 8 decimales.
-        - Extrae el tiempo (e.g., '0.001'), la acción y la duración (e.g., '[1.000]').
-        - Filtra metadatos irrelevantes y evita duplicados.
-        - Formatea cada línea como: '<tiempo>: <acción> [<duración>]' con tiempos y duraciones limitados a 8 decimales.
-        """
         cleaned_lines = []
         seen_actions = set()
         for line in plan_text.split('\n'):
             line = line.strip()
-            # Filtrar líneas con metadatos irrelevantes o comentarios
             if line and not any(s in line for s in ['Metric:', 'Makespan:', 'States evaluated:', 'Planner found', 'Rescheduled Plan:', 'Solution with original makespan', 'Plan length:', 'Search time:', 'Total time:']) and not line.startswith(';'):
-                # Extraer tiempo, acción y duración con expresión regular
                 time_match = re.match(r'^(\d+\.\d{1,8}):\s*(.*?)\s*(\[\d+\.\d{1,8}\])?$', line)
                 if time_match:
-                    time_prefix = float(time_match.group(1))  # Convertir tiempo a float
-                    action = time_match.group(2).strip()     # Acción (e.g., 'alimentar mc1 t1-clinker clinker MC1-desde-Pretrit')
-                    duration = time_match.group(3) if time_match.group(3) else '[0.00000000]'  # Default si no hay duración
-                    # Convertir duración a float, quitando los corchetes
+                    time_prefix = float(time_match.group(1))
+                    action = time_match.group(2).strip()
+                    duration = time_match.group(3) if time_match.group(3) else '[0.00000000]'
                     duration_value = float(duration[1:-1]) if duration != '[0.00000000]' else 0.0
-                    # Evitar duplicados basados en la acción sola
                     if action not in seen_actions:
-                        # Formatear con 8 decimales
                         formatted_line = f"{time_prefix:.3f}: {action} [{duration_value:.3f}]"
                         cleaned_lines.append(formatted_line)
                         seen_actions.add(action)
@@ -1258,41 +945,20 @@ class PDDLExecutor:
         except Exception as e:
             print(f"⚠️ Error al mostrar plan: {e}")
 
-
-    def _extract_action_timestamps(self, plan_content):
-        """
-        Extrae los tiempos de inicio de las acciones a partir del plan limpio.
-        Retorna una lista de tuplas (tiempo, acción).
-        """
-        timestamps = []
-        for line in plan_content.split('\n'):
-            if line.strip():
-                time_match = re.match(r'^(\d+\.\d{1,8}):', line)
-                if time_match:
-                    time = float(time_match.group(1))
-                    action = line.split(':', 1)[1].split('[', 1)[0].strip()
-                    timestamps.append((time, action))
-        return timestamps
-
-
-    def _focus_vscode(self):
-        print("⚠️ Método _focus_vscode no utilizado en ejecución remota")
-        return False
-
     def get_latest_plan_path(self):
         plan_files = list(self.output_dir.glob("plan_*.pddl"))
         if plan_files:
             return max(plan_files, key=os.path.getmtime)
         return None
 
-
 def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
+    session_state = page.session_state
     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
         for material, tolva in molino.tolvas.items():
             field_key = f"{molino.nombre}_{material}"
-            if field_key in level_fields and level_fields[field_key].value:
+            if field_key in session_state['level_fields'] and session_state['level_fields'][field_key].value:
                 try:
-                    new_level = float(level_fields[field_key].value)
+                    new_level = float(session_state['level_fields'][field_key].value)
                     if molino.nombre == "MC3":
                         tolva.nivel_actual = max(0, min(new_level, 100))
                     else:
@@ -1300,42 +966,51 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                 except ValueError:
                     tolva.nivel_actual = tolva.nivel_actual
         feed_rate_key = f"{molino.nombre}_feed_rate"
-        if feed_rate_key in feed_rate_fields and feed_rate_fields[feed_rate_key].value:
+        if feed_rate_key in session_state['feed_rate_fields'] and session_state['feed_rate_fields'][feed_rate_key].value:
             try:
-                new_feed = float(feed_rate_fields[feed_rate_key].value)
+                new_feed = float(session_state['feed_rate_fields'][feed_rate_key].value)
                 if new_feed >= 0:
-                    molino.set_alimentacion_fresca(new_feed)
-                    print(f"Alimentación fresca de {molino.nombre} actualizada a {new_feed} t/h")
+                    try:
+                        molino.set_alimentacion_fresca(new_feed)
+                        print(f"Alimentación fresca de {molino.nombre} actualizada a {new_feed} t/h")
+                    except AttributeError as e:
+                        print(f"❌ Error: No se encontró el método set_alimentacion_fresca en {molino.nombre}: {e}")
+                        page.snack_bar = ft.SnackBar(
+                            Text(f"❌ Error: No se pudo actualizar la alimentación fresca de {molino.nombre}"),
+                            open=True,
+                            duration=5000
+                        )
+                        page.update()
+                        return
                 else:
-                    print(f"Valor inválido para alimentación fresca de {molino.nombre}: {new_feed} (debe ser no negativo)")
+                    print(f"Valor inválido para alimentación fresca de {molino.nombre}: {new_feed}")
             except ValueError:
-                print(f"Valor inválido para alimentación fresca de {molino.nombre}: {feed_rate_fields[feed_rate_key].value}")
+                print(f"Valor inválido para alimentación fresca de {molino.nombre}: {session_state['feed_rate_fields'][feed_rate_key].value}")
     
     try:
         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
-        pddl_content = generar_problema_pddl_dinamico(estado_molinos, estado_rutas, tolvas_criticas, tiempos_por_tolva)
+        pddl_content = generar_problema_pddl_dinamico(
+            session_state['estado_molinos'],
+            session_state['estado_rutas'],
+            tolvas_criticas,
+            tiempos_por_tolva,
+            path_output=f"PDDL/cement_problem_{page.session_id}.pddl"
+        )
         refresh_cards(pddl_content, sistema, page)
     except ValueError as e:
         print(f"❌ Error al generar problema PDDL: {e}")
+        session_state['pddl_display'].controls[0].value = f"Error: {e}"
         page.snack_bar = ft.SnackBar(
             Text(f"❌ Error al generar problema PDDL: {e}"),
             open=True,
             duration=0
         )
-        pddl_display.controls[0].value = f"Error: {e}"
         page.update()
         return
     
-    # DOMAIN = r"G:\Mi unidad\TRABAJO UNACEM 2025\PROYECTO HEURISTICO 2025\PDDL-DA\cement-alimentacion.pddl"
-    # PROBLEM = r"G:\Mi unidad\TRABAJO UNACEM 2025\PROYECTO HEURISTICO 2025\PDDL-DA\cement_problem.pddl"
-    # WORKSPACE = r"G:\Mi unidad\TRABAJO UNACEM 2025\PROYECTO HEURISTICO 2025\PDDL-DA"
-    
-    # PDDL
-    DOMAIN   = BASE_DIR / "PDDL" / "cement-alimentacion.pddl"
-    PROBLEM  = BASE_DIR / "PDDL" / "cement_problem.pddl"
-    WORKSPACE= BASE_DIR / "PDDL"
-
-
+    DOMAIN = BASE_DIR / "PDDL" / "cement-alimentacion.pddl"
+    PROBLEM = BASE_DIR / "PDDL" / f"cement_problem_{page.session_id}.pddl"
+    WORKSPACE = BASE_DIR / "PDDL"
 
     try:
         with open(PROBLEM, 'w', encoding='utf-8') as f:
@@ -1343,8 +1018,8 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
         print(f"Problema PDDL guardado en {PROBLEM}")
     except Exception as e:
         print(f"Error al guardar el problema PDDL: {e}")
+        session_state['pddl_display'].controls[0].value = f"Error: {e}"
         page.snack_bar = ft.SnackBar(Text(f"❌ Error al guardar el problema PDDL: {e}"), open=True, duration=5000)
-        pddl_display.controls[0].value = f"Error: {e}"
         page.update()
         return
     
@@ -1362,9 +1037,7 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                     if line.strip() and not line.startswith(';') and not any(s in line for s in ['Plan length:', 'Makespan:', 'Search time:', 'Total time:'])
                 )
                 print(f"📜 Contenido para pddl_display:\n{clean_plan}")
-                 #actions = f"; {metric_name}: {metric_value}\n" + actions  # lo anexa arriba del plan
-                pddl_display.controls[0].value = f"{clean_plan}"
-                print(f"📜 Asignado a pddl_display.controls[0].value: {pddl_display.controls[0].value}")
+                session_state['pddl_display'].controls[0].value = clean_plan
                 page.snack_bar = ft.SnackBar(
                     Text(f"✅ Plan generado con éxito:\n{clean_plan}"),
                     open=True,
@@ -1372,16 +1045,15 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                 )
             else:
                 print("❌ No se encontraron planes generados")
-                pddl_display.controls[0].value = "Error: No se encontraron planes"
+                session_state['pddl_display'].controls[0].value = "Error: No se encontraron planes"
                 page.snack_bar = ft.SnackBar(
                     Text("❌ No se encontraron planes generados"),
                     open=True,
                     duration=0
                 )
-
     except Exception as e:
         print(f"❌ Error inicial: {e}")
-        pddl_display.controls[0].value = f"Error: {e}"
+        session_state['pddl_display'].controls[0].value = f"Error: {e}"
         page.snack_bar = ft.SnackBar(
             Text(f"❌ Error inicial: {e}"),
             open=True,
@@ -1390,7 +1062,6 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
     
     refresh_cards(sistema=sistema, page=page)
     page.update()
-
 
 # ---------------------------------------------
 # Main
@@ -1403,17 +1074,68 @@ def main(page: ft.Page):
     page.padding = 5
     page.window_width = 1200
     page.window_height = 600
-    page.scroll = ft.ScrollMode.AUTO  # Enable page-level scrolling
+    page.scroll = ft.ScrollMode.AUTO
+
+    if not (BASE_DIR / "assets" / "logo.png").exists():
+        print("❌ Error: logo.png no encontrado en assets")
+        page.snack_bar = ft.SnackBar(
+            Text("❌ Error: logo.png no encontrado en assets"),
+            open=True,
+            duration=0
+        )
+
+    # Inicializar estado por sesión
+    if not hasattr(page, 'session_state'):
+        page.session_state = {
+            'estado_rutas': {
+                "MC1-desde-Pretrit": True,
+                "MC2-desde-Pretrit": True,
+                "MC3-desde_Silo-Blanco": True,
+                "Pretrit_a_Silo_Blanco": True,
+                "PH-a-426HO04-por-MC2": True,
+                "PH-a-MC1-por-MC2": True,
+                "PH-a-MC1-por-MC1": True,
+                "PS-a-MC3-por-MC2": True,
+                "PS-a-426HO02-por-426HO04": True,
+                "MC1-por-MC1": True,
+                "MC1-por-MC2": True,
+                "MC2-por-MC2": True,
+                "MC3-por-MC1": True,
+                "MC3-por-MC2": True
+            },
+            'estado_molinos': {
+                "mc1": True,
+                "mc2": True,
+                "mc3": True
+            },
+            'level_fields': {},
+            'feed_rate_fields': {},
+            'status_dropdowns': {},
+            'menu_column': None,
+            'pddl_display': ft.ListView(
+                controls=[
+                    ft.Text(
+                        "Presione 'Generar Plan' para ver el contenido.",
+                        color=ft.Colors.BLACK,
+                        size=22,
+                        expand=True,
+                        no_wrap=False
+                    )
+                ],
+                expand=True,
+                height=240,
+                auto_scroll=ft.ScrollMode.AUTO
+            )
+        }
+
     try:
         sistema = SistemaAlimentacion()
         sistema.set_productos()
         
-        # Sincronizar estado_molinos con los molinos
-        sistema.mc1.set_estado(estado_molinos["mc1"])
-        sistema.mc2.set_estado(estado_molinos["mc2"])
-        sistema.mc3.set_estado(estado_molinos["mc3"])
+        sistema.mc1.set_estado(page.session_state['estado_molinos']["mc1"])
+        sistema.mc2.set_estado(page.session_state['estado_molinos']["mc2"])
+        sistema.mc3.set_estado(page.session_state['estado_molinos']["mc3"])
         
-        # Configurar niveles iniciales de las tolvas
         sistema.mc1.tolvas["clinker"].nivel_actual = 1.0
         sistema.mc1.tolvas["puzolana"].nivel_actual = 1.0
         sistema.mc1.tolvas["yeso"].nivel_actual = 1.0
@@ -1424,23 +1146,6 @@ def main(page: ft.Page):
         sistema.mc3.tolvas["clinker"].nivel_actual = 10.0
         sistema.mc3.tolvas["puzolana"].nivel_actual = 15.0
         sistema.mc3.tolvas["yeso"].nivel_actual = 10.5
-        
-        # Definir pddl_display globalmente
-        global pddl_display
-        pddl_display = ft.ListView(
-            controls=[
-                ft.Text(
-                    "Presione 'Generar Plan' para ver el contenido.",
-                    color=ft.Colors.BLACK,
-                    size=22,
-                    expand=True,
-                    no_wrap=False
-                )
-            ],
-            expand=True,
-            height=240,
-            auto_scroll=ft.ScrollMode.AUTO
-        )
         
         refresh_cards(sistema=sistema, page=page)
         page.update()
@@ -1457,13 +1162,9 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     ft.app(
-    target=main,
-    #view=None,  
-    view=ft.WEB_BROWSER,                    # imprescindible en servidor headless
-    port=int(os.getenv("PORT", "8080")),         # usa 8080 por defecto
-    assets_dir="assets" ,                         # para que cargue el logo
-    host="0.0.0.0"
+        target=main,
+        view=ft.WEB_BROWSER,
+        port=int(os.getenv("PORT", "8080")),
+        assets_dir="assets",
+        host="0.0.0.0"
     )
-    
-    #ft.app(target=main)
-    #view=ft.WEB_BROWSER

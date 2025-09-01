@@ -618,6 +618,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             
             card = ft.Card(
                 content=ft.Container(
+                    
                     content=ft.Column([
                         ft.Text(f"Molino {molino.nombre}", size=18, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
                         ft.Row(
@@ -662,6 +663,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                     ),
                     padding=7,
                     height=card_height,
+                    
                 ),
                 elevation=0,
             )

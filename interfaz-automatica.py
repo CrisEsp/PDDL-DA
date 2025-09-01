@@ -656,12 +656,15 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                             padding=ft.padding.only(left=0, right=0),
                         )
                     ],
+                    scroll="always",
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=0,
                     expand=True,
                     ),
                     padding=7,
-                    height=card_height,
+                    height=340,
+                    
+                    
                 ),
                 elevation=0,
             )

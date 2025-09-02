@@ -46,16 +46,22 @@
     (= (duracion-llenado t3-yeso MC3-por-MC1) 2)
     (= (duracion-llenado t3-yeso MC3-por-MC2) 6)
     (en-marcha mc1)
+    (en-marcha mc2)
     (en-marcha mc3)
     ;; Clinker
     (ruta-disponible mc1 t1-clinker clinker MC1-desde-Pretrit)
+    (ruta-disponible mc2 t2-clinker clinker MC2-desde-Pretrit)
     (ruta-disponible mc3 t3-clinker clinker MC3-desde_Silo-Blanco)
     (ruta-disponible mc3 t3-clinker clinker Pretrit_a_Silo_Blanco)
+    ;; Puzolana
+    (ruta-disponible mc2 t2-puzolana-h puzolana-h PH-a-426HO04-por-MC2)
     (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC2)
     (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC1)
     (ruta-disponible mc3 t3-puzolana-s puzolana-s PS-a-MC3-por-MC2)
+    (ruta-disponible mc2 t2-puzolana-s puzolana-s PS-a-426HO02-por-426HO04)
     ;; Yeso
     (ruta-disponible mc1 t1-yeso yeso MC1-por-MC1)
+    (ruta-disponible mc2 t2-yeso yeso MC2-por-MC2)
     (ruta-disponible mc3 t3-yeso yeso MC3-por-MC1)
     (ruta-disponible mc3 t3-yeso yeso MC3-por-MC2)
     ;; Tiempos de vaciado
@@ -74,10 +80,13 @@
   (:goal (and
     (alimentado t1-yeso yeso)
     (alimentado t3-yeso yeso)
+    (alimentado t2-puzolana-h puzolana-h)
     (alimentado t1-clinker clinker)
     (alimentado t1-puzolana-h puzolana-h)
     (alimentado t3-puzolana-s puzolana-s)
     (alimentado t3-clinker clinker)
+    (alimentado t2-clinker clinker)
+    (alimentado t2-puzolana-s puzolana-s)
   ))
   (:metric minimize (total-cost))
 )

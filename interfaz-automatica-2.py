@@ -1,3 +1,4 @@
+
 import os
 from pathlib import Path
 import requests
@@ -5,7 +6,7 @@ import re
 import time
 from datetime import datetime
 import flet as ft
-from flet import Page, SnackBar, Text, Column, Card, Container, ListView, TextAlign, FontWeight, CrossAxisAlignment
+from flet import Page, SnackBar, Text, Column, Card, Container, ListView, TextAlign, FontWeight, CrossAxisAlignment, ProgressRing
 import enum
 from typing import List, Dict, Tuple
 
@@ -618,7 +619,6 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
             
             card = ft.Card(
                 content=ft.Container(
-                    
                     content=ft.Column([
                         ft.Text(f"Molino {molino.nombre}", size=18, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER),
                         ft.Row(
@@ -657,13 +657,13 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
                             padding=ft.padding.only(left=0, right=0),
                         )
                     ],
+                    scroll="always",
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=0,
                     expand=True,
                     ),
                     padding=7,
-                    height=card_height,
-                    
+                    height=350,
                 ),
                 elevation=0,
             )
@@ -955,6 +955,35 @@ class PDDLExecutor:
 
 def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
     session_state = page.session_state
+    
+    # Clear the PDDL display and show loading animation
+    session_state['pddl_display'].controls.clear()
+    session_state['pddl_display'].controls.append(
+        ft.Container(
+            content=ft.Column([
+                ft.ProgressRing(
+                    color=ft.Colors.BLUE_700,
+                    width=50,
+                    height=50,
+                    stroke_width=5
+                ),
+                ft.Text(
+                    "Buscando rutas disponibles...",
+                    size=16,
+                    color=ft.Colors.BLACK,
+                    text_align=ft.TextAlign.CENTER
+                )
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=10
+            ),
+            alignment=ft.alignment.center,
+            expand=True
+        )
+    )
+    page.update()
+
     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
         for material, tolva in molino.tolvas.items():
             field_key = f"{molino.nombre}_{material}"
@@ -1029,6 +1058,9 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
         executor = PDDLExecutor(DOMAIN, PROBLEM, WORKSPACE)
         success = executor.execute()
         
+        # Clear the loading animation
+        session_state['pddl_display'].controls.clear()
+        
         if success:
             plan_path = executor.get_latest_plan_path()
             if plan_path:
@@ -1039,7 +1071,15 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                     if line.strip() and not line.startswith(';') and not any(s in line for s in ['Plan length:', 'Makespan:', 'Search time:', 'Total time:'])
                 )
                 print(f"📜 Contenido para pddl_display:\n{clean_plan}")
-                session_state['pddl_display'].controls[0].value = clean_plan
+                session_state['pddl_display'].controls.append(
+                    ft.Text(
+                        clean_plan,
+                        color=ft.Colors.BLACK,
+                        size=22,
+                        expand=True,
+                        no_wrap=False
+                    )
+                )
                 page.snack_bar = ft.SnackBar(
                     Text(f"✅ Plan generado con éxito:\n{clean_plan}"),
                     open=True,
@@ -1047,15 +1087,47 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                 )
             else:
                 print("❌ No se encontraron planes generados")
-                session_state['pddl_display'].controls[0].value = "Error: No se encontraron planes"
+                session_state['pddl_display'].controls.append(
+                    ft.Text(
+                        "Error: No se encontraron planes",
+                        color=ft.Colors.BLACK,
+                        size=22,
+                        expand=True,
+                        no_wrap=False
+                    )
+                )
                 page.snack_bar = ft.SnackBar(
                     Text("❌ No se encontraron planes generados"),
                     open=True,
                     duration=0
                 )
+        else:
+            session_state['pddl_display'].controls.append(
+                ft.Text(
+                    "Error: No se pudo generar el plan",
+                    color=ft.Colors.BLACK,
+                    size=22,
+                    expand=True,
+                    no_wrap=False
+                )
+            )
+            page.snack_bar = ft.SnackBar(
+                Text("❌ No se pudo generar el plan"),
+                open=True,
+                duration=0
+            )
     except Exception as e:
         print(f"❌ Error inicial: {e}")
-        session_state['pddl_display'].controls[0].value = f"Error: {e}"
+        session_state['pddl_display'].controls.clear()
+        session_state['pddl_display'].controls.append(
+            ft.Text(
+                f"Error: {e}",
+                color=ft.Colors.BLACK,
+                size=22,
+                expand=True,
+                no_wrap=False
+            )
+        )
         page.snack_bar = ft.SnackBar(
             Text(f"❌ Error inicial: {e}"),
             open=True,

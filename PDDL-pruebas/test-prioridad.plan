@@ -1,0 +1,10 @@
+;;!domain: vaciado-con-tiempos
+;;!problem: problema-vaciado-con-tiempos
+
+0.00000: (vaciar c3) [1.00000]
+1.00100: (vaciar c1) [8.00000]
+9.00200: (vaciar c2) [15.00000]
+
+; Makespan: 24.002000000000002
+; Metric: 34
+; States evaluated: 32

@@ -1,0 +1,12 @@
+;;!domain: cement-alimentacion
+;;!problem: cement-production-problem
+
+0.00100: (alimentar-clinker mc1 t1-clinker mc1-desde-pretrit) [2.00000]
+0.00100: (alimentar-puzolana-h mc1 t1-puzolana-h ph-a-mc1-por-mc1) [6.00000]
+0.00100: (alimentar-yeso mc1 t1-yeso mc1-por-mc1) [3.00000]
+0.00100: (alimentar-puzolana-h mc2 t2-puzolana-h ph-a-426ho04-por-mc2) [6.00000]
+0.01100: (alimentar-puzolana-s mc3 t3-puzolana-s ps-a-mc3-por-mc2) [5.00000]
+5.02100: (alimentar-yeso mc3 t3-yeso mc3-por-mc1) [2.00000]
+
+; Makespan: 7.021
+; Metric: 7.021

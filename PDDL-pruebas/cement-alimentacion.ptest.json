@@ -1,0 +1,12 @@
+{
+  "defaultDomain": "cement-alimentacion.pddl",
+  "defaultOptions": "",
+  "cases": [
+    {
+      "problem": "cement_problem.pddl",
+      "expectedPlans": [
+        "cement_problem.pddl_2025-09-02T20-34-03.973Z.plan"
+      ]
+    }
+  ]
+}

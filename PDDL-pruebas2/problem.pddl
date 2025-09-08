@@ -13,6 +13,25 @@
   )
 
   (:init
+    ; Molino libre
+    ;; Molino mc3 identificado
+    ; (es-mc3 mc3)
+    (clinker-libre)
+    (puzolana-h-libre PH-a-MC1-por-MC1)
+    (puzolana-h-libre PH-a-MC1-por-MC2)
+    (puzolana-s-libre)
+    (yeso-libre)
+
+    ;; Todos los molinos empiezan libres para clinker
+    (molino-libre-clinker mc1)
+    (molino-libre-clinker mc2)
+    (molino-libre-clinker mc3)
+
+    ;; Yeso permitido al inicio en todos
+    (yeso-permitido mc1)
+    (yeso-permitido mc2)
+    (yeso-permitido mc3)
+
     ;; Tolvas libres
     (libre t1-clinker) (libre t1-puzolana-h) (libre t1-yeso)
     (libre t2-clinker) (libre t2-puzolana-h) (libre t2-puzolana-s) (libre t2-yeso)
@@ -46,14 +65,14 @@
     (= (duracion-llenado t3-yeso MC3-por-MC2) 6)
 
     ;; Tiempos de vaciado (se usan como costo)
-    (= (tiempo-vaciado t1-clinker) 1.72)
-    (= (tiempo-vaciado t2-clinker) 0.13)
-    (= (tiempo-vaciado t3-clinker) 0.96)
+    (= (tiempo-vaciado t1-clinker) 2.72)
+    (= (tiempo-vaciado t2-clinker) 4.13)
+    (= (tiempo-vaciado t3-clinker) 9.96)
     (= (tiempo-vaciado t1-puzolana-h) 1.37)
-    (= (tiempo-vaciado t2-puzolana-h) 4.04)
+    (= (tiempo-vaciado t2-puzolana-h) 8.04)
     (= (tiempo-vaciado t2-puzolana-s) 1.97)
     (= (tiempo-vaciado t3-puzolana-s) 1.10)
-    (= (tiempo-vaciado t1-yeso) 12.25)
+    (= (tiempo-vaciado t1-yeso) 11.25)
     (= (tiempo-vaciado t2-yeso) 26.06)
     (= (tiempo-vaciado t3-yeso) 6.81)
 
@@ -74,7 +93,7 @@
 
     (ruta-disponible mc2 t2-puzolana-h puzolana-h PH-a-426HO04-por-MC2)
     (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC2)
-    (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC1)
+    ; (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC1)
     (ruta-disponible mc3 t3-puzolana-s puzolana-s PS-a-MC3-por-MC2)
     (ruta-disponible mc2 t2-puzolana-s puzolana-s PS-a-426HO02-por-426HO04)
 
@@ -86,12 +105,16 @@
 
   (:goal (and
     (alimentado t1-yeso yeso)
-    (alimentado t3-yeso yeso)
-    (alimentado t2-puzolana-h puzolana-h)
+    (alimentado t1-puzolana-h puzolana-h)
+    ; (alimentado t3-yeso yeso)
+    ; (alimentado t2-puzolana-h puzolana-h)
     ; (alimentado t1-clinker clinker)
+    ; (alimentado t2-clinker clinker)
+    ; (alimentado t3-clinker clinker)
     ; (alimentado t1-puzolana-h puzolana-h)
     ; (alimentado t3-puzolana-s puzolana-s)
   ))
 
   (:metric minimize (costo-total))
 )
+

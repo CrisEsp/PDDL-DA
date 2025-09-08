@@ -1,0 +1,9 @@
+;;!domain: cement-alimentacion
+;;!problem: cement-production-problem
+
+0.00000: (alimentar-yeso mc1 t1-yeso mc1-por-mc1) [3.00000]
+1.00100: (alimentar-yeso mc3 t3-yeso mc3-por-mc1) [2.00000]
+
+; Makespan: 3.001
+; Metric: 61.31
+; States evaluated: 52

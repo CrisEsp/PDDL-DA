@@ -46,16 +46,20 @@
     (= (duracion-llenado t3-yeso MC3-por-MC2) 6)
 
     ;; Tiempos de vaciado (se usan como costo)
-    (= (tiempo-vaciado t1-clinker) -1.72)
-    (= (tiempo-vaciado t2-clinker) -0.13)
-    (= (tiempo-vaciado t3-clinker) -0.96)
-    (= (tiempo-vaciado t1-puzolana-h) -1.37)
-    (= (tiempo-vaciado t2-puzolana-h) -4.04)
+    (= (tiempo-vaciado t1-clinker) 1.72)
+    (= (tiempo-vaciado t2-clinker) 0.13)
+    (= (tiempo-vaciado t3-clinker) 0.96)
+    (= (tiempo-vaciado t1-puzolana-h) 1.37)
+    (= (tiempo-vaciado t2-puzolana-h) 4.04)
     (= (tiempo-vaciado t2-puzolana-s) 1.97)
-    (= (tiempo-vaciado t3-puzolana-s) -1.10)
-    (= (tiempo-vaciado t1-yeso) -12.25)
+    (= (tiempo-vaciado t3-puzolana-s) 1.10)
+    (= (tiempo-vaciado t1-yeso) 12.25)
     (= (tiempo-vaciado t2-yeso) 26.06)
-    (= (tiempo-vaciado t3-yeso) -36.81)
+    (= (tiempo-vaciado t3-yeso) 6.81)
+
+    (= (tiempo-acumulado) 0)
+    (= (costo-total) 0)
+
 
     ;; Molinos en marcha
     (en-marcha mc1)
@@ -83,11 +87,11 @@
   (:goal (and
     (alimentado t1-yeso yeso)
     (alimentado t3-yeso yeso)
-    ; (alimentado t2-puzolana-h puzolana-h)
+    (alimentado t2-puzolana-h puzolana-h)
     ; (alimentado t1-clinker clinker)
     ; (alimentado t1-puzolana-h puzolana-h)
     ; (alimentado t3-puzolana-s puzolana-s)
   ))
 
-  (:metric minimize (total-cost))
+  (:metric minimize (costo-total))
 )

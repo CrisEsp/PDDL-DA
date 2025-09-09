@@ -110,7 +110,7 @@
           (and (= ?m mc2) (= ?t t2-puzolana-s) (= ?r PS-a-426HO02-por-426HO04))
           (and (= ?m mc3) (= ?t t3-puzolana-s) (= ?r PS-a-MC3-por-MC2))
       ))
-      ;; Exclusin mutua para evitar alimentacin simultnea de puzolana seca
+
       (over all (not (and (= ?m mc2) (alimentando puzolana-s mc3 t3-puzolana-s PS-a-MC3-por-MC2))))
       (over all (not (and (= ?m mc3) (alimentando puzolana-s mc2 t2-puzolana-s PS-a-426HO02-por-426HO04) )))
       (over all (not (and (= ?m mc1) (alimentando yeso mc1 ?r))))

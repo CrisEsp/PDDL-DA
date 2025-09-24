@@ -266,8 +266,10 @@
     ;; Recursos positivos para controlar conflictos
     (clinker-libre)
     (puzolana-h-libre ?r - ruta)
-    (puzolana-s-libre)
+    (puzolana-s-libre ?m - molino)
     (yeso-libre ?m - molino)
+    (ruta-yeso-libre ?m - molino ?r - ruta)
+    ; (yeso-libre ?r - ruta)
     (molino-libre-clinker ?m - molino)
   )
 
@@ -292,9 +294,9 @@
       (at start (material-disponible clinker))
       (at start (molino-libre-clinker ?m))
       (at start (clinker-libre))
-      (at start (puzolana-s-libre))
+      (at start (puzolana-s-libre ?m))
       ; (at start (puzolana-h-libre ?r))
-      ; (at start (yeso-libre ?m))
+      (at start (yeso-libre mc3))
     )
     :effect (and
       (at start (not (libre ?t)))
@@ -310,8 +312,9 @@
       (at end (clinker-libre))
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-      ; (at start (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-      ; (at end (increase (costo-total) (tiempo-acumulado)))
+
+
+
     )
   )
 
@@ -326,7 +329,10 @@
       (at start (libre ?t))
       (at start (ruta-disponible ?m ?t puzolana-h ?r))
       (at start (material-disponible puzolana-h))
+      (at start (yeso-libre mc1))
       (at start (puzolana-h-libre ?r))   ;;  recurso positivo
+      (at start (puzolana-h-libre PH-a-MC1-por-MC2)) ;; mantiene conflicto
+      
     )
     :effect (and
       (at start (not (libre ?t)))
@@ -340,8 +346,8 @@
       (at end (puzolana-h-libre ?r))          ;; libera la ruta
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-      ; (at start (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-      ; (at end (increase (costo-total) (tiempo-acumulado)))
+
+
     )
   )
 
@@ -356,23 +362,22 @@
       (at start (libre ?t))
       (at start (ruta-disponible ?m ?t puzolana-s ?r))
       (at start (material-disponible puzolana-s))
-      (at start (puzolana-s-libre))
+      (at start (puzolana-s-libre mc3))
       (at start (yeso-libre ?m))
+      (at start (molino-libre-clinker mc3))
     )
     :effect (and
       (at start (not (libre ?t)))
       (at start (tolva-ocupada ?t puzolana-s))
       (at start (alimentando puzolana-s ?m ?r))
-      (at start (not (puzolana-s-libre)))
+      (at start (not (puzolana-s-libre ?m)))
       (at end (alimentado ?t puzolana-s))
       (at end (libre ?t))
       (at end (not (tolva-ocupada ?t puzolana-s)))
       (at end (not (alimentando puzolana-s ?m ?r)))
-      (at end (puzolana-s-libre))
+      (at end (puzolana-s-libre ?m))
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-      ; (at start (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-      ; (at end (increase (costo-total) (tiempo-acumulado)))
     )
   )
 
@@ -389,6 +394,10 @@
       (at start (material-disponible yeso))
       (at start (yeso-libre ?m))          ;; recurso positivo
       (at start (puzolana-h-libre PH-a-MC1-por-MC1)) ;; mantiene conflicto
+      (at start (molino-libre-clinker mc3))
+      (at start (puzolana-s-libre ?m))
+      (at start (ruta-yeso-libre mc2 MC2-por-MC2))
+      (at start (ruta-yeso-libre mc3 MC3-por-MC2))       ;; recurso positivo
     )
     :effect (and
       (at start (not (libre ?t)))
@@ -402,9 +411,7 @@
       (at end (yeso-libre ?m))
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-      ; (at start (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-      ; (at end (increase (costo-total) (tiempo-acumulado)))
-
     )
   )
 )
+

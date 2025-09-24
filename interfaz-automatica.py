@@ -246,6 +246,7 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
         "t2-puzolana-s": ["PS-a-426HO02-por-426HO04"],
         "t3-puzolana-s": ["PS-a-MC3-por-MC2"],
         "t1-yeso": ["MC1-por-MC1"],
+        
         "t2-yeso": ["MC2-por-MC2"],
         "t3-yeso": ["MC3-por-MC1", "MC3-por-MC2"]
     }

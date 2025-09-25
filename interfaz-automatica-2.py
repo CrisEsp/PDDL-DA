@@ -35,8 +35,8 @@ class Tolva:
 
     def tiempo_vaciado(self, consumo_por_hora: float) -> float:
         toneladas_reales = ((self.nivel_actual - self.nivel_ineficiente) * self.capacidad) / self.altura_max
-        print(f"Nivel actual de {self.material}: {self.nivel_actual} m, Capacidad: {self.capacidad} t, Altura máxima: {self.altura_max} m")
-        print(f"Toneladas reales en {self.material}: {toneladas_reales} t")
+        # print(f"Nivel actual de {self.material}: {self.nivel_actual} m, Capacidad: {self.capacidad} t, Altura máxima: {self.altura_max} m")
+        # print(f"Toneladas reales en {self.material}: {toneladas_reales} t")
         return toneladas_reales / consumo_por_hora if consumo_por_hora > 0 else float('inf')
 
 class Molino:
@@ -76,7 +76,7 @@ class Molino:
     def tiempo_vaciado(self, material: str) -> float:
         if material not in self.ratios or material not in self.tolvas:
             return float('inf')
-        consumo = (self.alimentacion_fresca * self.ratios[material]) / 100
+        consumo = ((self.alimentacion_fresca * self.ratios[material]) / 100) +100
         print(f"Consumo para {material} en {self.nombre}: {consumo} t/h")
         return self.tolvas[material].tiempo_vaciado(consumo)
 
@@ -246,6 +246,7 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
         "t2-puzolana-s": ["PS-a-426HO02-por-426HO04"],
         "t3-puzolana-s": ["PS-a-MC3-por-MC2"],
         "t1-yeso": ["MC1-por-MC1"],
+        "t1-yeso": ["MC1-por-MC2"],
         "t2-yeso": ["MC2-por-MC2"],
         "t3-yeso": ["MC3-por-MC1", "MC3-por-MC2"]
     }
@@ -274,40 +275,71 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
     tolvas_validas_ordenadas = sorted(tolvas_validas, key=lambda x: tiempos_por_tolva.get(x, float('inf')))
     if not tolvas_validas:
         raise ValueError("No hay tolvas críticas válidas con rutas habilitadas para generar el objetivo.")
-    pddl_content = """(define (problem cement-production-problem)
+    pddl_content = """
+  (define (problem cement-production-problem)
   (:domain cement-alimentacion)
+
   (:objects
+    ;; Molinos
     mc1 mc2 mc3 - molino
+
+    ;; Tolvas
     t1-clinker t1-puzolana-h t1-yeso
     t2-clinker t2-puzolana-h t2-puzolana-s t2-yeso
     t3-clinker t3-puzolana-s t3-yeso - tolva
-    clinker puzolana-h yeso puzolana-s - materia
+
+    ;; Materias
+    clinker puzolana-h puzolana-s yeso - materia
+
+    ;; Rutas
     MC1-desde-Pretrit MC2-desde-Pretrit MC3-desde_Silo-Blanco Pretrit_a_Silo_Blanco 
-    PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04 - ruta
+    PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 
+    PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04 
     MC1-por-MC1 MC1-por-MC2 MC2-por-MC2 MC3-por-MC1 MC3-por-MC2 - ruta
   )
+
   (:init
+    ;; Molinos en marcha
+    (en-marcha mc1) (en-marcha mc2) (en-marcha mc3)
+
+    ;; Tolvas libres
     (libre t1-clinker) (libre t1-puzolana-h) (libre t1-yeso)
     (libre t2-clinker) (libre t2-puzolana-h) (libre t2-puzolana-s) (libre t2-yeso)
     (libre t3-clinker) (libre t3-puzolana-s) (libre t3-yeso)
+
+    ;; Compatibilidades
     (compatible clinker t1-clinker) (compatible puzolana-h t1-puzolana-h) (compatible yeso t1-yeso)
     (compatible clinker t2-clinker) (compatible puzolana-h t2-puzolana-h)
     (compatible puzolana-s t2-puzolana-s) (compatible yeso t2-yeso)
     (compatible clinker t3-clinker) (compatible puzolana-s t3-puzolana-s) (compatible yeso t3-yeso)
+
+    ;; Material disponible
     (material-disponible clinker)
     (material-disponible puzolana-h)
     (material-disponible puzolana-s)
     (material-disponible yeso)
-    (= (costo-prioridad t1-clinker) 166.67)
-    (= (costo-prioridad t1-puzolana-h) 476.19)
-    (= (costo-prioridad t1-yeso) 270.27)
-    (= (costo-prioridad t2-clinker) 47619.19)
-    (= (costo-prioridad t2-puzolana-h) 142.86)
-    (= (costo-prioridad t2-puzolana-s) 400.00)
-    (= (costo-prioridad t2-yeso) 270.27)
-    (= (costo-prioridad t3-clinker) 163.93)
-    (= (costo-prioridad t3-puzolana-s) 400.00)
-    (= (costo-prioridad t3-yeso) 270.27)
+
+    ;; Recursos positivos iniciales
+    (clinker-libre)
+    (puzolana-h-libre PH-a-MC1-por-MC1)
+    (puzolana-h-libre PH-a-MC1-por-MC2)
+    (puzolana-h-libre PH-a-426HO04-por-MC2)
+    (puzolana-s-libre mc1)
+    (puzolana-s-libre mc2) 
+    (puzolana-s-libre mc3) 
+    ; (ruta-yeso-libre MC1-por-MC1)
+    ; (ruta-yeso-libre MC1-por-MC2)
+    (ruta-yeso-libre MC2-por-MC2)
+    ; (ruta-yeso-libre MC3-por-MC1)
+    (ruta-yeso-libre MC3-por-MC2)
+    (yeso-libre mc1)
+    (yeso-libre mc2)
+    (yeso-libre mc3)
+    (molino-libre-clinker mc1)
+    (molino-libre-clinker mc2)
+    (molino-libre-clinker mc3)
+
+    ;; Duraciones
     (= (duracion-llenado t1-clinker MC1-desde-Pretrit) 2)
     (= (duracion-llenado t2-clinker MC2-desde-Pretrit) 3)
     (= (duracion-llenado t3-clinker MC3-desde_Silo-Blanco) 4)
@@ -317,10 +349,17 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
     (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC1) 6)
     (= (duracion-llenado t3-puzolana-s PS-a-MC3-por-MC2) 5)
     (= (duracion-llenado t2-puzolana-s PS-a-426HO02-por-426HO04) 4)
-    (= (duracion-llenado t1-yeso MC1-por-MC1) 3)
+    (= (duracion-llenado t1-yeso MC1-por-MC1) 3)       
+    (= (duracion-llenado t1-yeso MC1-por-MC2) 3)
     (= (duracion-llenado t2-yeso MC2-por-MC2) 5)
     (= (duracion-llenado t3-yeso MC3-por-MC1) 2)
     (= (duracion-llenado t3-yeso MC3-por-MC2) 6)
+
+    ;; Inicializar tiempo y costo
+    (= (tiempo-acumulado) 0)
+    (= (costo-total) 0)
+
+
 """
     rutas = [
         ("mc1", "t1-clinker", "MC1-desde-Pretrit"),
@@ -365,7 +404,7 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
         if estado_molinos.get(molino, False):
             material = tolva_a_material.get(tolva, "unknown")
             pddl_content += f"    (alimentado {tolva} {material})\n"
-    pddl_content += "  ))\n  (:metric minimize (total-cost))\n)"
+    pddl_content += "  ))\n  (:metric minimize (costo-total))\n)"
     with open(path_output, "w") as f:
         f.write(pddl_content)
     return pddl_content
@@ -739,6 +778,230 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
 # PDDL Executor
 # ---------------------------------------------
 
+# class PDDLExecutor:
+#     def __init__(self, domain_path, problem_path, workspace_path):
+#         self.domain_path = Path(str(domain_path).replace("\\", "/"))
+#         self.problem_path = Path(str(problem_path).replace("\\", "/"))
+#         self.workspace_path = Path(str(workspace_path).replace("\\", "/"))
+#         self.output_dir = self.workspace_path / "generated_plans"
+#         self.output_dir.mkdir(exist_ok=True)
+#         self.delays = {
+#             'open_vscode': 0,
+#             'command_palette': 45,
+#             'select_planner': 45,
+#             'plan_generation': 40,  # 10
+#             'monitor_interval': 40,
+#             'max_attempts': 10
+#         }
+
+#     def execute(self):
+#         print("🚀 Iniciando proceso de planificación PDDL")
+#         print(f"🔍 Usando servicio remoto: https://solver.planning.domains:5001/package/optic/solve")
+#         try:
+#             if not self._open_vscode():
+#                 return False
+#             if not self._run_tfd_planner():
+#                 return False
+#             plan_path = self._capture_and_save_plan()
+#             if plan_path:
+#                 print(f"✅ Plan generado exitosamente: {plan_path}")
+#                 self._display_clean_plan(plan_path)
+#                 return True
+#             else:
+#                 print("❌ No se pudo generar el plan")
+#                 return False
+#         except Exception as e:
+#             print(f"❌ Error crítico: {e}")
+#             return False
+
+#     def _open_vscode(self):
+#         try:
+#             print("📂 Verificando archivos PDDL...")
+#             print(f"📄 Dominio: {self.domain_path}")
+#             print(f"📄 Problema: {self.problem_path}")
+#             if not self.domain_path.exists():
+#                 print(f"❌ Archivo de dominio no encontrado: {self.domain_path}")
+#                 return False
+#             if not self.problem_path.exists():
+#                 print(f"❌ Archivo de problema no encontrado: {self.problem_path}")
+#                 return False
+#             time.sleep(self.delays['open_vscode'])
+#             return True
+#         except Exception as e:
+#             print(f"❌ Error al verificar archivos: {e}")
+#             return False
+
+#     def _run_tfd_planner(self):
+#         try:
+#             print("⚙️ Iniciando planificador TFD remoto...")
+#             with open(self.domain_path, 'r', encoding='utf-8') as f:
+#                 domain_content = f.read()
+#             with open(self.problem_path, 'r', encoding='utf-8') as f:
+#                 problem_content = f.read()
+#             url = "https://solver.planning.domains:5001/package/optic/solve"
+#             payload = {"domain": domain_content, "problem": problem_content}
+#             print(f"📤 Enviando solicitud al servicio: {url}")
+#             response = requests.post(url, json=payload, timeout=self.delays['plan_generation'])
+#             print(f"📥 Respuesta cruda inicial: {response.text}")
+#             if response.status_code != 200:
+#                 print(f"❌ Error en la solicitud al servicio: {response.status_code} - {response.text}")
+#                 return False
+#             try:
+#                 initial_response = response.json()
+#                 print(f"📥 Respuesta JSON inicial: {initial_response}")
+#             except json.JSONDecodeError:
+#                 print(f"⚠️ No se pudo parsear la respuesta inicial como JSON: {response.text}")
+#                 return False
+#             check_url = initial_response.get('result', '')
+#             if not check_url.startswith('/check/'):
+#                 print(f"❌ Respuesta inicial no contiene URL de verificación: {initial_response}")
+#                 return False
+#             check_url = f"https://solver.planning.domains:5001{check_url}"
+#             print(f"🔄 Consultando URL de verificación: {check_url}")
+#             for attempt in range(self.delays['max_attempts']):
+#                 response = requests.get(check_url, timeout=self.delays['plan_generation'])
+#                 print(f"📥 Respuesta cruda (intento {attempt + 1}): {response.text}")
+#                 if response.status_code != 200:
+#                     print(f"❌ Error en la solicitud de verificación: {response.status_code} - {response.text}")
+#                     return False
+#                 try:
+#                     check_response = response.json()
+#                     print(f"📥 Respuesta JSON (intento {attempt + 1}): {check_response}")
+#                     if check_response.get('status') == 'ok' and 'output' in check_response.get('result', {}):
+#                         self._planner_response = check_response
+#                         return True
+#                 except json.JSONDecodeError:
+#                     print(f"⚠️ No se pudo parsear la respuesta de verificación como JSON: {response.text}")
+#                 time.sleep(self.delays['monitor_interval'])
+#             print(f"❌ No se obtuvo un plan después de {self.delays['max_attempts']} intentos")
+#             return False
+#         except requests.exceptions.RequestException as e:
+#             print(f"❌ Error al conectar con el servicio remoto: {e}")
+#             return False
+#         except Exception as e:
+#             print(f"❌ Error al ejecutar planificador: {e}")
+#             return False
+
+#     def _capture_and_save_plan(self):
+#         try:
+#             if not hasattr(self, '_planner_response'):
+#                 print("❌ No se encontró respuesta del planificador")
+#                 return None
+#             result = self._planner_response.get('result', {})
+#             plan_text = result.get('output', {}).get('plan', '') if isinstance(result.get('output'), dict) else ''
+#             if not plan_text or 'Found new plan' not in plan_text:
+#                 print("❌ No se encontró un plan válido en la respuesta")
+#                 print(f"Respuesta completa: {self._planner_response}")
+#                 return None
+#             plan_content = self._extract_most_recent_plan(plan_text)
+#             if plan_content:
+#                 return self._save_clean_plan(plan_content)
+#             return None
+#         except Exception as e:
+#             print(f"⚠️ Error al capturar plan: {e}")
+#             return None
+
+#     def _extract_most_recent_plan(self, log_content):
+#         rescheduled_match = re.search(
+#             r"Rescheduled Plan:(.*?)(?:Solution with|Search time:|$)",
+#             log_content,
+#             re.DOTALL | re.IGNORECASE
+#         )
+
+#         if rescheduled_match:
+#             print("✅ Se encontró un Rescheduled Plan, se prioriza sobre el Found new plan")
+#             block = rescheduled_match.group(1).strip()
+#             actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
+#             after_block = log_content[rescheduled_match.end(): rescheduled_match.end() + 200]
+#             metric_match = re.search(r"(Rescheduled Makespan|Makespan)\s*:\s*([\d\.]+)", after_block)
+#             if metric_match:
+#                 metric_name = metric_match.group(1)
+#                 metric_value = metric_match.group(2)
+#                 print(f"📊 {metric_name} del plan final = {metric_value}")
+#                 actions = f"; {metric_name}: {metric_value}\n" + actions
+#             return self._clean_plan_text(actions)
+
+#         plan_match = re.search(
+#             r"Found new plan:(.*?)(?:Solution with|Search time:|$)",
+#             log_content,
+#             re.DOTALL | re.IGNORECASE
+#         )
+#         if plan_match:
+#             print("⚠️ No hay Rescheduled Plan, se devuelve el Found new plan")
+#             block = plan_match.group(1).strip()
+#             actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
+#             after_block = log_content[plan_match.end(): plan_match.end() + 200]
+#             metric_match = re.search(r"(Makespan)\s*:\s*([\d\.]+)", after_block)
+#             if metric_match:
+#                 metric_name = metric_match.group(1)
+#                 metric_value = metric_match.group(2)
+#                 print(f"📊 {metric_name} del plan final = {metric_value}")
+#                 actions = f"; {metric_name}: {metric_value}\n" + actions
+#             return self._clean_plan_text(actions)
+
+#         print("❌ No se encontraron planes en el log")
+#         return None
+
+#     def _clean_plan_text(self, plan_text):
+#         cleaned_lines = []
+#         seen_actions = set()
+#         for line in plan_text.split('\n'):
+#             line = line.strip()
+#             if line and not any(s in line for s in ['Metric:', 'Makespan:', 'States evaluated:', 'Planner found', 'Rescheduled Plan:', 'Solution with original makespan', 'Plan length:', 'Search time:', 'Total time:']) and not line.startswith(';'):
+#                 time_match = re.match(r'^(\d+\.\d{1,8}):\s*(.*?)\s*(\[\d+\.\d{1,8}\])?$', line)
+#                 if time_match:
+#                     time_prefix = float(time_match.group(1))
+#                     action = time_match.group(2).strip()
+#                     duration = time_match.group(3) if time_match.group(3) else '[0.00000000]'
+#                     duration_value = float(duration[1:-1]) if duration != '[0.00000000]' else 0.0
+#                     if action not in seen_actions:
+#                         formatted_line = f"{time_prefix:.3f}: {action} [{duration_value:.3f}]"
+#                         cleaned_lines.append(formatted_line)
+#                         seen_actions.add(action)
+#         return '\n'.join(cleaned_lines)
+
+#     def _save_clean_plan(self, plan_content):
+#         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+#         filename = f"plan_{timestamp}.pddl"
+#         filepath = self.output_dir / filename
+#         try:
+#             with open(filepath, 'w', encoding='utf-8') as f:
+#                 f.write(f"; Plan generado automaticamente - {datetime.now()}\n")
+#                 f.write(f"; Dominio: {self.domain_path.name}\n")
+#                 f.write(f"; Problema: {self.problem_path.name}\n\n")
+#                 f.write(plan_content)
+#             return filepath
+#         except Exception as e:
+#             print(f"⚠️ Error al guardar plan: {e}")
+#             return None
+
+#     def _display_clean_plan(self, plan_path):
+#         try:
+#             with open(plan_path, 'r') as f:
+#                 print("\n" + "="*50)
+#                 print("CONTENIDO DEL PLAN LIMPIO:")
+#                 print("="*50)
+#                 print(f.read())
+#                 print("="*50 + "\n")
+#         except Exception as e:
+#             print(f"⚠️ Error al mostrar plan: {e}")
+
+#     def get_latest_plan_path(self):
+#         plan_files = list(self.output_dir.glob("plan_*.pddl"))
+#         if plan_files:
+#             return max(plan_files, key=os.path.getmtime)
+#         return None
+
+
+
+import os
+import re
+import time
+import json
+import requests
+from pathlib import Path
+from datetime import datetime
+
 class PDDLExecutor:
     def __init__(self, domain_path, problem_path, workspace_path):
         self.domain_path = Path(str(domain_path).replace("\\", "/"))
@@ -748,16 +1011,16 @@ class PDDLExecutor:
         self.output_dir.mkdir(exist_ok=True)
         self.delays = {
             'open_vscode': 0,
-            'command_palette': 5,
-            'select_planner': 5,
-            'plan_generation': 10,
-            'monitor_interval': 0,
+            'command_palette': 100,
+            'select_planner': 100,
+            'plan_generation': 100,
+            'monitor_interval': 100,
             'max_attempts': 10
         }
 
     def execute(self):
         print("🚀 Iniciando proceso de planificación PDDL")
-        print(f"🔍 Usando servicio remoto: https://solver.planning.domains:5001/package/tfd/solve")
+        print("🔍 Usando servicio remoto: https://solver.planning.domains:5001/package/optic/solve")
         try:
             if not self._open_vscode():
                 return False
@@ -799,7 +1062,7 @@ class PDDLExecutor:
                 domain_content = f.read()
             with open(self.problem_path, 'r', encoding='utf-8') as f:
                 problem_content = f.read()
-            url = "https://solver.planning.domains:5001/package/tfd/solve"
+            url = "https://solver.planning.domains:5001/package/optic/solve"
             payload = {"domain": domain_content, "problem": problem_content}
             print(f"📤 Enviando solicitud al servicio: {url}")
             response = requests.post(url, json=payload, timeout=self.delays['plan_generation'])
@@ -849,12 +1112,25 @@ class PDDLExecutor:
                 print("❌ No se encontró respuesta del planificador")
                 return None
             result = self._planner_response.get('result', {})
-            plan_text = result.get('output', {}).get('plan', '') if isinstance(result.get('output'), dict) else ''
-            if not plan_text or 'Found new plan' not in plan_text:
-                print("❌ No se encontró un plan válido en la respuesta")
-                print(f"Respuesta completa: {self._planner_response}")
+            output = result.get('output', {})
+            # Puede estar en 'plan' o en 'stdout'
+            raw_text = ""
+            if isinstance(output, dict):
+                raw_text = output.get('plan') or output.get('stdout', '')
+            else:
+                raw_text = str(output)
+
+            if not raw_text:
+                print("⚠️ El solver no devolvió texto de plan")
                 return None
-            plan_content = self._extract_most_recent_plan(plan_text)
+
+            # Aceptar "Plan found:" o "Found new plan:"
+            if not re.search(r"(Plan found|Found new plan)", raw_text, re.IGNORECASE):
+                print("⚠️ No se encontró cabecera de plan en la salida completa:")
+                print(raw_text)
+                return None
+
+            plan_content = self._extract_most_recent_plan(raw_text)
             if plan_content:
                 return self._save_clean_plan(plan_content)
             return None
@@ -863,41 +1139,28 @@ class PDDLExecutor:
             return None
 
     def _extract_most_recent_plan(self, log_content):
+        # Prioriza Rescheduled Plan si existe
         rescheduled_match = re.search(
             r"Rescheduled Plan:(.*?)(?:Solution with|Search time:|$)",
             log_content,
             re.DOTALL | re.IGNORECASE
         )
-
         if rescheduled_match:
-            print("✅ Se encontró un Rescheduled Plan, se prioriza sobre el Found new plan")
+            print("✅ Se encontró un Rescheduled Plan, se prioriza sobre el Plan found")
             block = rescheduled_match.group(1).strip()
             actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
-            after_block = log_content[rescheduled_match.end(): rescheduled_match.end() + 200]
-            metric_match = re.search(r"(Rescheduled Makespan|Makespan)\s*:\s*([\d\.]+)", after_block)
-            if metric_match:
-                metric_name = metric_match.group(1)
-                metric_value = metric_match.group(2)
-                print(f"📊 {metric_name} del plan final = {metric_value}")
-                actions = f"; {metric_name}: {metric_value}\n" + actions
             return self._clean_plan_text(actions)
 
+        # Acepta Plan found o Found new plan
         plan_match = re.search(
-            r"Found new plan:(.*?)(?:Solution with|Search time:|$)",
+            r"(?:Found new plan|Plan found)\s*:(.*?)(?:Metric|Makespan|$)",
             log_content,
             re.DOTALL | re.IGNORECASE
         )
         if plan_match:
-            print("⚠️ No hay Rescheduled Plan, se devuelve el Found new plan")
+            print("⚠️ Plan encontrado en la salida")
             block = plan_match.group(1).strip()
             actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
-            after_block = log_content[plan_match.end(): plan_match.end() + 200]
-            metric_match = re.search(r"(Makespan)\s*:\s*([\d\.]+)", after_block)
-            if metric_match:
-                metric_name = metric_match.group(1)
-                metric_value = metric_match.group(2)
-                print(f"📊 {metric_name} del plan final = {metric_value}")
-                actions = f"; {metric_name}: {metric_value}\n" + actions
             return self._clean_plan_text(actions)
 
         print("❌ No se encontraron planes en el log")
@@ -908,13 +1171,13 @@ class PDDLExecutor:
         seen_actions = set()
         for line in plan_text.split('\n'):
             line = line.strip()
-            if line and not any(s in line for s in ['Metric:', 'Makespan:', 'States evaluated:', 'Planner found', 'Rescheduled Plan:', 'Solution with original makespan', 'Plan length:', 'Search time:', 'Total time:']) and not line.startswith(';'):
-                time_match = re.match(r'^(\d+\.\d{1,8}):\s*(.*?)\s*(\[\d+\.\d{1,8}\])?$', line)
+            if line and not line.startswith(';'):
+                time_match = re.match(r'^(\d+\.\d+):\s*(.*?)\s*(\[\d+\.\d+\])?$', line)
                 if time_match:
                     time_prefix = float(time_match.group(1))
                     action = time_match.group(2).strip()
-                    duration = time_match.group(3) if time_match.group(3) else '[0.00000000]'
-                    duration_value = float(duration[1:-1]) if duration != '[0.00000000]' else 0.0
+                    duration = time_match.group(3) if time_match.group(3) else '[0.0]'
+                    duration_value = float(duration[1:-1]) if duration else 0.0
                     if action not in seen_actions:
                         formatted_line = f"{time_prefix:.3f}: {action} [{duration_value:.3f}]"
                         cleaned_lines.append(formatted_line)
@@ -952,6 +1215,7 @@ class PDDLExecutor:
         if plan_files:
             return max(plan_files, key=os.path.getmtime)
         return None
+
 
 def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
     session_state = page.session_state

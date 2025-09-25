@@ -608,7 +608,7 @@ class PDDLExecutor:
             'max_attempts': 10
         }
 
-    def execute_optic(self):
+    def execute(self):
         print("🚀 Iniciando planificación PDDL con OPTIC")
         print("🔍 Usando servicio: https://solver.planning.domains:5001/package/optic/solve")
 
@@ -723,35 +723,13 @@ class PDDLExecutor:
                 best_plan = actions
         
         if best_plan:
-            # Extraer información adicional del log
-            additional_info = ""
-            goal_match = re.search(r"For limits: literal goal index 4, fact \(alimentado t3-puzolana-s puzolana-s\),.*?\(alimentando puzolana-s mc3 ps-a-mc3-por-mc2\)\)", log_content, re.DOTALL)
-            if goal_match:
-                additional_info += f"### Información de Límites (Goals)\n- **Literal Goal Index 4**: {goal_match.group(0)}\n\n"
-            
-            numeric_effects = re.findall(r"Numeric effect \(\(costo-total\) \+= [\d.]+ \+ \(tiempo-acumulado\)\) makes effects on 1 be order-dependent", log_content)
-            if numeric_effects:
-                additional_info += "### Efectos Numéricos (Costo Total)\n"
-                for effect in numeric_effects:
-                    additional_info += f"- {effect}\n"
-                additional_info += "\n"
-            
-            compression_info = re.search(r"None of the ground temporal actions in this problem have been recognised as compression-safe", log_content)
-            if compression_info:
-                additional_info += "### Compresión de Acciones\n- **Nota**: None of the ground temporal actions in this problem have been recognised as compression-safe.\n  Esto indica que las acciones temporales no pueden comprimirse, lo que afecta el orden y la duración de las acciones en el plan.\n\n"
-            
-            heuristic_info = re.search(r"Initial heuristic = [\d.]+, admissible cost estimate [\d.]+.*?\(G\)", log_content, re.DOTALL)
-            if heuristic_info:
-                additional_info += f"### Heurística Inicial\n- **Initial Heuristic**: {heuristic_info.group(0).split(',')[0].split('=')[1].strip()}\n- **Admissible Cost Estimate**: {heuristic_info.group(0).split(',')[1].split('estimate')[1].strip().split('b')[0].strip()}\n- **Search States**: {heuristic_info.group(0).split('b ')[1].strip()}\n\n"
-            
-            lp_info = re.search(r"; LP calculated the cost", log_content)
-            if lp_info:
-                additional_info += "### Cálculo del Costo\n- **LP Calculated the Cost**: The linear programming component of OPTIC calculated the final metric of 75.750, which represents the optimized `costo-total` for the plan.\n\n"
-            
-            additional_info += "### Explicación del Orden de Rutas\nEl orden de las rutas en el plan se determina mediante la búsqueda heurística de OPTIC, que minimiza el `costo-total` mientras respeta las restricciones de simultaneidad y disponibilidad de tolvas y rutas. Las acciones están escalonadas para evitar conflictos (por ejemplo, no alimentar simultáneamente `Puzolana a la 1 por la 1` y `Yeso a la 1 por la 1`). Los tiempos de inicio (`0.000`, `4.001`, `6.001`, `10.002`) y las duraciones (`7.000`, `6.000`, `3.000`, `4.000`, `5.000`) reflejan la planificación temporal para optimizar el makespan (15.002) y el costo total (75.750).\n"
-            
-            return {"actions": best_plan, "metric": best_metric, "additional_info": additional_info}
-        
+            # Ya no extraemos información adicional del log
+            return {
+                "actions": best_plan,
+                "metric": best_metric,
+                "additional_info": ""   # clav
+            }
+
         return None
 
     def _clean_plan(self, plan_text):
@@ -778,7 +756,8 @@ class PDDLExecutor:
             with open(plan_file, 'w', encoding='utf-8') as f:
                 f.write(f"# Plan Limpio para Alimentación de Materias Primas\n\n")
                 f.write(f"## Plan Seleccionado (Metric: {plan_data['metric']})\n\n")
-                f.write(f"```\n{self._clean_plan(plan_data['actions'])}\n```\n\n")
+                # f.write(f"```\n{self._clean_plan(plan_data['actions'])}\n```\n\n")
+                f.write(f"{self._clean_plan(plan_data['actions'])}")
                 f.write(plan_data['additional_info'])
             print(f"✅ Plan guardado en: {plan_file}")
             return plan_file
@@ -797,4 +776,4 @@ class PDDLExecutor:
 
 if __name__ == "__main__":
     executor = PDDLExecutor(domain_path, problem_path, workspace_path)
-    executor.execute_optic()
+    executor.execute()

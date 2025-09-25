@@ -76,7 +76,7 @@ class Molino:
     def tiempo_vaciado(self, material: str) -> float:
         if material not in self.ratios or material not in self.tolvas:
             return float('inf')
-        consumo = ((self.alimentacion_fresca * self.ratios[material]) / 100) +100
+        consumo = ((self.alimentacion_fresca * self.ratios[material]) / 100) 
         print(f"Consumo para {material} en {self.nombre}: {consumo} t/h")
         return self.tolvas[material].tiempo_vaciado(consumo)
 
@@ -329,9 +329,9 @@ def generar_problema_pddl_dinamico(estado_molinos: Dict[str, bool], estado_rutas
     (puzolana-s-libre mc3) 
     ; (ruta-yeso-libre MC1-por-MC1)
     ; (ruta-yeso-libre MC1-por-MC2)
-    (ruta-yeso-libre MC2-por-MC2)
+    (ruta-yeso-libre mc2 MC2-por-MC2)
     ; (ruta-yeso-libre MC3-por-MC1)
-    (ruta-yeso-libre MC3-por-MC2)
+    (ruta-yeso-libre mc3 MC3-por-MC2)
     (yeso-libre mc1)
     (yeso-libre mc2)
     (yeso-libre mc3)
@@ -796,7 +796,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
 
 #     def execute(self):
 #         print("🚀 Iniciando proceso de planificación PDDL")
-#         print(f"🔍 Usando servicio remoto: https://solver.planning.domains:5001/package/optic/solve")
+#         print(f"🔍 Usando servicio remoto: https://solver.planning.domains:5001/package/tfd/solve")
 #         try:
 #             if not self._open_vscode():
 #                 return False
@@ -838,7 +838,7 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
 #                 domain_content = f.read()
 #             with open(self.problem_path, 'r', encoding='utf-8') as f:
 #                 problem_content = f.read()
-#             url = "https://solver.planning.domains:5001/package/optic/solve"
+#             url = "https://solver.planning.domains:5001/package/tfd/solve"
 #             payload = {"domain": domain_content, "problem": problem_content}
 #             print(f"📤 Enviando solicitud al servicio: {url}")
 #             response = requests.post(url, json=payload, timeout=self.delays['plan_generation'])
@@ -992,235 +992,563 @@ def refresh_cards(pddl_content=None, sistema: SistemaAlimentacion=None, page: ft
 #             return max(plan_files, key=os.path.getmtime)
 #         return None
 
-
-
 import os
+from pathlib import Path
+import requests
 import re
 import time
-import json
-import requests
-from pathlib import Path
 from datetime import datetime
+import json
 
 class PDDLExecutor:
     def __init__(self, domain_path, problem_path, workspace_path):
-        self.domain_path = Path(str(domain_path).replace("\\", "/"))
-        self.problem_path = Path(str(problem_path).replace("\\", "/"))
-        self.workspace_path = Path(str(workspace_path).replace("\\", "/"))
+        self.domain_path = Path(domain_path)
+        self.problem_path = Path(problem_path)
+        self.workspace_path = Path(workspace_path)
         self.output_dir = self.workspace_path / "generated_plans"
         self.output_dir.mkdir(exist_ok=True)
         self.delays = {
-            'open_vscode': 0,
-            'command_palette': 100,
-            'select_planner': 100,
-            'plan_generation': 100,
-            'monitor_interval': 100,
+            'plan_generation': 60,
+            'monitor_interval': 5,
             'max_attempts': 10
         }
 
     def execute(self):
-        print("🚀 Iniciando proceso de planificación PDDL")
-        print("🔍 Usando servicio remoto: https://solver.planning.domains:5001/package/optic/solve")
-        try:
-            if not self._open_vscode():
-                return False
-            if not self._run_tfd_planner():
-                return False
-            plan_path = self._capture_and_save_plan()
-            if plan_path:
-                print(f"✅ Plan generado exitosamente: {plan_path}")
-                self._display_clean_plan(plan_path)
-                return True
-            else:
-                print("❌ No se pudo generar el plan")
-                return False
-        except Exception as e:
-            print(f"❌ Error crítico: {e}")
+        print("🚀 Iniciando planificación PDDL con OPTIC")
+        print("🔍 Usando servicio: https://solver.planning.domains:5001/package/optic/solve")
+
+        if not self._check_files():
             return False
 
-    def _open_vscode(self):
         try:
-            print("📂 Verificando archivos PDDL...")
-            print(f"📄 Dominio: {self.domain_path}")
-            print(f"📄 Problema: {self.problem_path}")
-            if not self.domain_path.exists():
-                print(f"❌ Archivo de dominio no encontrado: {self.domain_path}")
-                return False
-            if not self.problem_path.exists():
-                print(f"❌ Archivo de problema no encontrado: {self.problem_path}")
-                return False
-            time.sleep(self.delays['open_vscode'])
-            return True
-        except Exception as e:
-            print(f"❌ Error al verificar archivos: {e}")
-            return False
-
-    def _run_tfd_planner(self):
-        try:
-            print("⚙️ Iniciando planificador TFD remoto...")
             with open(self.domain_path, 'r', encoding='utf-8') as f:
                 domain_content = f.read()
             with open(self.problem_path, 'r', encoding='utf-8') as f:
                 problem_content = f.read()
+
             url = "https://solver.planning.domains:5001/package/optic/solve"
             payload = {"domain": domain_content, "problem": problem_content}
-            print(f"📤 Enviando solicitud al servicio: {url}")
             response = requests.post(url, json=payload, timeout=self.delays['plan_generation'])
-            print(f"📥 Respuesta cruda inicial: {response.text}")
+
             if response.status_code != 200:
-                print(f"❌ Error en la solicitud al servicio: {response.status_code} - {response.text}")
+                print(f"❌ Error en la solicitud: {response.status_code}")
+                print(response.text)
                 return False
+
             try:
                 initial_response = response.json()
-                print(f"📥 Respuesta JSON inicial: {initial_response}")
             except json.JSONDecodeError:
-                print(f"⚠️ No se pudo parsear la respuesta inicial como JSON: {response.text}")
+                print("❌ No se pudo parsear la respuesta inicial como JSON")
                 return False
+
             check_url = initial_response.get('result', '')
             if not check_url.startswith('/check/'):
                 print(f"❌ Respuesta inicial no contiene URL de verificación: {initial_response}")
                 return False
+
             check_url = f"https://solver.planning.domains:5001{check_url}"
-            print(f"🔄 Consultando URL de verificación: {check_url}")
-            for attempt in range(self.delays['max_attempts']):
-                response = requests.get(check_url, timeout=self.delays['plan_generation'])
-                print(f"📥 Respuesta cruda (intento {attempt + 1}): {response.text}")
-                if response.status_code != 200:
-                    print(f"❌ Error en la solicitud de verificación: {response.status_code} - {response.text}")
-                    return False
-                try:
-                    check_response = response.json()
-                    print(f"📥 Respuesta JSON (intento {attempt + 1}): {check_response}")
-                    if check_response.get('status') == 'ok' and 'output' in check_response.get('result', {}):
-                        self._planner_response = check_response
+            plan_text = self._poll_for_plan(check_url)
+
+            if plan_text:
+                best_plan = self._select_best_plan(plan_text)
+                if best_plan:
+                    plan_path = self._save_plan(best_plan, plan_text)
+                    if plan_path:
+                        self._display_plan(plan_path)
                         return True
-                except json.JSONDecodeError:
-                    print(f"⚠️ No se pudo parsear la respuesta de verificación como JSON: {response.text}")
-                time.sleep(self.delays['monitor_interval'])
-            print(f"❌ No se obtuvo un plan después de {self.delays['max_attempts']} intentos")
+
+            print("❌ No se encontró un plan válido")
             return False
-        except requests.exceptions.RequestException as e:
-            print(f"❌ Error al conectar con el servicio remoto: {e}")
-            return False
+
         except Exception as e:
-            print(f"❌ Error al ejecutar planificador: {e}")
+            print(f"❌ Error crítico: {e}")
             return False
 
-    def _capture_and_save_plan(self):
-        try:
-            if not hasattr(self, '_planner_response'):
-                print("❌ No se encontró respuesta del planificador")
-                return None
-            result = self._planner_response.get('result', {})
-            output = result.get('output', {})
-            # Puede estar en 'plan' o en 'stdout'
-            raw_text = ""
-            if isinstance(output, dict):
-                raw_text = output.get('plan') or output.get('stdout', '')
-            else:
-                raw_text = str(output)
+    def _check_files(self):
+        if not self.domain_path.exists():
+            print(f"❌ Archivo de dominio no encontrado: {self.domain_path}")
+            return False
+        if not self.problem_path.exists():
+            print(f"❌ Archivo de problema no encontrado: {self.problem_path}")
+            return False
+        return True
 
-            if not raw_text:
-                print("⚠️ El solver no devolvió texto de plan")
-                return None
-
-            # Aceptar "Plan found:" o "Found new plan:"
-            if not re.search(r"(Plan found|Found new plan)", raw_text, re.IGNORECASE):
-                print("⚠️ No se encontró cabecera de plan en la salida completa:")
-                print(raw_text)
-                return None
-
-            plan_content = self._extract_most_recent_plan(raw_text)
-            if plan_content:
-                return self._save_clean_plan(plan_content)
-            return None
-        except Exception as e:
-            print(f"⚠️ Error al capturar plan: {e}")
-            return None
-
-    def _extract_most_recent_plan(self, log_content):
-        # Prioriza Rescheduled Plan si existe
-        rescheduled_match = re.search(
-            r"Rescheduled Plan:(.*?)(?:Solution with|Search time:|$)",
-            log_content,
-            re.DOTALL | re.IGNORECASE
-        )
-        if rescheduled_match:
-            print("✅ Se encontró un Rescheduled Plan, se prioriza sobre el Plan found")
-            block = rescheduled_match.group(1).strip()
-            actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
-            return self._clean_plan_text(actions)
-
-        # Acepta Plan found o Found new plan
-        plan_match = re.search(
-            r"(?:Found new plan|Plan found)\s*:(.*?)(?:Metric|Makespan|$)",
-            log_content,
-            re.DOTALL | re.IGNORECASE
-        )
-        if plan_match:
-            print("⚠️ Plan encontrado en la salida")
-            block = plan_match.group(1).strip()
-            actions = "\n".join(line for line in block.splitlines() if re.match(r"^\d", line))
-            return self._clean_plan_text(actions)
-
-        print("❌ No se encontraron planes en el log")
+    def _poll_for_plan(self, check_url):
+        for attempt in range(self.delays['max_attempts']):
+            try:
+                response = requests.get(check_url, timeout=self.delays['plan_generation'])
+                if response.status_code != 200:
+                    print(f"❌ Error en la verificación: {response.status_code}")
+                    return None
+                data = response.json()
+                if data.get('status') == 'ok' and 'output' in data.get('result', {}):
+                    output = data['result']['output']
+                    if isinstance(output, dict):
+                        plan_text = output.get('plan') or output.get('stdout', '')
+                    else:
+                        plan_text = str(output)
+                    if plan_text:
+                        return plan_text
+            except Exception as e:
+                print(f"⚠️ Intento {attempt+1} fallo: {e}")
+            time.sleep(self.delays['monitor_interval'])
+        print(f"❌ No se obtuvo plan después de {self.delays['max_attempts']} intentos")
         return None
 
-    def _clean_plan_text(self, plan_text):
+    def _select_best_plan(self, log_content):
+        """
+        Extrae todos los planes y selecciona el de menor Metric positivo (excluyendo Metric = 0).
+        Retorna las acciones del plan limpio y la información adicional solicitada.
+        """
+        plan_blocks = re.split(r";\s*Plan found with metric\s+[\d.]+", log_content, flags=re.IGNORECASE)
+        metric_matches = list(re.finditer(r";\s*Plan found with metric\s+([\d.]+)", log_content, re.IGNORECASE))
+        
+        best_plan = None
+        best_metric = float('inf')
+        
+        for block, metric_match in zip(plan_blocks[1:], metric_matches):
+            actions = "\n".join(line.strip() for line in block.splitlines() if re.match(r"^\d+\.\d+:", line))
+            if not actions:
+                continue
+            
+            metric_value = float(metric_match.group(1)) if metric_match else None
+            if metric_value is None or metric_value == 0:
+                continue
+            
+            if metric_value < best_metric:
+                best_metric = metric_value
+                best_plan = actions
+        
+        if best_plan:
+            return {
+                "actions": best_plan,
+                "metric": best_metric,
+                "additional_info": ""
+            }
+        return None
+
+    def _clean_plan(self, plan_text):
         cleaned_lines = []
         seen_actions = set()
-        for line in plan_text.split('\n'):
+        for line in plan_text.splitlines():
             line = line.strip()
-            if line and not line.startswith(';'):
-                time_match = re.match(r'^(\d+\.\d+):\s*(.*?)\s*(\[\d+\.\d+\])?$', line)
+            if line and re.match(r"^\d+\.\d+:", line):
+                time_match = re.match(r'^(\d+\.\d+):\s*(.*?)\s*\[(\d+\.\d+)\]$', line)
                 if time_match:
                     time_prefix = float(time_match.group(1))
                     action = time_match.group(2).strip()
-                    duration = time_match.group(3) if time_match.group(3) else '[0.0]'
-                    duration_value = float(duration[1:-1]) if duration else 0.0
-                    if action not in seen_actions:
-                        formatted_line = f"{time_prefix:.3f}: {action} [{duration_value:.3f}]"
+                    duration = float(time_match.group(3))
+                    if (time_prefix, action) not in seen_actions:
+                        formatted_line = f"{time_prefix:.5f}: {action} [{duration:.5f}]"
                         cleaned_lines.append(formatted_line)
-                        seen_actions.add(action)
-        return '\n'.join(cleaned_lines)
+                        seen_actions.add((time_prefix, action))
+        return "\n".join(cleaned_lines)
 
-    def _save_clean_plan(self, plan_content):
+    def _save_plan(self, plan_data, log_content):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"plan_{timestamp}.pddl"
-        filepath = self.output_dir / filename
+        plan_file = self.output_dir / f"plan_optic_{timestamp}.md"
         try:
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(f"; Plan generado automaticamente - {datetime.now()}\n")
-                f.write(f"; Dominio: {self.domain_path.name}\n")
-                f.write(f"; Problema: {self.problem_path.name}\n\n")
-                f.write(plan_content)
-            return filepath
+            with open(plan_file, 'w', encoding='utf-8') as f:
+                f.write(f"# Plan Limpio para Alimentación de Materias Primas\n\n")
+                f.write(f"## Plan Seleccionado (Metric: {plan_data['metric']})\n\n")
+                f.write(f"{self._clean_plan(plan_data['actions'])}")
+                f.write(plan_data['additional_info'])
+            print(f"✅ Plan guardado en: {plan_file}")
+            return plan_file
         except Exception as e:
-            print(f"⚠️ Error al guardar plan: {e}")
+            print(f"❌ Error al guardar plan: {e}")
             return None
 
-    def _display_clean_plan(self, plan_path):
-        try:
-            with open(plan_path, 'r') as f:
-                print("\n" + "="*50)
-                print("CONTENIDO DEL PLAN LIMPIO:")
-                print("="*50)
-                print(f.read())
-                print("="*50 + "\n")
-        except Exception as e:
-            print(f"⚠️ Error al mostrar plan: {e}")
+    def _display_plan(self, plan_path):
+        print("\n" + "="*50)
+        print("PLAN LIMPIO:")
+        print("="*50)
+        with open(plan_path, 'r', encoding='utf-8') as f:
+            print(f.read())
+        print("="*50 + "\n")
 
-    def get_latest_plan_path(self):
-        plan_files = list(self.output_dir.glob("plan_*.pddl"))
-        if plan_files:
-            return max(plan_files, key=os.path.getmtime)
-        return None
+# def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
+#     session_state = page.session_state
+    
+#     # Clear the PDDL display and show loading animation
+#     session_state['pddl_display'].controls.clear()
+#     session_state['pddl_display'].controls.append(
+#         ft.Container(
+#             content=ft.Column([
+#                 ft.ProgressRing(
+#                     color=ft.Colors.BLUE_700,
+#                     width=50,
+#                     height=50,
+#                     stroke_width=5
+#                 ),
+#                 ft.Text(
+#                     "Buscando rutas disponibles...",
+#                     size=16,
+#                     color=ft.Colors.BLACK,
+#                     text_align=ft.TextAlign.CENTER
+#                 )
+#             ],
+#             alignment=ft.MainAxisAlignment.CENTER,
+#             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+#             spacing=10
+#             ),
+#             alignment=ft.alignment.center,
+#             expand=True
+#         )
+#     )
+#     page.update()
+
+#     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
+#         for material, tolva in molino.tolvas.items():
+#             field_key = f"{molino.nombre}_{material}"
+#             if field_key in session_state['level_fields'] and session_state['level_fields'][field_key].value:
+#                 try:
+#                     new_level = float(session_state['level_fields'][field_key].value)
+#                     if molino.nombre == "MC3":
+#                         tolva.nivel_actual = max(0, min(new_level, 100))
+#                     else:
+#                         tolva.nivel_actual = max(0, min(new_level, tolva.altura_max))
+#                 except ValueError:
+#                     tolva.nivel_actual = tolva.nivel_actual
+#         feed_rate_key = f"{molino.nombre}_feed_rate"
+#         if feed_rate_key in session_state['feed_rate_fields'] and session_state['feed_rate_fields'][feed_rate_key].value:
+#             try:
+#                 new_feed = float(session_state['feed_rate_fields'][feed_rate_key].value)
+#                 if new_feed >= 0:
+#                     try:
+#                         molino.set_alimentacion_fresca(new_feed)
+#                         print(f"Alimentación fresca de {molino.nombre} actualizada a {new_feed} t/h")
+#                     except AttributeError as e:
+#                         print(f"❌ Error: No se encontró el método set_alimentacion_fresca en {molino.nombre}: {e}")
+#                         page.snack_bar = ft.SnackBar(
+#                             Text(f"❌ Error: No se pudo actualizar la alimentación fresca de {molino.nombre}"),
+#                             open=True,
+#                             duration=5000
+#                         )
+#                         page.update()
+#                         return
+#                 else:
+#                     print(f"Valor inválido para alimentación fresca de {molino.nombre}: {new_feed}")
+#             except ValueError:
+#                 print(f"Valor inválido para alimentación fresca de {molino.nombre}: {session_state['feed_rate_fields'][feed_rate_key].value}")
+    
+#     try:
+#         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
+#         pddl_content = generar_problema_pddl_dinamico(
+#             session_state['estado_molinos'],
+#             session_state['estado_rutas'],
+#             tolvas_criticas,
+#             tiempos_por_tolva,
+#             path_output=f"PDDL/cement_problem_{page.session_id}.pddl"
+#         )
+#         refresh_cards(pddl_content, sistema, page)
+#     except ValueError as e:
+#         print(f"❌ Error al generar problema PDDL: {e}")
+#         session_state['pddl_display'].controls[0].value = f"Error: {e}"
+#         page.snack_bar = ft.SnackBar(
+#             Text(f"❌ Error al generar problema PDDL: {e}"),
+#             open=True,
+#             duration=0
+#         )
+#         page.update()
+#         return
+    
+#     DOMAIN = BASE_DIR / "PDDL" / "cement-alimentacion.pddl"
+#     PROBLEM = BASE_DIR / "PDDL" / f"cement_problem_{page.session_id}.pddl"
+#     WORKSPACE = BASE_DIR / "PDDL"
+
+#     try:
+#         with open(PROBLEM, 'w', encoding='utf-8') as f:
+#             f.write(pddl_content)
+#         print(f"Problema PDDL guardado en {PROBLEM}")
+#     except Exception as e:
+#         print(f"Error al guardar el problema PDDL: {e}")
+#         session_state['pddl_display'].controls[0].value = f"Error: {e}"
+#         page.snack_bar = ft.SnackBar(Text(f"❌ Error al guardar el problema PDDL: {e}"), open=True, duration=5000)
+#         page.update()
+#         return
+    
+#     try:
+#         executor = PDDLExecutor(DOMAIN, PROBLEM, WORKSPACE)
+#         success = executor.execute()
+        
+#         # Clear the loading animation
+#         session_state['pddl_display'].controls.clear()
+        
+#         if success:
+#             plan_path = executor.get_latest_plan_path()
+#             if plan_path:
+#                 with open(plan_path, 'r', encoding='utf-8') as f:
+#                     plan_content = f.read()
+#                 clean_plan = '\n'.join(
+#                     line for line in plan_content.split('\n')
+#                     if line.strip() and not line.startswith(';') and not any(s in line for s in ['Plan length:', 'Makespan:', 'Search time:', 'Total time:'])
+#                 )
+#                 print(f"📜 Contenido para pddl_display:\n{clean_plan}")
+#                 session_state['pddl_display'].controls.append(
+#                     ft.Text(
+#                         clean_plan,
+#                         color=ft.Colors.BLACK,
+#                         size=22,
+#                         expand=True,
+#                         no_wrap=False
+#                     )
+#                 )
+#                 page.snack_bar = ft.SnackBar(
+#                     Text(f"✅ Plan generado con éxito:\n{clean_plan}"),
+#                     open=True,
+#                     duration=0
+#                 )
+#             else:
+#                 print("❌ No se encontraron planes generados")
+#                 session_state['pddl_display'].controls.append(
+#                     ft.Text(
+#                         "Error: No se encontraron planes",
+#                         color=ft.Colors.BLACK,
+#                         size=22,
+#                         expand=True,
+#                         no_wrap=False
+#                     )
+#                 )
+#                 page.snack_bar = ft.SnackBar(
+#                     Text("❌ No se encontraron planes generados"),
+#                     open=True,
+#                     duration=0
+#                 )
+#         else:
+#             session_state['pddl_display'].controls.append(
+#                 ft.Text(
+#                     "Error: No se pudo generar el plan",
+#                     color=ft.Colors.BLACK,
+#                     size=22,
+#                     expand=True,
+#                     no_wrap=False
+#                 )
+#             )
+#             page.snack_bar = ft.SnackBar(
+#                 Text("❌ No se pudo generar el plan"),
+#                 open=True,
+#                 duration=0
+#             )
+#     except Exception as e:
+#         print(f"❌ Error inicial: {e}")
+#         session_state['pddl_display'].controls.clear()
+#         session_state['pddl_display'].controls.append(
+#             ft.Text(
+#                 f"Error: {e}",
+#                 color=ft.Colors.BLACK,
+#                 size=22,
+#                 expand=True,
+#                 no_wrap=False
+#             )
+#         )
+#         page.snack_bar = ft.SnackBar(
+#             Text(f"❌ Error inicial: {e}"),
+#             open=True,
+#             duration=0
+#         )
+    
+#     refresh_cards(sistema=sistema, page=page)
+#     page.update()
+
+
+
+# def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
+#     session_state = page.session_state
+    
+#     # Clear the PDDL display and show loading animation
+#     session_state['pddl_display'].controls.clear()
+#     session_state['pddl_display'].controls.append(
+#         ft.Container(
+#             content=ft.Column([
+#                 ft.ProgressRing(
+#                     color=ft.Colors.BLUE_700,
+#                     width=50,
+#                     height=50,
+#                     stroke_width=5
+#                 ),
+#                 ft.Text(
+#                     "Buscando rutas disponibles...",
+#                     size=16,
+#                     color=ft.Colors.BLACK,
+#                     text_align=ft.TextAlign.CENTER
+#                 )
+#             ],
+#             alignment=ft.MainAxisAlignment.CENTER,
+#             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+#             spacing=10
+#             ),
+#             alignment=ft.alignment.center,
+#             expand=True
+#         )
+#     )
+#     page.update()
+
+#     # Actualizar niveles de tolvas
+#     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
+#         for material, tolva in molino.tolvas.items():
+#             field_key = f"{molino.nombre}_{material}"
+#             if field_key in session_state['level_fields'] and session_state['level_fields'][field_key].value:
+#                 try:
+#                     new_level = float(session_state['level_fields'][field_key].value)
+#                     if molino.nombre == "MC3":
+#                         tolva.nivel_actual = max(0, min(new_level, 100))
+#                     else:
+#                         tolva.nivel_actual = max(0, min(new_level, tolva.altura_max))
+#                 except ValueError:
+#                     tolva.nivel_actual = tolva.nivel_actual
+#         feed_rate_key = f"{molino.nombre}_feed_rate"
+#         if feed_rate_key in session_state['feed_rate_fields'] and session_state['feed_rate_fields'][feed_rate_key].value:
+#             try:
+#                 new_feed = float(session_state['feed_rate_fields'][feed_rate_key].value)
+#                 if new_feed >= 0:
+#                     try:
+#                         molino.set_alimentacion_fresca(new_feed)
+#                         print(f"Alimentación fresca de {molino.nombre} actualizada a {new_feed} t/h")
+#                     except AttributeError as e:
+#                         print(f"❌ Error: No se encontró el método set_alimentacion_fresca en {molino.nombre}: {e}")
+#                         page.snack_bar = ft.SnackBar(
+#                             Text(f"❌ Error: No se pudo actualizar la alimentación fresca de {molino.nombre}"),
+#                             open=True,
+#                             duration=5000
+#                         )
+#                         page.update()
+#                         return
+#                 else:
+#                     print(f"Valor inválido para alimentación fresca de {molino.nombre}: {new_feed}")
+#             except ValueError:
+#                 print(f"Valor inválido para alimentación fresca de {molino.nombre}: {session_state['feed_rate_fields'][feed_rate_key].value}")
+
+#     # Generar archivo PDDL
+#     try:
+#         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
+#         # Ajustar tiempos de vaciado negativos
+#         for tolva in tiempos_por_tolva:
+#             tiempos_por_tolva[tolva] = max(0, tiempos_por_tolva[tolva])
+#         pddl_content = generar_problema_pddl_dinamico(
+#             session_state['estado_molinos'],
+#             session_state['estado_rutas'],
+#             tolvas_criticas,
+#             tiempos_por_tolva,
+#             path_output=f"PDDL/cement_problem_{page.session_id}.pddl"
+#         )
+#     except ValueError as e:
+#         print(f"❌ Error al generar problema PDDL: {e}")
+#         session_state['pddl_display'].controls[0].value = f"Error: {e}"
+#         page.snack_bar = ft.SnackBar(
+#             Text(f"❌ Error al generar problema PDDL: {e}"),
+#             open=True,
+#             duration=0
+#         )
+#         page.update()
+#         return
+    
+#     DOMAIN = BASE_DIR / "PDDL" / "cement-alimentacion.pddl"
+#     PROBLEM = BASE_DIR / "PDDL" / f"cement_problem_{page.session_id}.pddl"
+#     WORKSPACE = BASE_DIR / "PDDL"
+
+#     try:
+#         with open(PROBLEM, 'w', encoding='utf-8') as f:
+#             f.write(pddl_content)
+#         print(f"Problema PDDL guardado en {PROBLEM}")
+#     except Exception as e:
+#         print(f"Error al guardar el problema PDDL: {e}")
+#         session_state['pddl_display'].controls[0].value = f"Error: {e}"
+#         page.snack_bar = ft.SnackBar(Text(f"❌ Error al guardar el problema PDDL: {e}"), open=True, duration=5000)
+#         page.update()
+#         return
+    
+#     # Ejecutar planificador OPTIC
+#     try:
+#         executor = PDDLExecutor(DOMAIN, PROBLEM, WORKSPACE)
+#         success = executor.execute()  # Usar execute en lugar de execute_optic
+        
+#         # Clear the loading animation
+#         session_state['pddl_display'].controls.clear()
+        
+#         if success:
+#             plan_path = executor.output_dir / max(executor.output_dir.glob("plan_optic_*.md"), key=os.path.getmtime, default=None)
+#             if plan_path and plan_path.exists():
+#                 with open(plan_path, 'r', encoding='utf-8') as f:
+#                     plan_content = f.read()
+#                 # Extraer solo las acciones del plan para la interfaz
+#                 clean_plan = '\n'.join(
+#                     line for line in plan_content.split('\n')
+#                     if re.match(r"^\d+\.\d+:", line)
+#                 )
+#                 print(f"📜 Contenido para pddl_display:\n{clean_plan}")
+#                 session_state['pddl_display'].controls.append(
+#                     ft.Text(
+#                         clean_plan or "Plan generado pero no se encontraron acciones.",
+#                         color=ft.Colors.BLACK,
+#                         size=22,
+#                         expand=True,
+#                         no_wrap=False
+#                     )
+#                 )
+#                 page.snack_bar = ft.SnackBar(
+#                     Text(f"✅ Plan generado con éxito:\n{clean_plan}"),
+#                     open=True,
+#                     duration=0
+#                 )
+#             else:
+#                 print("❌ No se encontraron planes generados")
+#                 session_state['pddl_display'].controls.append(
+#                     ft.Text(
+#                         "Error: No se encontraron planes",
+#                         color=ft.Colors.BLACK,
+#                         size=22,
+#                         expand=True,
+#                         no_wrap=False
+#                     )
+#                 )
+#                 page.snack_bar = ft.SnackBar(
+#                     Text("❌ No se encontraron planes generados"),
+#                     open=True,
+#                     duration=0
+#                 )
+#         else:
+#             session_state['pddl_display'].controls.append(
+#                 ft.Text(
+#                     "Error: No se pudo generar el plan",
+#                     color=ft.Colors.BLACK,
+#                     size=22,
+#                     expand=True,
+#                     no_wrap=False
+#                 )
+#             )
+#             page.snack_bar = ft.SnackBar(
+#                 Text("❌ No se pudo generar el plan"),
+#                 open=True,
+#                 duration=0
+#             )
+#     except Exception as e:
+#         print(f"❌ Error inicial: {e}")
+#         session_state['pddl_display'].controls.clear()
+#         session_state['pddl_display'].controls.append(
+#             ft.Text(
+#                 f"Error: {e}",
+#                 color=ft.Colors.BLACK,
+#                 size=22,
+#                 expand=True,
+#                 no_wrap=False
+#             )
+#         )
+#         page.snack_bar = ft.SnackBar(
+#             Text(f"❌ Error inicial: {e}"),
+#             open=True,
+#             duration=0
+#         )
+    
+#     refresh_cards(sistema=sistema, page=page)
+#     page.update()
+
 
 
 def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
     session_state = page.session_state
     
-    # Clear the PDDL display and show loading animation
+    # Clear the PDDL display and show loading animation for plan generation
     session_state['pddl_display'].controls.clear()
     session_state['pddl_display'].controls.append(
         ft.Container(
@@ -1248,6 +1576,7 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
     )
     page.update()
 
+    # Actualizar niveles de tolvas
     for molino in [sistema.mc1, sistema.mc2, sistema.mc3]:
         for material, tolva in molino.tolvas.items():
             field_key = f"{molino.nombre}_{material}"
@@ -1281,9 +1610,24 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
                     print(f"Valor inválido para alimentación fresca de {molino.nombre}: {new_feed}")
             except ValueError:
                 print(f"Valor inválido para alimentación fresca de {molino.nombre}: {session_state['feed_rate_fields'][feed_rate_key].value}")
-    
+
+    # Actualizar las barras y cálculos inmediatamente
+    refresh_cards(sistema=sistema, page=page)
+    page.update()
+
+    # Generar archivo PDDL
     try:
         tolvas_criticas, tiempos_por_tolva = obtener_tolvas_a_llenar_por_tiempos(sistema)
+        # Ajustar tiempos de vaciado negativos
+        # for tolva in tiempos_por_tolva:
+        #     tiempos_por_tolva[tolva] = max(0, tiempos_por_tolva[tolva])
+        min_tiempo = min(tiempos_por_tolva.values(), default=0)
+        if min_tiempo < 0:
+            C = abs(min_tiempo) + 0.01  # Constante para desplazar tiempos, con margen
+            print(f"⚠️ Tiempo mínimo detectado: {min_tiempo:.2f} h, aplicando desplazamiento C={C:.2f}")
+            for tolva in tiempos_por_tolva:
+                tiempos_por_tolva[tolva] = tiempos_por_tolva[tolva] + C
+                print(f"Tiempo ajustado para {tolva}: {tiempos_por_tolva[tolva]:.2f} h")
         pddl_content = generar_problema_pddl_dinamico(
             session_state['estado_molinos'],
             session_state['estado_rutas'],
@@ -1291,10 +1635,18 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
             tiempos_por_tolva,
             path_output=f"PDDL/cement_problem_{page.session_id}.pddl"
         )
-        refresh_cards(pddl_content, sistema, page)
     except ValueError as e:
         print(f"❌ Error al generar problema PDDL: {e}")
-        session_state['pddl_display'].controls[0].value = f"Error: {e}"
+        session_state['pddl_display'].controls.clear()
+        session_state['pddl_display'].controls.append(
+            ft.Text(
+                f"Error: {e}",
+                color=ft.Colors.BLACK,
+                size=22,
+                expand=True,
+                no_wrap=False
+            )
+        )
         page.snack_bar = ft.SnackBar(
             Text(f"❌ Error al generar problema PDDL: {e}"),
             open=True,
@@ -1313,11 +1665,25 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
         print(f"Problema PDDL guardado en {PROBLEM}")
     except Exception as e:
         print(f"Error al guardar el problema PDDL: {e}")
-        session_state['pddl_display'].controls[0].value = f"Error: {e}"
-        page.snack_bar = ft.SnackBar(Text(f"❌ Error al guardar el problema PDDL: {e}"), open=True, duration=5000)
+        session_state['pddl_display'].controls.clear()
+        session_state['pddl_display'].controls.append(
+            ft.Text(
+                f"Error: {e}",
+                color=ft.Colors.BLACK,
+                size=22,
+                expand=True,
+                no_wrap=False
+            )
+        )
+        page.snack_bar = ft.SnackBar(
+            Text(f"❌ Error al guardar el problema PDDL: {e}"),
+            open=True,
+            duration=5000
+        )
         page.update()
         return
     
+    # Ejecutar planificador OPTIC
     try:
         executor = PDDLExecutor(DOMAIN, PROBLEM, WORKSPACE)
         success = executor.execute()
@@ -1326,18 +1692,19 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
         session_state['pddl_display'].controls.clear()
         
         if success:
-            plan_path = executor.get_latest_plan_path()
-            if plan_path:
+            plan_path = executor.output_dir / max(executor.output_dir.glob("plan_optic_*.md"), key=os.path.getmtime, default=None)
+            if plan_path and plan_path.exists():
                 with open(plan_path, 'r', encoding='utf-8') as f:
                     plan_content = f.read()
+                # Extraer solo las acciones del plan para la interfaz
                 clean_plan = '\n'.join(
                     line for line in plan_content.split('\n')
-                    if line.strip() and not line.startswith(';') and not any(s in line for s in ['Plan length:', 'Makespan:', 'Search time:', 'Total time:'])
+                    if re.match(r"^\d+\.\d+:", line)
                 )
                 print(f"📜 Contenido para pddl_display:\n{clean_plan}")
                 session_state['pddl_display'].controls.append(
                     ft.Text(
-                        clean_plan,
+                        clean_plan or "Plan generado pero no se encontraron acciones.",
                         color=ft.Colors.BLACK,
                         size=22,
                         expand=True,
@@ -1398,9 +1765,7 @@ def update_levels(e, sistema: SistemaAlimentacion, page: ft.Page):
             duration=0
         )
     
-    refresh_cards(sistema=sistema, page=page)
     page.update()
-
 # ---------------------------------------------
 # Main
 # ---------------------------------------------

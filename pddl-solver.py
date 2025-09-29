@@ -581,6 +581,205 @@
 
 
 
+# import os
+# from pathlib import Path
+# import requests
+# import re
+# import time
+# from datetime import datetime
+# import json
+
+# # ============================
+# domain_path = "/home/cristian/PDDL-DA/PDDL-pruebas2/dominio.pddl"
+# problem_path = "/home/cristian/PDDL-DA/PDDL-pruebas2/problem.pddl"
+# workspace_path = "."   # Carpeta donde se guardará generated_plans
+# # ============================
+
+# class PDDLExecutor:
+#     def __init__(self, domain_path, problem_path, workspace_path):
+#         self.domain_path = Path(domain_path)
+#         self.problem_path = Path(problem_path)
+#         self.workspace_path = Path(workspace_path)
+#         self.output_dir = self.workspace_path / "generated_plans"
+#         self.output_dir.mkdir(exist_ok=True)
+#         self.delays = {
+#             'plan_generation': 60,
+#             'monitor_interval': 5,
+#             'max_attempts': 10
+#         }
+
+#     def execute(self):
+#         print("🚀 Iniciando planificación PDDL con OPTIC")
+#         print("🔍 Usando servicio: https://solver.planning.domains:5001/package/optic/solve")
+
+#         if not self._check_files():
+#             return False
+
+#         try:
+#             with open(self.domain_path, 'r', encoding='utf-8') as f:
+#                 domain_content = f.read()
+#             with open(self.problem_path, 'r', encoding='utf-8') as f:
+#                 problem_content = f.read()
+
+#             url = "https://solver.planning.domains:5001/package/optic/solve"
+#             payload = {"domain": domain_content, "problem": problem_content}
+#             response = requests.post(url, json=payload, timeout=self.delays['plan_generation'])
+
+#             if response.status_code != 200:
+#                 print(f"❌ Error en la solicitud: {response.status_code}")
+#                 print(response.text)
+#                 return False
+
+#             try:
+#                 initial_response = response.json()
+#             except json.JSONDecodeError:
+#                 print("❌ No se pudo parsear la respuesta inicial como JSON")
+#                 return False
+
+#             check_url = initial_response.get('result', '')
+#             if not check_url.startswith('/check/'):
+#                 print(f"❌ Respuesta inicial no contiene URL de verificación: {initial_response}")
+#                 return False
+
+#             check_url = f"https://solver.planning.domains:5001{check_url}"
+#             plan_text = self._poll_for_plan(check_url)
+
+#             if plan_text:
+#                 best_plan = self._select_best_plan(plan_text)
+#                 if best_plan:
+#                     plan_path = self._save_plan(best_plan, plan_text)
+#                     if plan_path:
+#                         self._display_plan(plan_path)
+#                         return True
+
+#             print("❌ No se encontró un plan válido")
+#             return False
+
+#         except Exception as e:
+#             print(f"❌ Error crítico: {e}")
+#             return False
+
+#     def _check_files(self):
+#         if not self.domain_path.exists():
+#             print(f"❌ Archivo de dominio no encontrado: {self.domain_path}")
+#             return False
+#         if not self.problem_path.exists():
+#             print(f"❌ Archivo de problema no encontrado: {self.problem_path}")
+#             return False
+#         return True
+
+#     def _poll_for_plan(self, check_url):
+#         for attempt in range(self.delays['max_attempts']):
+#             try:
+#                 response = requests.get(check_url, timeout=self.delays['plan_generation'])
+#                 if response.status_code != 200:
+#                     print(f"❌ Error en la verificación: {response.status_code}")
+#                     return None
+#                 data = response.json()
+#                 if data.get('status') == 'ok' and 'output' in data.get('result', {}):
+#                     output = data['result']['output']
+#                     # Puede estar en 'plan' o 'stdout'
+#                     if isinstance(output, dict):
+#                         plan_text = output.get('plan') or output.get('stdout', '')
+#                     else:
+#                         plan_text = str(output)
+#                     if plan_text:
+#                         return plan_text
+#             except Exception as e:
+#                 print(f"⚠️ Intento {attempt+1} fallo: {e}")
+#             time.sleep(self.delays['monitor_interval'])
+#         print(f"❌ No se obtuvo plan después de {self.delays['max_attempts']} intentos")
+#         return None
+
+#     def _select_best_plan(self, log_content):
+#         """
+#         Extrae todos los planes y selecciona el de menor Metric positivo (excluyendo Metric = 0).
+#         Retorna las acciones del plan limpio y la información adicional solicitada.
+#         """
+#         # Dividir el log usando las líneas que indican un nuevo plan
+#         plan_blocks = re.split(r";\s*Plan found with metric\s+[\d.]+", log_content, flags=re.IGNORECASE)
+#         metric_matches = list(re.finditer(r";\s*Plan found with metric\s+([\d.]+)", log_content, re.IGNORECASE))
+        
+#         best_plan = None
+#         best_metric = float('inf')
+        
+#         # Asegurarse de que los bloques y métricas estén alineados
+#         for block, metric_match in zip(plan_blocks[1:], metric_matches):
+#             # Extraer solo las líneas de acciones
+#             actions = "\n".join(line.strip() for line in block.splitlines() if re.match(r"^\d+\.\d+:", line))
+#             if not actions:
+#                 continue
+            
+#             # Obtener la métrica del bloque
+#             metric_value = float(metric_match.group(1)) if metric_match else None
+            
+#             # Filtrar métricas inválidas o cero
+#             if metric_value is None or metric_value == 0:
+#                 continue
+            
+#             # Seleccionar el plan con la menor métrica positiva
+#             if metric_value < best_metric:
+#                 best_metric = metric_value
+#                 best_plan = actions
+        
+#         if best_plan:
+#             # Ya no extraemos información adicional del log
+#             return {
+#                 "actions": best_plan,
+#                 "metric": best_metric,
+#                 "additional_info": ""   # clav
+#             }
+
+#         return None
+
+#     def _clean_plan(self, plan_text):
+#         cleaned_lines = []
+#         seen_actions = set()
+#         for line in plan_text.splitlines():
+#             line = line.strip()
+#             if line and re.match(r"^\d+\.\d+:", line):
+#                 time_match = re.match(r'^(\d+\.\d+):\s*(.*?)\s*\[(\d+\.\d+)\]$', line)
+#                 if time_match:
+#                     time_prefix = float(time_match.group(1))
+#                     action = time_match.group(2).strip()
+#                     duration = float(time_match.group(3))
+#                     if (time_prefix, action) not in seen_actions:
+#                         formatted_line = f"{time_prefix:.5f}: {action} [{duration:.5f}]"
+#                         cleaned_lines.append(formatted_line)
+#                         seen_actions.add((time_prefix, action))
+#         return "\n".join(cleaned_lines)
+
+#     def _save_plan(self, plan_data, log_content):
+#         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+#         plan_file = self.output_dir / f"plan_optic_{timestamp}.md"
+#         try:
+#             with open(plan_file, 'w', encoding='utf-8') as f:
+#                 f.write(f"# Plan Limpio para Alimentación de Materias Primas\n\n")
+#                 f.write(f"## Plan Seleccionado (Metric: {plan_data['metric']})\n\n")
+#                 # f.write(f"```\n{self._clean_plan(plan_data['actions'])}\n```\n\n")
+#                 f.write(f"{self._clean_plan(plan_data['actions'])}")
+#                 f.write(plan_data['additional_info'])
+#             print(f"✅ Plan guardado en: {plan_file}")
+#             return plan_file
+#         except Exception as e:
+#             print(f"❌ Error al guardar plan: {e}")
+#             return None
+
+#     def _display_plan(self, plan_path):
+#         print("\n" + "="*50)
+#         print("PLAN LIMPIO:")
+#         print("="*50)
+#         with open(plan_path, 'r', encoding='utf-8') as f:
+#             print(f.read())
+#         print("="*50 + "\n")
+
+
+# if __name__ == "__main__":
+#     executor = PDDLExecutor(domain_path, problem_path, workspace_path)
+#     executor.execute()
+
+
+
 import os
 from pathlib import Path
 import requests
@@ -588,6 +787,7 @@ import re
 import time
 from datetime import datetime
 import json
+import matplotlib.pyplot as plt   # <-- para graficar
 
 # ============================
 domain_path = "/home/cristian/PDDL-DA/PDDL-pruebas2/dominio.pddl"
@@ -678,7 +878,6 @@ class PDDLExecutor:
                 data = response.json()
                 if data.get('status') == 'ok' and 'output' in data.get('result', {}):
                     output = data['result']['output']
-                    # Puede estar en 'plan' o 'stdout'
                     if isinstance(output, dict):
                         plan_text = output.get('plan') or output.get('stdout', '')
                     else:
@@ -693,43 +892,32 @@ class PDDLExecutor:
 
     def _select_best_plan(self, log_content):
         """
-        Extrae todos los planes y selecciona el de menor Metric positivo (excluyendo Metric = 0).
-        Retorna las acciones del plan limpio y la información adicional solicitada.
+        Extrae todos los planes y selecciona el de menor métrica positiva.
         """
-        # Dividir el log usando las líneas que indican un nuevo plan
         plan_blocks = re.split(r";\s*Plan found with metric\s+[\d.]+", log_content, flags=re.IGNORECASE)
         metric_matches = list(re.finditer(r";\s*Plan found with metric\s+([\d.]+)", log_content, re.IGNORECASE))
         
         best_plan = None
         best_metric = float('inf')
         
-        # Asegurarse de que los bloques y métricas estén alineados
         for block, metric_match in zip(plan_blocks[1:], metric_matches):
-            # Extraer solo las líneas de acciones
-            actions = "\n".join(line.strip() for line in block.splitlines() if re.match(r"^\d+\.\d+:", line))
+            actions = "\n".join(line.strip() for line in block.splitlines()
+                                if re.match(r"^\d+\.\d+:", line))
             if not actions:
                 continue
-            
-            # Obtener la métrica del bloque
             metric_value = float(metric_match.group(1)) if metric_match else None
-            
-            # Filtrar métricas inválidas o cero
             if metric_value is None or metric_value == 0:
                 continue
-            
-            # Seleccionar el plan con la menor métrica positiva
             if metric_value < best_metric:
                 best_metric = metric_value
                 best_plan = actions
         
         if best_plan:
-            # Ya no extraemos información adicional del log
             return {
                 "actions": best_plan,
                 "metric": best_metric,
-                "additional_info": ""   # clav
+                "additional_info": ""   # no extra info
             }
-
         return None
 
     def _clean_plan(self, plan_text):
@@ -738,15 +926,14 @@ class PDDLExecutor:
         for line in plan_text.splitlines():
             line = line.strip()
             if line and re.match(r"^\d+\.\d+:", line):
-                time_match = re.match(r'^(\d+\.\d+):\s*(.*?)\s*\[(\d+\.\d+)\]$', line)
+                time_match = re.match(r'^(\d+\.\d+):\s*\((.*?)\)\s*\[(\d+\.\d+)\]$', line)
                 if time_match:
-                    time_prefix = float(time_match.group(1))
+                    t0 = float(time_match.group(1))
                     action = time_match.group(2).strip()
-                    duration = float(time_match.group(3))
-                    if (time_prefix, action) not in seen_actions:
-                        formatted_line = f"{time_prefix:.5f}: {action} [{duration:.5f}]"
-                        cleaned_lines.append(formatted_line)
-                        seen_actions.add((time_prefix, action))
+                    dur = float(time_match.group(3))
+                    if (t0, action) not in seen_actions:
+                        cleaned_lines.append(f"{t0:.5f}: ({action}) [{dur:.5f}]")
+                        seen_actions.add((t0, action))
         return "\n".join(cleaned_lines)
 
     def _save_plan(self, plan_data, log_content):
@@ -756,9 +943,7 @@ class PDDLExecutor:
             with open(plan_file, 'w', encoding='utf-8') as f:
                 f.write(f"# Plan Limpio para Alimentación de Materias Primas\n\n")
                 f.write(f"## Plan Seleccionado (Metric: {plan_data['metric']})\n\n")
-                # f.write(f"```\n{self._clean_plan(plan_data['actions'])}\n```\n\n")
-                f.write(f"{self._clean_plan(plan_data['actions'])}")
-                f.write(plan_data['additional_info'])
+                f.write(self._clean_plan(plan_data['actions']))
             print(f"✅ Plan guardado en: {plan_file}")
             return plan_file
         except Exception as e:
@@ -770,8 +955,71 @@ class PDDLExecutor:
         print("PLAN LIMPIO:")
         print("="*50)
         with open(plan_path, 'r', encoding='utf-8') as f:
-            print(f.read())
+            plan_txt = f.read()
+            print(plan_txt)
         print("="*50 + "\n")
+
+        # >>> Graficar el plan <<<
+        self._plot_gantt(plan_txt)
+
+
+    def _plot_gantt(self, plan_txt):
+        """
+        Diagrama de Gantt con fondo oscuro solo en el área de la gráfica
+        y barras sin borde, orden de arriba → abajo.
+        """
+        import matplotlib.pyplot as plt
+        import re
+
+        acciones = []
+        for line in plan_txt.splitlines():
+            m = re.match(r"^(\d+\.\d+):\s*\((.+)\)\s*\[(\d+\.\d+)\]$", line)
+            if m:
+                start = float(m.group(1))
+                action = m.group(2)
+                dur = float(m.group(3))
+                acciones.append((action, start, dur))
+
+        if not acciones:
+            print("⚠️ No se pudieron extraer acciones para graficar.")
+            return
+
+        # Colores brillantes
+        colores = {
+            'puzolana-h': '#00FF00',  # verde neón
+            'puzolana-s': '#0000FF',  # azul eléctrico
+            'yeso':       '#FF00FF',  # magenta
+            'clinker':    '#FF0000'   # rojo vivo
+        }
+
+        fig, ax = plt.subplots(figsize=(10, 5))
+        # Fondo oscuro SOLO del área de ejes
+        ax.set_facecolor("#1e1e1e")
+
+        n = len(acciones)
+        for idx, (accion, inicio, dur) in enumerate(acciones):
+            y = n - 1 - idx  # primera acción arriba
+            color = '#808080'
+            for m in colores:
+                if m in accion:
+                    color = colores[m]
+                    break
+            # Barras SIN borde (edgecolor=None o linewidth=0)
+            ax.barh(y, dur, left=inicio, color=color, edgecolor=None, linewidth=0)
+            ax.text(inicio + dur/2, y, f"{dur:.1f}",
+                    ha="center", va="center", color="white",
+                    fontsize=9, weight="bold")
+
+        # Etiquetas y estilo
+        ax.set_yticks(range(n))
+        ax.set_yticklabels([a[0] for a in reversed(acciones)], color="black")
+        ax.set_xlabel("Tiempo", color="black")
+        ax.set_title("Planificación PDDL – Diagrama de Gantt", color="black")
+        ax.tick_params(colors="black")
+
+        plt.tight_layout()
+        plt.show()
+
 
 
 if __name__ == "__main__":

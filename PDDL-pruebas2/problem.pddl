@@ -464,6 +464,7 @@
     (= (duracion-llenado t2-puzolana-s PS-a-426HO02-por-426HO04) 4)
     (= (duracion-llenado t1-yeso MC1-por-MC1) 3)       
     (= (duracion-llenado t1-yeso MC1-por-MC2) 3)
+    
     (= (duracion-llenado t2-yeso MC2-por-MC2) 5)
     (= (duracion-llenado t3-yeso MC3-por-MC1) 2)
     (= (duracion-llenado t3-yeso MC3-por-MC2) 6)

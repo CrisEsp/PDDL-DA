@@ -1,8 +1,8 @@
 
-(define (problem cement-production-problem)
-(:domain cement-alimentacion)
+  (define (problem cement-production-problem)
+  (:domain cement-alimentacion)
 
-(:objects
+  (:objects
     ;; Molinos
     mc1 mc2 mc3 - molino
 
@@ -19,9 +19,9 @@
     PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 
     PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04 
     MC1-por-MC1 MC1-por-MC2 MC2-por-MC2 MC3-por-MC1 MC3-por-MC2 - ruta
-)
+  )
 
-(:init
+  (:init
     ;; Molinos en marcha
     (en-marcha mc1) (en-marcha mc2) (en-marcha mc3)
 
@@ -50,7 +50,10 @@
     (puzolana-s-libre mc1)
     (puzolana-s-libre mc2) 
     (puzolana-s-libre mc3) 
+    ; (ruta-yeso-libre MC1-por-MC1)
+    ; (ruta-yeso-libre MC1-por-MC2)
     (ruta-yeso-libre mc2 MC2-por-MC2)
+    ; (ruta-yeso-libre MC3-por-MC1)
     (ruta-yeso-libre mc3 MC3-por-MC2)
     (yeso-libre mc1)
     (yeso-libre mc2)
@@ -78,38 +81,48 @@
     ;; Inicializar tiempo y costo
     (= (tiempo-acumulado) 0)
     (= (costo-total) 0)
+
+
     (en-marcha mc1)
     (en-marcha mc2)
+    (en-marcha mc3)
     ;; Clinker
     (ruta-disponible mc1 t1-clinker clinker MC1-desde-Pretrit)
     (ruta-disponible mc2 t2-clinker clinker MC2-desde-Pretrit)
+    (ruta-disponible mc3 t3-clinker clinker MC3-desde_Silo-Blanco)
+    (ruta-disponible mc3 t3-clinker clinker Pretrit_a_Silo_Blanco)
     ;; Puzolana
     (ruta-disponible mc2 t2-puzolana-h puzolana-h PH-a-426HO04-por-MC2)
     (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC2)
     (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC1)
+    (ruta-disponible mc3 t3-puzolana-s puzolana-s PS-a-MC3-por-MC2)
     (ruta-disponible mc2 t2-puzolana-s puzolana-s PS-a-426HO02-por-426HO04)
     ;; Yeso
     (ruta-disponible mc1 t1-yeso yeso MC1-por-MC1)
-    (ruta-disponible mc1 t1-yeso yeso MC1-por-MC2)
     (ruta-disponible mc2 t2-yeso yeso MC2-por-MC2)
+    (ruta-disponible mc3 t3-yeso yeso MC3-por-MC1)
+    (ruta-disponible mc3 t3-yeso yeso MC3-por-MC2)
     ;; Tiempos de vaciado
-    (= (tiempo-vaciado t1-clinker) -1.72)
-    (= (tiempo-vaciado t2-clinker) -0.13)
-    (= (tiempo-vaciado t3-clinker) -0.96)
-    (= (tiempo-vaciado t1-puzolana-h) -1.37)
-    (= (tiempo-vaciado t2-puzolana-h) -4.04)
-    (= (tiempo-vaciado t2-puzolana-s) 1.97)
-    (= (tiempo-vaciado t3-puzolana-s) -1.10)
-    (= (tiempo-vaciado t1-yeso) -31.25)
-    (= (tiempo-vaciado t2-yeso) 26.06)
-    (= (tiempo-vaciado t3-yeso) -12.81)
+    (= (tiempo-vaciado t1-clinker) 29.54)
+    (= (tiempo-vaciado t2-clinker) 31.13)
+    (= (tiempo-vaciado t3-clinker) 30.30)
+    (= (tiempo-vaciado t1-puzolana-h) 29.89)
+    (= (tiempo-vaciado t2-puzolana-h) 27.22)
+    (= (tiempo-vaciado t2-puzolana-s) 33.23)
+    (= (tiempo-vaciado t3-puzolana-s) 30.16)
+    (= (tiempo-vaciado t1-yeso) 0.01)
+    (= (tiempo-vaciado t2-yeso) 57.32)
+    (= (tiempo-vaciado t3-yeso) 18.45)
   )
 
   (:goal (and
     (alimentado t1-yeso yeso)
+    (alimentado t3-yeso yeso)
     (alimentado t2-puzolana-h puzolana-h)
     (alimentado t1-clinker clinker)
     (alimentado t1-puzolana-h puzolana-h)
+    (alimentado t3-puzolana-s puzolana-s)
+    (alimentado t3-clinker clinker)
     (alimentado t2-clinker clinker)
     (alimentado t2-puzolana-s puzolana-s)
   ))

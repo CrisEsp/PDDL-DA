@@ -1,3 +1,4 @@
+
 (define (problem cement-production-problem)
 (:domain cement-alimentacion)
 
@@ -98,20 +99,19 @@
     (ruta-disponible mc3 t3-yeso yeso MC3-por-MC1)
     (ruta-disponible mc3 t3-yeso yeso MC3-por-MC2)
     ;; Tiempos de vaciado
-    (= (tiempo-vaciado t1-clinker) 29.54)
-    (= (tiempo-vaciado t2-clinker) 31.13)
-    (= (tiempo-vaciado t3-clinker) 30.30)
-    (= (tiempo-vaciado t1-puzolana-h) 29.89)
-    (= (tiempo-vaciado t2-puzolana-h) 27.22)
-    (= (tiempo-vaciado t2-puzolana-s) 33.23)
-    (= (tiempo-vaciado t3-puzolana-s) 30.16)
-    (= (tiempo-vaciado t1-yeso) 0.01)
-    (= (tiempo-vaciado t2-yeso) 57.32)
-    (= (tiempo-vaciado t3-yeso) 18.45)
+    (= (tiempo-vaciado t1-clinker) 11.10)
+    (= (tiempo-vaciado t2-clinker) 12.69)
+    (= (tiempo-vaciado t3-clinker) 11.86)
+    (= (tiempo-vaciado t1-puzolana-h) 11.45)
+    (= (tiempo-vaciado t2-puzolana-h) 8.78)
+    (= (tiempo-vaciado t2-puzolana-s) 14.79)
+    (= (tiempo-vaciado t3-puzolana-s) 11.72)
+    (= (tiempo-vaciado t1-yeso) 44.07)
+    (= (tiempo-vaciado t2-yeso) 38.88)
+    (= (tiempo-vaciado t3-yeso) 0.01)
   )
 
   (:goal (and
-    (alimentado t1-yeso yeso)
     (alimentado t3-yeso yeso)
     (alimentado t2-puzolana-h puzolana-h)
     (alimentado t1-clinker clinker)

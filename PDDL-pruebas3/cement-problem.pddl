@@ -45,23 +45,32 @@
     ;; Recursos positivos iniciales
     (clinker-libre)
     (puzolana-s-libre)
-
-    ; (puzolana-h-libre PH-a-MC1-por-MC1)
-    ; (puzolana-h-libre PH-a-MC1-por-MC2)
-    ; (puzolana-h-libre PH-a-426HO04-por-MC2)
-    ; (puzolana-s-libre mc1)
-    ; (puzolana-s-libre mc2) 
+    (puzolana-h-libre)
+    (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1)
     (molino-puzolana-s-libre mc3) 
     ; (ruta-yeso-libre mc2 MC2-por-MC2)
-    (ruta-yeso-libre mc3 MC3-por-MC2)
-    ; (yeso-libre mc1)
+
+    (ruta-yeso-libre mc1 MC1-por-MC2)
+
     ; (yeso-libre mc2)
-    (yeso-libre mc3)
-    (molino-libre-yeso mc3)
+
     (molino-libre-clinker mc1)
     (molino-libre-clinker mc2)
     (molino-libre-clinker mc3)
     (molino-libre-pz-seca mc3)
+    (molino-libre-pz-humeda mc1)
+    ; Yeso MC3
+    (yeso-libre mc3)
+    (molino-libre-yeso mc3)
+    (ruta-yeso-libre mc3 MC3-por-MC2)
+
+    ;Yeso MC1
+    (molino-libre-yeso mc1)
+    ; (ruta-es-mc1-por-mc1 MC1-por-MC1)
+    (ruta-yeso-libre mc1 MC1-por-MC1)
+    (yeso-libre mc1)
+    ; (ruta-es-mc1-por-mc2 MC1-por-MC2)
+
 
     ;; Duraciones
     (= (duracion-llenado t1-clinker MC1-desde-Pretrit) 2)
@@ -96,8 +105,8 @@
     (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC1)
     (ruta-disponible mc3 t3-puzolana-s puzolana-s PS-a-MC3-por-MC2)
     (ruta-disponible mc2 t2-puzolana-s puzolana-s PS-a-426HO02-por-426HO04)
-    ;; Yeso
-    (ruta-disponible mc1 t1-yeso yeso MC1-por-MC1)
+    ; ;; Yeso
+    ; (ruta-disponible mc1 t1-yeso yeso MC1-por-MC1)
     (ruta-disponible mc1 t1-yeso yeso MC1-por-MC2)
     (ruta-disponible mc2 t2-yeso yeso MC2-por-MC2)
     (ruta-disponible mc3 t3-yeso yeso MC3-por-MC1)
@@ -105,27 +114,28 @@
     ;; Tiempos de vaciado
     (= (tiempo-vaciado t1-clinker) 64.84)
     (= (tiempo-vaciado t2-clinker) 9.71)
-    (= (tiempo-vaciado t3-clinker) 50.31)
+    (= (tiempo-vaciado t3-clinker) 40.31)
     (= (tiempo-vaciado t1-puzolana-h) 60.17)
     (= (tiempo-vaciado t2-puzolana-h) 56.45)
     (= (tiempo-vaciado t2-puzolana-s) 61.30)
-    (= (tiempo-vaciado t3-puzolana-s) 60.93)
+    (= (tiempo-vaciado t3-puzolana-s) 30.93)
     (= (tiempo-vaciado t1-yeso) 0.01)
     (= (tiempo-vaciado t2-yeso) 51.60)
     (= (tiempo-vaciado t3-yeso) 46.29)
   )
 
   (:goal (and
-    ; (alimentado t1-yeso yeso)
-    (alimentado t3-yeso yeso)
-    ; (alimentado t2-yeso yeso)
-    ; (alimentado t2-puzolana-h puzolana-h)
+    (alimentado t1-yeso yeso)
+    (alimentado t1-puzolana-h puzolana-h)
+    ; (alimentado t3-yeso yeso)
+
     ; (alimentado t1-clinker clinker)
-    ; (alimentado t1-puzolana-h puzolana-h)
-    (alimentado t3-puzolana-s puzolana-s)
-    ; (alimentado t2-puzolana-s puzolana-s)
-    (alimentado t3-clinker clinker)
+    ; (alimentado t3-clinker clinker)
     ; (alimentado t2-clinker clinker)
+
+    ; (alimentado t3-puzolana-s puzolana-s)
+    ; (alimentado t2-puzolana-s puzolana-s)
+
   ))
   (:metric minimize (costo-total))
 )

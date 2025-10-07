@@ -16,6 +16,7 @@
     ;; Recursos positivos para controlar conflictos
     (clinker-libre)
     (puzolana-s-libre)
+    (puzolana-h-libre)
     ; (puzolana-h-libre ?r - ruta)
     (molino-puzolana-s-libre ?m - molino)
     (yeso-libre ?m - molino)
@@ -23,7 +24,13 @@
     ; (yeso-libre ?r - ruta)
     (molino-libre-clinker ?m - molino)
     (molino-libre-pz-seca ?m - molino)
+    (molino-libre-pz-humeda ?m - molino)
     (molino-libre-yeso ?m - molino)
+    (ruta-puzolana-h-libre ?m - molino ?r - ruta)
+
+    (ruta-es-mc1-por-mc1 ?r)
+    
+    (ruta-es-mc1-por-mc2 ?r)
   )
 
   (:functions
@@ -137,8 +144,83 @@
 
     )
   )
+
+    ;; -------------------------------
+  ;; Alimentar puzolana-h MC1
+  ;; -------------------------------
+
+  (:durative-action alimentar-puzolana-h-MC1-por-MC1
+    :parameters (?m - molino ?t - tolva ?r - ruta)
+    :duration (= ?duration (duracion-llenado ?t ?r))
+    :condition (and
+      (at start (en-marcha mc1))
+      (at start (libre ?t))
+      (at start (compatible puzolana-h ?t))
+      (at start (ruta-disponible mc1 ?t puzolana-h ?r))
+      (at start (material-disponible puzolana-h))
+      (at start (molino-libre-pz-humeda mc1))
+      (at start (puzolana-h-libre))
+      (at start (ruta-yeso-libre mc1 MC1-por-MC1))
+      (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1))
+
+    )
+    :effect (and
+      (at start (not (libre ?t)))
+      (at start (tolva-ocupada ?t puzolana-h))
+      (at start (alimentando puzolana-h mc1 ?r))
+      (at start (not (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1)))
+      (at start (not (molino-libre-pz-humeda mc1)))
+      (at start (not (puzolana-h-libre)))
+      (at end (alimentado ?t puzolana-h))
+      (at end (libre ?t))
+      (at end (not (tolva-ocupada ?t puzolana-h)))
+      (at end (not (alimentando puzolana-h mc1 ?r)))
+      (at end (molino-libre-pz-humeda mc1))
+      (at end (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1))
+      (at end (puzolana-h-libre))
+
+
+      (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
+      (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
+    )
+  )
+
+    (:durative-action alimentar-puzolana-h-MC1-por-MC2
+    :parameters (?m - molino ?t - tolva ?r - ruta)
+    :duration (= ?duration (duracion-llenado ?t ?r))
+    :condition (and
+      (at start (en-marcha mc1))
+      (at start (libre ?t))
+      (at start (compatible puzolana-h ?t))
+      (at start (ruta-disponible mc1 ?t puzolana-h ?r))
+      (at start (material-disponible puzolana-h))
+      (at start (molino-libre-pz-humeda mc1))
+      (at start (puzolana-h-libre))
+      (at start (ruta-yeso-libre mc1 MC1-por-MC2))
+      (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC2))
+
+    )
+    :effect (and
+      (at start (not (libre ?t)))
+      (at start (tolva-ocupada ?t puzolana-h))
+      (at start (alimentando puzolana-h mc1 ?r))
+      (at start (not (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC2)))
+      (at start (not (molino-libre-pz-humeda mc1)))
+      (at start (not (puzolana-h-libre)))
+      (at end (alimentado ?t puzolana-h))
+      (at end (libre ?t))
+      (at end (not (tolva-ocupada ?t puzolana-h)))
+      (at end (not (alimentando puzolana-h mc1 ?r)))
+      (at end (molino-libre-pz-humeda mc1))
+      (at end (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC2))
+      (at end (puzolana-h-libre))
+      (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
+      (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
+    )
+  )
+
 ;; -------------------------------
-  ;; Alimentar puzolana-s
+  ;; Alimentar puzolana-s mc3
   ;; -------------------------------
 
     (:durative-action alimentar-puzolana-s-mc3
@@ -154,7 +236,7 @@
       (at start (puzolana-s-libre))
       ; (at start (puzolana-s-libre ?m))
       ; (at start (puzolana-h-libre ?r))
-      ; (at start (yeso-libre mc3))
+      (at start (molino-libre-yeso mc3))
     )
     :effect (and
       (at start (not (libre ?t)))
@@ -175,6 +257,297 @@
 
 
 ;; -------------------------------
+  ;; Alimentar yeso MC1
+  ;; -------------------------------
+
+
+
+; (:durative-action alimentar-yeso-MC1-por-MC1
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (ruta-es-mc1-por-mc1 ?r))
+;     (at start (en-marcha mc1))
+;     (at start (libre ?t))
+;     (at start (compatible yeso ?t))
+;     (at start (ruta-disponible mc1 ?t yeso ?r))
+;     (at start (material-disponible yeso))
+;     (at start (ruta-yeso-libre mc1 ?r))
+;     (at start (yeso-libre mc1))
+;     (at start (molino-libre-yeso mc1))
+;   )
+;   :effect (and
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t yeso))
+;     (at start (alimentando yeso mc1 ?r))
+;     (at start (not (molino-libre-yeso mc1)))
+;     (at start (not (yeso-libre mc1)))
+;     (at start (not (ruta-yeso-libre mc1 ?r)))
+;     (at end (alimentado ?t yeso))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t yeso)))
+;     (at end (not (alimentando yeso mc1 ?r)))
+;     (at end (molino-libre-yeso mc1))
+;     (at end (yeso-libre mc1))
+;     (at end (ruta-yeso-libre mc1 ?r))
+;     (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
+;     (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
+;   )
+; )
+
+; (:durative-action alimentar-yeso-MC1-por-MC1
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha mc1))
+;     (at start (libre ?t))
+;     (at start (compatible yeso ?t))
+;     (at start (ruta-disponible mc1 ?t yeso ?r))
+;     (at start (material-disponible yeso))
+;     (at start (ruta-yeso-libre mc1 MC1-por-MC1))
+;     (at start (yeso-libre mc1))
+;     (at start (molino-libre-yeso mc1))
+;   )
+;   :effect (and
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t yeso))
+;     (at start (alimentando yeso mc1 ?r))
+;     (at start (not (molino-libre-yeso mc1)))
+;     (at start (not (yeso-libre mc1)))
+;     (at start (not (ruta-yeso-libre mc1 MC1-por-MC1)))
+;     (at end (alimentado ?t yeso))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t yeso)))
+;     (at end (not (alimentando yeso mc1 ?r)))
+;     (at end (molino-libre-yeso mc1))
+;     (at end (yeso-libre mc1))
+;     (at end (ruta-yeso-libre mc1 MC1-por-MC1))
+;     (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
+;     (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
+;   )
+; )
+
+;   (:durative-action alimentar-yeso-MC1-por-MC1
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (ruta-yeso-libre mc1 MC1-por-MC1))
+;     ; (at start (ruta-es-mc1-por-mc1 ?r))
+;     (at start (en-marcha mc1))
+;     ; (at start (ruta-es-mc1-por-mc1 ?r))
+
+;     (at start (libre ?t))
+;     (at start (compatible yeso ?t))
+;     (at start (ruta-disponible mc1 ?t yeso ?r))
+;     (at start (material-disponible yeso))
+;     (at start (ruta-yeso-libre mc1 ?r))
+;     (at start (yeso-libre mc1))
+;     (at start (molino-libre-yeso mc1))
+
+;     ; (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1))
+;     ; (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC2))
+;   )
+;   :effect (and
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t yeso))
+;     (at start (alimentando yeso mc1 ?r))
+;     (at start (not (molino-libre-yeso mc1)))
+;     (at start (not (yeso-libre mc1)))
+;     (at start (not (ruta-yeso-libre mc1 ?r)))
+;     (at end (alimentado ?t yeso))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t yeso)))
+;     (at end (not (alimentando yeso mc1 ?r)))
+;     (at end (molino-libre-yeso mc1))
+;     (at end (yeso-libre mc1))
+;     (at end (ruta-yeso-libre mc1 ?r))
+;     (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
+;     (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
+;   )
+; )
+
+
+
+  (:durative-action alimentar-yeso-mc1-por-mc1
+    :parameters (?m - molino ?t - tolva ?r - ruta)
+    :duration (= ?duration (duracion-llenado ?t ?r))
+    :condition (and
+      ; (at start (ruta-es-mc1-por-mc1 MC1-por-MC1))
+      (at start (en-marcha mc1))
+      (at start (libre ?t))
+      (at start (compatible yeso ?t))
+      (at start (ruta-disponible mc1 ?t yeso MC1-por-MC1))
+      (at start (material-disponible yeso))
+      (at start (molino-libre-yeso mc1))
+      (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1))
+      (at start (ruta-yeso-libre mc1 MC1-por-MC1))  ;;  ESTA ES LA CLAVE
+      ; (at start (yeso-libre))
+      ; (at start (puzolana-s-libre ?m))
+      ; (at start (puzolana-h-libre ?r))
+      ; (at start (yeso-libre mc3))
+    )
+    :effect (and
+      (at start (not (libre ?t)))
+      (at start (tolva-ocupada ?t yeso))
+      (at start (alimentando yeso mc1 MC1-por-MC1))
+      (at start (not (molino-libre-yeso mc1)))
+      (at start (not(ruta-yeso-libre mc1 MC1-por-MC1))) 
+      ; (at start (not (clinker-libre)))
+      (at end (alimentado t1-yeso yeso))
+      (at end (libre ?t))
+      (at end (not (tolva-ocupada ?t yeso)))
+      (at end (not (alimentando yeso mc1 MC1-por-MC1)))
+      (at end (molino-libre-yeso mc1))
+      ; (at end (clinker-libre))
+      (at end (ruta-yeso-libre mc1 MC1-por-MC1))
+      (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
+      (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
+
+    )
+  )
+
+
+
+; (:durative-action alimentar-yeso-MC1-por-MC1
+;   :parameters (?t - tolva)
+;   :duration (= ?duration (duracion-llenado ?t MC1-por-MC1))
+;   :condition (and
+;     (at start (en-marcha mc1))
+;     (at start (libre ?t))
+;     (at start (compatible yeso ?t))
+;     (at start (ruta-disponible mc1 ?t yeso MC1-por-MC1))
+;     (at start (material-disponible yeso))
+;     (at start (ruta-yeso-libre mc1 MC1-por-MC1))
+;     (at start (yeso-libre mc1))
+;     (at start (molino-libre-yeso mc1))
+;   )
+;   :effect (and
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t yeso))
+;     (at start (alimentando yeso mc1 MC1-por-MC1))
+;     (at start (not (molino-libre-yeso mc1)))
+;     (at start (not (yeso-libre mc1)))
+;     (at start (not (ruta-yeso-libre mc1 MC1-por-MC1)))
+
+;     (at end (alimentado ?t yeso))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t yeso)))
+;     (at end (not (alimentando yeso mc1 MC1-por-MC1)))
+;     (at end (molino-libre-yeso mc1))
+;     (at end (yeso-libre mc1))
+;     (at end (ruta-yeso-libre mc1 MC1-por-MC1))
+;     (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
+;     (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
+;   )
+; )
+
+  (:durative-action alimentar-yeso-mc1-por-mc2
+    :parameters (?m - molino ?t - tolva ?r - ruta)
+    :duration (= ?duration (duracion-llenado ?t ?r))
+    :condition (and
+      (at start (en-marcha mc1))
+      (at start (libre ?t))
+      (at start (compatible yeso ?t))
+      (at start (ruta-disponible mc1 ?t yeso MC1-por-MC2))
+      (at start (material-disponible yeso))
+      (at start (molino-libre-yeso mc1))
+      (at start (ruta-yeso-libre mc1 MC1-por-MC2)) 
+      ; (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1))
+      ; (at start (yeso-libre))
+      ; (at start (puzolana-s-libre ?m))
+      ; (at start (puzolana-h-libre ?r))
+      ; (at start (yeso-libre mc3))
+    )
+    :effect (and
+      (at start (not (libre ?t)))
+      (at start (tolva-ocupada ?t yeso))
+      (at start (alimentando yeso mc1 ?r))
+      (at start (not (molino-libre-yeso mc1)))
+      (at start (not (ruta-yeso-libre mc1 MC1-por-MC2))) ;; bloquea la ruta
+      ; (at start (not (clinker-libre)))
+      (at end (alimentado t1-yeso yeso))
+      (at end (libre ?t))
+      (at end (not (tolva-ocupada ?t yeso)))
+      (at end (not (alimentando yeso mc1 ?r)))
+      (at end (molino-libre-yeso mc1))
+      ; (at end (clinker-libre))
+      (at end (ruta-yeso-libre mc1 MC1-por-MC2));; bloquea la ruta
+      (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
+      (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
+
+    )
+  )
+
+;   (:durative-action alimentar-yeso-MC1-por-MC2
+;   :parameters (?m - molino ?t - tolva ?r - ruta)
+
+;   :duration (= ?duration (duracion-llenado ?t ?r))
+;   :condition (and
+;     (at start (en-marcha mc1))
+;     (at start (libre ?t))
+;     (at start (compatible yeso ?t))
+;     (at start (ruta-disponible mc1 ?t yeso MC1-por-MC2))
+;     (at start (material-disponible yeso))
+;     ; (at start (ruta-yeso-libre mc1 ?r))
+;     (at start (yeso-libre mc1))
+;     (at start (molino-libre-yeso mc1))
+;     (at start (ruta-yeso-libre mc1 MC1-por-MC2))
+;     ; (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1))
+;     ; (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC2))
+;   )
+;   :effect (and
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t yeso))
+;     (at start (alimentando yeso mc1 MC1-por-MC2))
+;     (at start (not (molino-libre-yeso mc1)))
+;     (at start (not (yeso-libre mc1)))
+;     (at start (not (ruta-yeso-libre mc1 MC1-por-MC2)))
+;     (at end (alimentado ?t yeso))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t yeso)))
+;     (at end (not (alimentando yeso mc1 MC1-por-MC2)))
+;     (at end (molino-libre-yeso mc1))
+;     (at end (yeso-libre mc1))
+;     (at end (ruta-yeso-libre mc1 MC1-por-MC2))
+;     (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
+;     (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
+;   )
+; )
+
+; (:durative-action alimentar-yeso-MC1-por-MC2
+;   :parameters (?m - molino ?t - tolva)
+;   :duration (= ?duration (duracion-llenado ?t MC1-por-MC2))
+;   :condition (and
+;     (at start (en-marcha mc1))
+;     (at start (libre ?t))
+;     (at start (compatible yeso ?t))
+;     (at start (ruta-disponible mc1 ?t yeso MC1-por-MC2))
+;     (at start (material-disponible yeso))
+;     (at start (ruta-yeso-libre mc1 MC1-por-MC2))
+;     (at start (yeso-libre mc1))
+;     (at start (molino-libre-yeso mc1))
+;   )
+;   :effect (and
+;     (at start (not (libre ?t)))
+;     (at start (tolva-ocupada ?t yeso))
+;     (at start (alimentando yeso mc1 MC1-por-MC2))
+;     (at start (not (molino-libre-yeso mc1)))
+;     (at start (not (yeso-libre mc1)))
+;     (at start (not (ruta-yeso-libre mc1 MC1-por-MC2)))
+;     (at end (alimentado ?t yeso))
+;     (at end (libre ?t))
+;     (at end (not (tolva-ocupada ?t yeso)))
+;     (at end (not (alimentando yeso mc1 MC1-por-MC2)))
+;     (at end (molino-libre-yeso mc1))
+;     (at end (yeso-libre mc1))
+;     (at end (ruta-yeso-libre mc1 MC1-por-MC2))
+;     (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
+;     (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
+;   )
+; )
+
+
+;; -------------------------------
   ;; Alimentar yeso MC3
   ;; -------------------------------
     (:durative-action alimentar-yeso-mc3
@@ -191,6 +564,7 @@
       ; (at start (puzolana-s-libre ?m))
       ; (at start (puzolana-h-libre ?r))
       (at start (yeso-libre mc3))
+      (at start (molino-libre-clinker mc3))
 
     )
     :effect (and
@@ -207,7 +581,7 @@
       (at end (not (alimentando yeso ?m MC3-por-MC2)))
       ; (at end (not(molino-libre-yeso mc3)))
       ; (at end (puzolana-s-libre))
-      (at start (molino-libre-yeso mc3))
+      (at end (molino-libre-yeso mc3))
       (at end (yeso-libre mc3))
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))

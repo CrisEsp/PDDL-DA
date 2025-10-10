@@ -15,10 +15,11 @@
     clinker puzolana-h puzolana-s yeso - materia
 
     ;; Rutas
-    MC1-desde-Pretrit MC2-desde-Pretrit MC3-desde_Silo-Blanco Pretrit_a_Silo_Blanco 
+    ;  MC3-desde_Silo-Blanco Pretrit_a_Silo_Blanco 
+    MC1-desde-Pretrit MC2-desde-Pretrit Silo3-desde-Pretrit
     PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 
     PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04 
-    MC1-por-MC1 MC1-por-MC2 MC2-por-MC2 MC3-por-MC1 MC3-por-MC2 - ruta
+    MC1-por-MC1 MC1-por-MC2 MC2-por-MC2 MC3-por-MC1 MC3-por-MC2 MC3-desde-Silo3 - ruta
 )
 
 (:init
@@ -47,13 +48,14 @@
     (puzolana-s-libre)
     (puzolana-h-libre)
     (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1)
+    (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC2)
     (molino-puzolana-s-libre mc3) 
     ; (ruta-yeso-libre mc2 MC2-por-MC2)
-
+    (ruta-ck-libre mc3 MC3-desde-Silo3)
     (ruta-yeso-libre mc1 MC1-por-MC2)
 
     ; (yeso-libre mc2)
-
+    (tarea-yeso-t1-pendiente)
     (molino-libre-clinker mc1)
     (molino-libre-clinker mc2)
     (molino-libre-clinker mc3)
@@ -63,6 +65,7 @@
     (yeso-libre mc3)
     (molino-libre-yeso mc3)
     (ruta-yeso-libre mc3 MC3-por-MC2)
+    (ruta-yeso-libre mc3 MC3-por-MC1)
 
     ;Yeso MC1
     (molino-libre-yeso mc1)
@@ -71,12 +74,19 @@
     (yeso-libre mc1)
     ; (ruta-es-mc1-por-mc2 MC1-por-MC2)
 
+    ;Yeso MC2
+    (molino-libre-yeso mc2)
+    ; (ruta-es-mc1-por-mc1 MC1-por-MC1)
+    (ruta-yeso-libre mc2 MC2-por-MC2)
+    (yeso-libre mc2)
+    ; (ruta-es-mc1-por-mc2 MC1-por-MC2)
+    (ruta-puzolana-h-libre mc2 PH-a-426HO04-por-MC2)
 
     ;; Duraciones
     (= (duracion-llenado t1-clinker MC1-desde-Pretrit) 2)
     (= (duracion-llenado t2-clinker MC2-desde-Pretrit) 3)
-    (= (duracion-llenado t3-clinker MC3-desde_Silo-Blanco) 4)
-    (= (duracion-llenado t3-clinker Pretrit_a_Silo_Blanco) 5)
+    (= (duracion-llenado t3-clinker MC3-desde-Silo3) 4)
+    (= (duracion-llenado t3-clinker Silo3-desde-Pretrit) 5)
     (= (duracion-llenado t2-puzolana-h PH-a-426HO04-por-MC2) 6)
     (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC2) 7)
     (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC1) 6)
@@ -97,17 +107,17 @@
     ;; Clinker
     (ruta-disponible mc1 t1-clinker clinker MC1-desde-Pretrit)
     (ruta-disponible mc2 t2-clinker clinker MC2-desde-Pretrit)
-    (ruta-disponible mc3 t3-clinker clinker MC3-desde_Silo-Blanco)
-    (ruta-disponible mc3 t3-clinker clinker Pretrit_a_Silo_Blanco)
+    (ruta-disponible mc3 t3-clinker clinker MC3-desde-Silo3)
+    (ruta-disponible mc3 t3-clinker clinker Silo3-desde-Pretrit)
     ;; Puzolana
     (ruta-disponible mc2 t2-puzolana-h puzolana-h PH-a-426HO04-por-MC2)
-    (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC2)
+    ; (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC2)
     (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC1)
     (ruta-disponible mc3 t3-puzolana-s puzolana-s PS-a-MC3-por-MC2)
     (ruta-disponible mc2 t2-puzolana-s puzolana-s PS-a-426HO02-por-426HO04)
     ; ;; Yeso
-    ; (ruta-disponible mc1 t1-yeso yeso MC1-por-MC1)
-    (ruta-disponible mc1 t1-yeso yeso MC1-por-MC2)
+    (ruta-disponible mc1 t1-yeso yeso MC1-por-MC1)
+    ; (ruta-disponible mc1 t1-yeso yeso MC1-por-MC2)
     (ruta-disponible mc2 t2-yeso yeso MC2-por-MC2)
     (ruta-disponible mc3 t3-yeso yeso MC3-por-MC1)
     (ruta-disponible mc3 t3-yeso yeso MC3-por-MC2)
@@ -115,22 +125,24 @@
     (= (tiempo-vaciado t1-clinker) 64.84)
     (= (tiempo-vaciado t2-clinker) 9.71)
     (= (tiempo-vaciado t3-clinker) 40.31)
-    (= (tiempo-vaciado t1-puzolana-h) 60.17)
+    (= (tiempo-vaciado t1-puzolana-h) 66.17)
     (= (tiempo-vaciado t2-puzolana-h) 56.45)
     (= (tiempo-vaciado t2-puzolana-s) 61.30)
     (= (tiempo-vaciado t3-puzolana-s) 30.93)
-    (= (tiempo-vaciado t1-yeso) 0.01)
-    (= (tiempo-vaciado t2-yeso) 51.60)
-    (= (tiempo-vaciado t3-yeso) 46.29)
+    (= (tiempo-vaciado t1-yeso) 53.01)
+    (= (tiempo-vaciado t2-yeso) 56.60)
+    (= (tiempo-vaciado t3-yeso) 54.29)
   )
 
   (:goal (and
     (alimentado t1-yeso yeso)
     (alimentado t1-puzolana-h puzolana-h)
+    ; (alimentado t2-puzolana-h puzolana-h)
+    (alimentado t2-yeso yeso)
     ; (alimentado t3-yeso yeso)
 
     ; (alimentado t1-clinker clinker)
-    ; (alimentado t3-clinker clinker)
+    (alimentado t3-clinker clinker)
     ; (alimentado t2-clinker clinker)
 
     ; (alimentado t3-puzolana-s puzolana-s)

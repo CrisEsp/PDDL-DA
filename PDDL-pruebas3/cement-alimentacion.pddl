@@ -12,9 +12,10 @@
     (alimentado ?t - tolva ?mat - materia)
     (tolva-ocupada ?t - tolva ?mat - materia)
     (alimentando ?mat - materia ?m - molino ?r - ruta)
-    (tarea-yeso-t1-pendiente)
+    ; (tarea-yeso-t1-pendiente)
     ;; Recursos positivos para controlar conflictos
     (clinker-libre)
+    ; (yeso-libre)
     (puzolana-s-libre)
     (puzolana-h-libre)
     ; (puzolana-h-libre ?r - ruta)
@@ -29,7 +30,7 @@
     (ruta-puzolana-h-libre ?m - molino ?r - ruta)
     (ruta-ck-libre ?m - molino ?r - ruta)
     (ruta-es-mc1-por-mc1 ?r)
-    
+    (ruta-puzolana-s-libre ?m - molino ?r - ruta)
     (ruta-es-mc1-por-mc2 ?r)
   )
 
@@ -126,6 +127,7 @@
       (at start (molino-libre-pz-seca mc3))
       (at start (ruta-yeso-libre mc1 MC1-por-MC1)) 
       (at start (ruta-ck-libre mc3 MC3-desde-Silo3))
+      (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1))
       ; (at start (puzolana-h-libre ?r))
       (at start (yeso-libre mc3))
     )
@@ -208,7 +210,7 @@
       (at start (puzolana-h-libre))
       (at start (ruta-yeso-libre mc1 MC1-por-MC1))
       (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1))
-
+      (at start (ruta-ck-libre mc3 MC3-desde-Silo3))
     )
     :effect (and
       (at start (not (libre ?t)))
@@ -224,8 +226,6 @@
       (at end (molino-libre-pz-humeda mc1))
       (at end (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1))
       (at end (puzolana-h-libre))
-
-
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
     )
@@ -248,7 +248,9 @@
       (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC2))
       (at start (ruta-yeso-libre mc3 MC3-por-MC2)) 
       (at start (ruta-yeso-libre mc2 MC2-por-MC2))    
+      (at start (ruta-puzolana-h-libre mc2 PH-a-426HO04-por-MC2))
     )
+
     :effect (and
       (at start (not (libre ?t)))
       (at start (tolva-ocupada ?t puzolana-h))
@@ -287,8 +289,10 @@
       (at start (molino-libre-pz-humeda mc2))
       (at start (puzolana-h-libre))
       (at start (ruta-puzolana-h-libre mc2 PH-a-426HO04-por-MC2))
-      ; (at start (ruta-yeso-libre mc1 MC1-por-MC1))
-      ; (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1))
+      (at start (ruta-yeso-libre mc1 MC1-por-MC2))
+      (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC2))
+      (at start (ruta-yeso-libre mc3 MC3-por-MC2)) 
+      (at start (ruta-yeso-libre mc2 MC2-por-MC2))    
 
     )
     :effect (and
@@ -328,6 +332,7 @@
       ; (at start (puzolana-s-libre ?m))
       ; (at start (puzolana-h-libre ?r))
       (at start (molino-libre-yeso mc3))
+      (at start (ruta-puzolana-s-libre mc3 PS-a-MC3-por-MC2))
     )
     :effect (and
       (at start (not (libre ?t)))
@@ -335,12 +340,14 @@
       (at start (alimentando puzolana-s ?m PS-a-MC3-por-MC2))
       (at start (not (molino-libre-pz-seca ?m)))
       (at start (not (puzolana-s-libre)))
+      (at start (not(ruta-puzolana-s-libre mc3 PS-a-MC3-por-MC2)))
       (at end (alimentado ?t puzolana-s))
       (at end (libre ?t))
       (at end (not (tolva-ocupada ?t puzolana-s)))
       (at end (not (alimentando puzolana-s ?m PS-a-MC3-por-MC2)))
       (at end (molino-libre-pz-seca ?m))
       (at end (puzolana-s-libre))
+      (at end (ruta-puzolana-s-libre mc3 PS-a-MC3-por-MC2))
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
       )
@@ -399,16 +406,17 @@
       (at start (en-marcha mc1))
       (at start (= ?m mc1)) 
       (at start (= ?r MC1-por-MC2)) 
-      (at start (tarea-yeso-t1-pendiente)) 
+      ; (at start (tarea-yeso-t1-pendiente)) 
       (at start (libre ?t))
       (at start (compatible yeso ?t))
       (at start (ruta-disponible mc1 ?t yeso MC1-por-MC2))
       (at start (material-disponible yeso))
       (at start (molino-libre-yeso mc1))
+      (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC2))
       (at start (ruta-yeso-libre mc1 MC1-por-MC2)) 
       (at start (ruta-yeso-libre mc3 MC3-por-MC2)) 
       (at start (ruta-yeso-libre mc2 MC2-por-MC2))    
-      (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC2))
+      (at start (ruta-puzolana-h-libre mc2 PH-a-426HO04-por-MC2))
       ; (at start (yeso-libre))
       ; (at start (puzolana-s-libre ?m))
       ; (at start (puzolana-h-libre ?r))
@@ -421,7 +429,7 @@
       (at start (not (molino-libre-yeso mc1)))
       (at start (not (ruta-yeso-libre mc1 MC1-por-MC2))) ;; bloquea la ruta
       (at end (alimentado t1-yeso yeso))
-      (at end (not (tarea-yeso-t1-pendiente))) ; <--- La tarea se completa y se elimina el recurso
+      ; (at end (not (tarea-yeso-t1-pendiente))) ; <--- La tarea se completa y se elimina el recurso
       ; (at start (not (clinker-libre)))
 
       (at end (libre ?t))
@@ -453,13 +461,15 @@
       (at start (ruta-disponible mc2 ?t yeso ?r))
       (at start (material-disponible yeso))
       (at start (molino-libre-yeso mc2))
+      (at start (ruta-puzolana-h-libre mc2 PH-a-426HO04-por-MC2))
       (at start (ruta-yeso-libre mc2 MC2-por-MC2))
       (at start (ruta-yeso-libre mc3 MC3-por-MC2))
       (at start (ruta-yeso-libre mc1 MC1-por-MC2))
       (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC2))
+      (at start (ruta-puzolana-h-libre mc2 PH-a-426HO04-por-MC2))
       ; (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC1))
       ; (at start (ruta-yeso-libre mc1 MC1-por-MC1))  ;;  ESTA ES LA CLAVE
-      ; (at start (yeso-libre))
+      ; (at start (yeso-libre mc2))
       ; (at start (puzolana-s-libre ?m))
       ; (at start (puzolana-h-libre ?r))
       ; (at start (yeso-libre mc3))
@@ -467,15 +477,15 @@
     :effect (and
       (at start (not (libre ?t)))
       (at start (tolva-ocupada ?t yeso))
-      (at start (alimentando yeso mc2 ?r))
+      (at start (alimentando yeso ?m ?r))
       (at start (not (molino-libre-yeso mc2)))
       (at start (not(ruta-yeso-libre mc2 MC2-por-MC2))) 
-      ; (at start (not (clinker-libre)))
-      (at end (alimentado t2-yeso yeso))
+      (at start (not (yeso-libre mc2)))
+      (at end (alimentado ?t yeso))
       (at end (libre ?t))
       (at end (not (tolva-ocupada ?t yeso)))
-      (at end (not (alimentando yeso mc2 MC2-por-MC2)))
-      ; (at end (clinker-libre))
+      (at end (not (alimentando yeso ?m ?r)))
+      (at end (yeso-libre mc2))
       (at end (ruta-yeso-libre mc2 MC2-por-MC2))
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
@@ -504,7 +514,7 @@
       (at start (yeso-libre mc3))
       (at start (molino-libre-clinker mc3))
       (at start (ruta-yeso-libre mc3 MC3-por-MC1))
-
+      (at start (ruta-puzolana-s-libre mc3 PS-a-MC3-por-MC2))
     )
     :effect (and
       (at start (not (libre ?t)))
@@ -551,6 +561,8 @@
       (at start (ruta-yeso-libre mc2 MC2-por-MC2))
       (at start (ruta-yeso-libre mc1 MC1-por-MC2))
       (at start (ruta-puzolana-h-libre mc1 PH-a-MC1-por-MC2))
+      (at start (ruta-puzolana-h-libre mc2 PH-a-426HO04-por-MC2))
+      (at start (ruta-puzolana-s-libre mc3 PS-a-MC3-por-MC2))
     )
     :effect (and
       (at start (not (libre ?t)))

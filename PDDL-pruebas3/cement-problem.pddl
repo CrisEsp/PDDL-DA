@@ -4,7 +4,7 @@
 
 (:objects
     ;; Molinos
-    mc1 mc2 mc3 - molino
+    ; mc1 mc2 mc3 - molino
 
     ;; Tolvas
     t1-clinker t1-puzolana-h t1-yeso
@@ -12,14 +12,14 @@
     t3-clinker t3-puzolana-s t3-yeso - tolva
 
     ;; Materias
-    clinker puzolana-h puzolana-s yeso - materia
+    ;; Removed redundant declaration of clinker, puzolana-h, puzolana-s, and yeso
 
     ;; Rutas
     ;  MC3-desde_Silo-Blanco Pretrit_a_Silo_Blanco 
-    MC1-desde-Pretrit MC2-desde-Pretrit Silo3-desde-Pretrit
-    PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 
-    PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04 
-    MC1-por-MC1 MC1-por-MC2 MC2-por-MC2 MC3-por-MC1 MC3-por-MC2 MC3-desde-Silo3 - ruta
+    ; MC1-desde-Pretrit MC2-desde-Pretrit Silo3-desde-Pretrit
+    ; PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 
+    ; PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04 
+    ; MC1-por-MC1 MC1-por-MC2 MC2-por-MC2 MC3-por-MC1 MC3-por-MC2 MC3-desde-Silo3 - ruta
 )
 
 (:init
@@ -85,6 +85,9 @@
     ; (ruta-es-mc1-por-mc2 MC1-por-MC2)
     (ruta-puzolana-h-libre mc2 PH-a-426HO04-por-MC2)
 
+    (en-marcha mc1)
+
+
     ;; Duraciones
     (= (duracion-llenado t1-clinker MC1-desde-Pretrit) 2)
     (= (duracion-llenado t2-clinker MC2-desde-Pretrit) 3)
@@ -132,16 +135,16 @@
     (= (tiempo-vaciado t2-puzolana-h) 8.45)
     (= (tiempo-vaciado t2-puzolana-s) 61.30)
     (= (tiempo-vaciado t3-puzolana-s) 30.93)
-    (= (tiempo-vaciado t1-yeso) 3.29)
-    (= (tiempo-vaciado t2-yeso) 0.60)
-    (= (tiempo-vaciado t3-yeso) 3.01)
+    (= (tiempo-vaciado t1-yeso) 0.29)
+    (= (tiempo-vaciado t2-yeso) 10.60)
+    (= (tiempo-vaciado t3-yeso) 0.81)
   )
 
   (:goal (and
     (alimentado t1-yeso yeso)
     (alimentado t1-puzolana-h puzolana-h)
     (alimentado t2-puzolana-h puzolana-h)
-    (alimentado t2-yeso yeso)
+    ; (alimentado t2-yeso yeso)
     (alimentado t3-yeso yeso)
 
     ; (alimentado t1-clinker clinker)

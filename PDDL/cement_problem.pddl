@@ -98,7 +98,7 @@
 
 (:objects
     ;; Molinos
-    mc1 mc2 mc3 - molino
+    ; mc1 mc2 mc3 - molino
 
     ;; Tolvas
     t1-clinker t1-puzolana-h t1-yeso
@@ -106,13 +106,14 @@
     t3-clinker t3-puzolana-s t3-yeso - tolva
 
     ;; Materias
-    clinker puzolana-h puzolana-s yeso - materia
+;     clinker puzolana-h puzolana-s yeso - materia
 
-    ;; Rutas
-    MC1-desde-Pretrit MC2-desde-Pretrit MC3-desde_Silo-Blanco Pretrit_a_Silo_Blanco 
-    PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 
-    PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04 
-    MC1-por-MC1 MC1-por-MC2 MC2-por-MC2 MC3-por-MC1 MC3-por-MC2 - ruta
+;     ;; Rutas
+;     MC1-desde-Pretrit MC2-desde-Pretrit MC3-desde_Silo-Blanco Pretrit_a_Silo_Blanco 
+;     PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 
+;     PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04 
+;     MC1-por-MC1 MC1-por-MC2 MC2-por-MC2 MC3-por-MC1 MC3-por-MC2 - ruta 
+  
 )
 
 (:init

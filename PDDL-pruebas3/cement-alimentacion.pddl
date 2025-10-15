@@ -1,7 +1,18 @@
 
 (define (domain cement-alimentacion)
-  (:requirements :durative-actions :typing :numeric-fluents)
+  (:requirements :durative-actions :typing :numeric-fluents :equality)
   (:types molino tolva materia ruta)
+
+  (:constants
+
+    mc1 mc2 mc3 - molino
+    clinker puzolana-h puzolana-s yeso - materia
+    MC1-desde-Pretrit MC2-desde-Pretrit Silo3-desde-Pretrit
+    PH-a-MC1-por-MC1 PH-a-MC1-por-MC2 PH-a-426HO04-por-MC2 
+    PS-a-MC3-por-MC2 PS-a-426HO02-por-426HO04 
+    MC1-por-MC1 MC1-por-MC2 MC2-por-MC2 MC3-por-MC1 MC3-por-MC2 MC3-desde-Silo3 - ruta
+
+  )
 
   (:predicates
     (en-marcha ?m - molino)
@@ -49,7 +60,7 @@
     :parameters (?m - molino ?t - tolva ?r - ruta)
     :duration (= ?duration (duracion-llenado ?t ?r))
     :condition (and
-      (at start (en-marcha mc1))
+      (at start (en-marcha ?m))
       (at start (libre ?t))
       (at start (compatible clinker ?t))
       (at start (ruta-disponible mc1 ?t clinker ?r))
@@ -66,7 +77,7 @@
       (at start (alimentando clinker mc1 MC1-desde-Pretrit))
       (at start (not (molino-libre-clinker mc1)))
       (at start (not (clinker-libre)))
-      (at end (alimentado t1-clinker clinker))
+      (at end (alimentado ?t clinker))
       (at end (libre ?t))
       (at end (not (tolva-ocupada ?t clinker)))
       (at end (not (alimentando clinker mc1 MC1-desde-Pretrit)))
@@ -385,7 +396,7 @@
       (at start (not (molino-libre-yeso mc1)))
       (at start (not(ruta-yeso-libre mc1 MC1-por-MC1))) 
       ; (at start (not (clinker-libre)))
-      (at end (alimentado t1-yeso yeso))
+      (at end (alimentado ?t yeso))
       (at end (libre ?t))
       (at end (not (tolva-ocupada ?t yeso)))
       (at end (not (alimentando yeso mc1 MC1-por-MC1)))
@@ -428,7 +439,7 @@
       (at start (alimentando yeso mc1 MC1-por-MC2))
       (at start (not (molino-libre-yeso mc1)))
       (at start (not (ruta-yeso-libre mc1 MC1-por-MC2))) ;; bloquea la ruta
-      (at end (alimentado t1-yeso yeso))
+      (at end (alimentado ?t yeso))
       ; (at end (not (tarea-yeso-t1-pendiente))) ; <--- La tarea se completa y se elimina el recurso
       ; (at start (not (clinker-libre)))
 

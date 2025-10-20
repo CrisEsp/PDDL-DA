@@ -1,12 +1,12 @@
 ;;!domain: cement-alimentacion
 ;;!problem: cement-production-problem
 
-0.00000: (alimentar-puzolana-h-mc1-por-mc2 mc1 t1-puzolana-h ph-a-mc1-por-mc2) [7.00000]
-7.00100: (alimentar-yeso-mc3-por-mc2 mc1 t3-yeso mc3-por-mc2) [6.00000]
-13.00200: (alimentar-yeso-mc1-por-mc2 mc1 t1-yeso mc1-por-mc2) [3.00000]
-16.00300: (alimentar-yeso-mc2-por-mc2 mc2 t2-yeso mc2-por-mc2) [3.00000]
-19.00400: (alimentar-puzolana-h-426ho04-por-mc2 mc1 t2-puzolana-h ph-a-426ho04-por-mc2) [6.00000]
+0.00000: (alimentar-yeso-mc2-por-mc2 mc2 t2-yeso mc2-por-mc2) [6.00000]
+6.00100: (alimentar-puzolana-h-mc1-por-mc2 mc1 t1-puzolana-h ph-a-mc1-por-mc2) [7.00000]
+13.00200: (alimentar-puzolana-h-426ho04-por-mc2 mc2 t2-puzolana-h ph-a-426ho04-por-mc2) [6.00000]
+19.00300: (alimentar-yeso-mc3-por-mc2 mc3 t3-yeso mc3-por-mc2) [6.00000]
+25.00400: (alimentar-yeso-mc1-por-mc2 mc1 t1-yeso mc1-por-mc2) [3.00000]
 
-; Makespan: 25.004
-; Metric: 41.24
-; States evaluated: 222
+; Makespan: 28.004
+; Metric: 1.06
+; States evaluated: 38159

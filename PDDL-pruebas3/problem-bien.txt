@@ -50,17 +50,17 @@
 
     ;; Duraciones y Tiempos de vaciado
     (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC2) 7)
-    (= (duracion-llenado t2-puzolana-h PH-a-426HO04-por-MC2) 9)
+    (= (duracion-llenado t2-puzolana-h PH-a-426HO04-por-MC2) 6)
     (= (duracion-llenado t1-yeso MC1-por-MC2) 3)
-    (= (duracion-llenado t3-yeso MC3-por-MC2) 1)
-    (= (duracion-llenado t2-yeso MC2-por-MC2) 3)
-    (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC1) 8)
+    (= (duracion-llenado t3-yeso MC3-por-MC2) 6)
+    (= (duracion-llenado t2-yeso MC2-por-MC2) 6)
+    (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC1) 6)
 
-    (= (tiempo-vaciado t1-puzolana-h) 0.01)
-    (= (tiempo-vaciado t2-puzolana-h) 4.07)
+    (= (tiempo-vaciado t1-puzolana-h) 0.05)
+    (= (tiempo-vaciado t2-puzolana-h) 0.07)
     (= (tiempo-vaciado t1-yeso) 0.40)
-    (= (tiempo-vaciado t2-yeso) 0.05)
-    (= (tiempo-vaciado t3-yeso) 0.10)
+    (= (tiempo-vaciado t2-yeso) 0.01)
+    (= (tiempo-vaciado t3-yeso) 0.11)
 
     (= (tiempo-acumulado) 0)
     (= (costo-total) 0)

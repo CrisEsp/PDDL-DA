@@ -75,9 +75,7 @@
       ;; MTRICA T + V
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-
-      
-       )
+    )
   )
 
   ;; Puzolana-H 426HO04 por MC2 (V=18.45)
@@ -85,11 +83,9 @@
     :parameters (?m - molino ?t - tolva ?r - ruta)
     :duration (= ?duration (duracion-llenado ?t ?r))
     :condition (and
-      (at start (= ?m mc2))
-      (at start (= ?r PH-a-426HO04-por-MC2))
       (at start (libre ?t))
       (at start (compatible puzolana-h ?t))
-      (at start (ruta-disponible ?m ?t puzolana-h ?r))
+      (at start (ruta-disponible mc2 ?t puzolana-h ?r))
       (at start (ruta-la-cinta-mc2-libre))
       (at start (molino-libre-pz-humeda mc2))
     )
@@ -104,7 +100,6 @@
       ;; MTRICA T + V
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-
     )
   )
 
@@ -114,8 +109,6 @@
     :duration (= ?duration (duracion-llenado ?t ?r))
     :condition (and
       (at start (libre ?t))
-      (at start (= ?m mc1))
-      (at start (= ?r MC1-por-MC2))
       (at start (compatible yeso ?t))
       (at start (ruta-disponible mc1 ?t yeso ?r))
       (at start (ruta-la-cinta-mc2-libre))
@@ -132,8 +125,6 @@
       ;; MTRICA T + V
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-
-
     )
   )
 
@@ -142,8 +133,6 @@
     :duration (= ?duration (duracion-llenado ?t ?r))
     :condition (and
       (at start (libre ?t))
-      (at start (= ?m mc2))
-      (at start (= ?r MC2-por-MC2))
       (at start (compatible yeso ?t))
       (at start (ruta-disponible mc2 ?t yeso ?r))
       (at start (ruta-la-cinta-mc2-libre))
@@ -160,7 +149,6 @@
       ;; MTRICA T + V
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-
     )
   )
 
@@ -169,8 +157,6 @@
     :parameters (?m - molino ?t - tolva ?r - ruta)
     :duration (= ?duration (duracion-llenado ?t ?r))
     :condition (and
-      (at start (= ?m mc3))
-      (at start (= ?r MC3-por-MC2))
       (at start (libre ?t))
       (at start (compatible yeso ?t))
       (at start (ruta-disponible mc3 ?t yeso ?r))
@@ -186,9 +172,8 @@
       (at end (ruta-la-cinta-mc2-libre))
       (at end (molino-libre-yeso mc3))
       ;; MTRICA T + V
-        (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
-        (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-
+      (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
+      (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
     )
   )
   
@@ -216,8 +201,6 @@
       ;; MTRICA T + V
       (at end (increase (costo-total) (+ (tiempo-acumulado) (tiempo-vaciado ?t))))
       (at end (increase (tiempo-acumulado) (tiempo-vaciado ?t)))
-
-
     )
   )
   
@@ -226,7 +209,6 @@
     :parameters (?m - molino ?t - tolva ?r - ruta)
     :duration (= ?duration (duracion-llenado ?t ?r))
     :condition (and
-
       (at start (libre ?t))
       (at start (compatible clinker ?t))
       (at start (ruta-disponible mc1 ?t clinker ?r))
@@ -247,6 +229,3 @@
   )
 
 )
-
-
-

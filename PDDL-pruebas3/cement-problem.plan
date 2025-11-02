@@ -1,13 +1,11 @@
 ;;!domain: cement-alimentacion-durativo
 ;;!problem: cement-test-durativo
 
-0.00000: (alimentar-puzolana-h-mc1-por-mc1 mc1 t1-puzolana-h ph-a-mc1-por-mc1) [8.00000]
-0.00000: (alimentar-puzolana-h-426ho04-por-mc2 mc2 t2-puzolana-h ph-a-426ho04-por-mc2) [1.00000]
-1.00100: (alimentar-yeso-mc3-por-mc2 mc3 t3-yeso mc3-por-mc2) [9.00000]
-8.00100: (alimentar-yeso-mc1-por-mc1 mc1 t1-yeso mc1-por-mc1) [6.00000]
-10.00200: (alimentar-yeso-mc2-por-mc2 mc2 t2-yeso mc2-por-mc2) [3.00000]
-14.00100: (G)(G)(G)(G)
+0.00000: (alimentar-clinker-mc3-desde-silo3 mc3 t3-clinker-sb mc3-desde-silo3) [7.00000]
+0.00200: (alimentar-clinker-silo3-desde-pretrit mc3 t3-clinker silo3-desde-pretrit) [7.00000]
+7.00100: (alimentar-clinker-mc2 mc2 t2-clinker mc2-desde-pretrit) [5.00000]
+7.00300: (alimentar-clinker-mc1 mc1 t1-clinker mc1-desde-pretrit) [7.00000]
 
-; Makespan: 14.001
-; Metric: 13.328
-; States evaluated: 2782
+; Makespan: 14.003
+; Metric: 42.9
+; States evaluated: 9

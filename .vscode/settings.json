@@ -19,34 +19,54 @@
 // }
 
 
+
+
+// {
+//   "filewatcher.commands": [
+//     {
+//       "match": ".*\\.plan$",
+//       "isAsync": true,
+//       "cmd": "powershell -ExecutionPolicy Bypass -Command \"$fecha=Get-Date -Format 'yyyyMMdd_HHmmss'; $destino='${workspaceFolder}\\planes-generados\\plan_'+$fecha+'.plan'; Copy-Item '${file}' $destino; Write-Output 'Plan copiado en: '+$destino\""
+//     }
+//   ],
+//   "pddl.planners": [
+//     // --- ESTA ES LA ENTRADA QUE DEBES AÑADIR O REVISAR ---
+//     {
+//       "type": "executable",
+//       "name": "optic-clp-local-t60",
+//       "executable": "/home/cristian/Descargas/planners64/planners/optic-clp",
+//       "args": [
+//         "-t60", // Argumento clave: Detiene la búsqueda de óptimo después de 60 segundos
+//         "{domain}",
+//         "{problem}"
+//       ],
+//       "scope": "local"
+//     },
+//     // --------------------------------------------------------
+//     {
+//       "kind": "PLANNING_AS_A_SERVICE",
+//       "url": "https://solver.planning.domains:5001/package",
+//       "title": "Planning as a service (solver.planning.domains)",
+//       "canConfigure": false
+//     }
+//   ]
+// }
+
 {
   "filewatcher.commands": [
     {
       "match": ".*\\.plan$",
       "isAsync": true,
-      "cmd": "powershell -ExecutionPolicy Bypass -Command \"$fecha=Get-Date -Format 'yyyyMMdd_HHmmss'; $destino='${workspaceFolder}\\planes-generados\\plan_'+$fecha+'.plan'; Copy-Item '${file}' $destino; Write-Output 'Plan copiado en: '+$destino\""
+      "cmd": "bash -c 'fecha=$(date +%Y%m%d_%H%M%S); destino=\"${workspaceFolder}/planes-generados/plan_${fecha}.plan\"; mkdir -p \"${workspaceFolder}/planes-generados\"; cp \"${file}\" \"$destino\"; echo \"Plan copiado en: $destino\"'"
     }
   ],
   "pddl.planners": [
-    // --- ESTA ES LA ENTRADA QUE DEBES AÑADIR O REVISAR ---
     {
-      "type": "executable",
-      "name": "optic-clp-local-t60",
-      "executable": "/home/cristian/Descargas/planners64/planners/optic-clp",
-      "args": [
-        "-t60", // Argumento clave: Detiene la búsqueda de óptimo después de 60 segundos
-        "{domain}",
-        "{problem}"
-      ],
-      "scope": "local"
-    },
-    // --------------------------------------------------------
-    {
-      "kind": "PLANNING_AS_A_SERVICE",
-      "url": "https://solver.planning.domains:5001/package",
-      "title": "Planning as a service (solver.planning.domains)",
-      "canConfigure": false
+      "kind": "COMMAND",
+      "path": "/home/cristian/Descargas/planners64/planners/optic-30s",
+      "syntax": "$(planner) $(options) $(domain) $(problem)",
+      "title": "optic-30s #3",
+      "canConfigure": true
     }
-  ],
-  "pddl.selectedPlanner": "Planning as a service (solver.planning.domains)"
+  ]
 }

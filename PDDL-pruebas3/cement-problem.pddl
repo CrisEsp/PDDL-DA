@@ -110,13 +110,13 @@
 ;   )
   
 ;   (:goal (and
-;     (alimentado t1-puzolana-h puzolana-h)
-;     (alimentado t1-yeso yeso)
-;     (alimentado t2-puzolana-h puzolana-h)
-;     (alimentado t2-yeso yeso)
-;     ; (alimentado t3-yeso yeso)
+;     ; (alimentado t1-puzolana-h puzolana-h)
+;     ; (alimentado t1-yeso yeso)
+;     ; (alimentado t2-puzolana-h puzolana-h)
+;     ; (alimentado t2-yeso yeso)
+;     (alimentado t3-yeso yeso)
 ;     (alimentado t3-puzolana-s puzolana-s)
-;     ; (alimentado t3-clinker clinker)
+;     (alimentado t3-clinker clinker)
 ;     ; (alimentado t1-clinker clinker) 
 ;     ; (alimentado t2-clinker clinker)
 ;     ; (alimentado t3-clinker-SB clinker)  ;; Added for new tolva
@@ -129,7 +129,6 @@
 ;   (:metric minimize (+ (* 0.06 (costo-total)) (* 2 (total-time))))
 ; )
   
-
 
 
 
@@ -232,7 +231,7 @@
     (= (tiempo-vaciado t2-puzolana-h) 3.8)
     (= (tiempo-vaciado t3-yeso) 3.7)
     (= (tiempo-vaciado t2-yeso) 3.5)
-    (= (tiempo-vaciado t1-puzolana-h) 1.4)
+    (= (tiempo-vaciado t1-puzolana-h) 0.3)
     (= (tiempo-vaciado t1-yeso) 0.2)
     (= (tiempo-vaciado t1-clinker) 5.7)
     (= (tiempo-vaciado t2-clinker) 0.7)
@@ -244,23 +243,23 @@
     (= (tiempo-acumulado-mc1) 0)                                                                                                                                                                                                                                                    
     (= (tiempo-acumulado-mc2) 0)
     (= (tiempo-acumulado-ck) 0)
-    (= (costo-auxiliar) 0)
+    ; (= (costo-auxiliar) 0)
     (= (costo-total) 0)
   )
   
   (:goal (and
-    (alimentado t1-puzolana-h puzolana-h)
-    (alimentado t1-yeso yeso)
-    (alimentado t2-puzolana-h puzolana-h)
-    (alimentado t2-yeso yeso)
+    ; (alimentado t1-puzolana-h puzolana-h)
+    ; (alimentado t1-yeso yeso)
+    ; (alimentado t2-puzolana-h puzolana-h)
+    ; (alimentado t2-yeso yeso)
     (alimentado t3-puzolana-s puzolana-s)
-    (alimentado t1-clinker clinker) 
-    (alimentado t3-clinker clinker)  
-    ; (alimentado t3-yeso yeso)
+    ; (alimentado t1-clinker clinker) 
+    ; (alimentado t3-clinker clinker)  
+    (alimentado t3-yeso yeso)
 
     ; (alimentado t2-clinker clinker)
     ; (alimentado t3-clinker-SB clinker)  ;; Added for new tolva
   ))
   
-  (:metric minimize (+ (* 0.01 (costo-total)) (* 100 (total-time))))
+  (:metric minimize (+ (* 1.5 (costo-total)) (* 10 (total-time))))
 )

@@ -178,7 +178,7 @@
     (ruta-clinker-libre)
     (ruta-mc3-compartida-libre)
     (alimentando-mc3-comun)
-    
+    ; (usando-mc1-en-clinker)
     ;; Recursos de molino disponibles
     (molino-libre-pz-humeda mc1)
     (molino-libre-pz-humeda mc2)
@@ -206,8 +206,10 @@
     (ruta-disponible mc2 t2-puzolana-h puzolana-h PH-a-426HO04-por-MC2)
     (ruta-disponible mc2 t2-yeso yeso MC2-por-MC2)
     (ruta-disponible mc3 t3-yeso yeso MC3-por-MC2)
-    (ruta-disponible mc1 t1-yeso yeso MC1-por-MC2)
-    (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC2)
+    ; (ruta-disponible mc1 t1-yeso yeso MC1-por-MC2)
+    (ruta-disponible mc1 t1-yeso yeso MC1-por-MC1)
+    ; (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC2)
+    (ruta-disponible mc1 t1-puzolana-h puzolana-h PH-a-MC1-por-MC1)
     (ruta-disponible mc3 t3-clinker clinker MC3-desde-Silo3)
     (ruta-disponible mc2 t2-clinker clinker MC2-desde-Pretrit)
     (ruta-disponible mc1 t1-clinker clinker MC1-desde-Pretrit)
@@ -229,19 +231,20 @@
     (= (duracion-llenado t3-clinker-SB Silo3-desde-Pretrit) 7)
 
     (= (tiempo-vaciado t2-puzolana-h) 3.8)
-    (= (tiempo-vaciado t3-yeso) 3.7)
+    (= (tiempo-vaciado t3-yeso) 0.4)
     (= (tiempo-vaciado t2-yeso) 3.5)
-    (= (tiempo-vaciado t1-puzolana-h) 0.3)
+    (= (tiempo-vaciado t1-puzolana-h) 0.1)
     (= (tiempo-vaciado t1-yeso) 0.2)
     (= (tiempo-vaciado t1-clinker) 5.7)
     (= (tiempo-vaciado t2-clinker) 0.7)
-    (= (tiempo-vaciado t3-clinker) 5.0)
+    (= (tiempo-vaciado t3-clinker) 1.0)
     (= (tiempo-vaciado t3-clinker-SB) 1.7)
-    (= (tiempo-vaciado t3-puzolana-s) 2.4)
+    (= (tiempo-vaciado t3-puzolana-s) 0.6)
     
     ;; Inicializacion de acumuladores por linea
     (= (tiempo-acumulado-mc1) 0)                                                                                                                                                                                                                                                    
     (= (tiempo-acumulado-mc2) 0)
+    (= (tiempo-acumulado-mc3) 0)
     (= (tiempo-acumulado-ck) 0)
     ; (= (costo-auxiliar) 0)
     (= (costo-total) 0)
@@ -254,12 +257,13 @@
     ; (alimentado t2-yeso yeso)
     (alimentado t3-puzolana-s puzolana-s)
     ; (alimentado t1-clinker clinker) 
-    ; (alimentado t3-clinker clinker)  
-    (alimentado t3-yeso yeso)
+    (alimentado t3-clinker clinker)  
+    ; (alimentado t3-yeso yeso)
 
     ; (alimentado t2-clinker clinker)
     ; (alimentado t3-clinker-SB clinker)  ;; Added for new tolva
   ))
   
   (:metric minimize (+ (* 1.5 (costo-total)) (* 10 (total-time))))
+  ; (:metric minimize (+ (costo-total) (* 0.1 (total-time))))
 )

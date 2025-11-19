@@ -1063,8 +1063,8 @@
     (= (tiempo-vaciado t2-yeso) 1.8)
     (= (tiempo-vaciado t1-puzolana-h) 0.9)
     (= (tiempo-vaciado t1-yeso) 0.8)
-    (= (tiempo-vaciado t1-clinker) 5.5)
-    (= (tiempo-vaciado t2-clinker) 5.4)
+    (= (tiempo-vaciado t1-clinker) 0.3)
+    (= (tiempo-vaciado t2-clinker) 2)
     (= (tiempo-vaciado t3-clinker) 4.0)
     (= (tiempo-vaciado t3-clinker-SB) 1.7)
     (= (tiempo-vaciado t3-puzolana-s) 0.1)
@@ -1082,23 +1082,50 @@
   )
       
   (:goal (and
-    (alimentado t1-puzolana-h puzolana-h)
-    (alimentado t1-yeso yeso)
-    (alimentado t2-puzolana-h puzolana-h)
-    (alimentado t2-yeso yeso)
+    ; (alimentado t1-puzolana-h puzolana-h)
+    ; (alimentado t1-yeso yeso)
+    ; (alimentado t2-puzolana-h puzolana-h)
+    ; (alimentado t2-yeso yeso)
+
     (alimentado t3-yeso yeso)
     (alimentado t3-puzolana-s puzolana-s)
+    (alimentado t1-clinker clinker)
+    (alimentado t2-clinker clinker)
+    (alimentado t3-clinker-SB clinker)
+    (alimentado t3-clinker clinker)
+
   ))
   
+  ; (:metric minimize (+ 
+  ;   (* 0.01 (tiempo-acumulado-cinta-mc2))
+  ;   (* 0.01 (tiempo-acumulado-ruta-mc3))
+  ;   (* 0.01 (tiempo-acumulado-mc1))
+  ;   (* 0.01 (tiempo-acumulado-ck))
+  ;   (* 25 (costo-tiempo-compartido-cinta-mc2))
+  ;   (* 25 (costo-tiempo-compartido-ruta-mc3))
+  ;   (* 25 (costo-tiempo-compartido-mc1))
+  ;   (* 25 (costo-tiempo-compartido-ck))
+  ;   (* 1 (total-time))
+  ; ))
+
+
+;   (:metric minimize (+ 
+;   (* 25 (+ 
+;     (costo-tiempo-compartido-cinta-mc2)
+;     (costo-tiempo-compartido-ruta-mc3)
+;     (costo-tiempo-compartido-ck)
+;   ))
+;   (* 1 (total-time))
+; ))
+  
+
   (:metric minimize (+ 
-    (* 0.01 (tiempo-acumulado-cinta-mc2))
-    (* 0.01 (tiempo-acumulado-ruta-mc3))
-    (* 0.01 (tiempo-acumulado-mc1))
-    (* 0.01 (tiempo-acumulado-ck))
-    (* 25 (costo-tiempo-compartido-cinta-mc2))
-    (* 25 (costo-tiempo-compartido-ruta-mc3))
-    (* 25 (costo-tiempo-compartido-mc1))
-    (* 25 (costo-tiempo-compartido-ck))
-    (* 1 (total-time))
+  (* 25 (+ 
+    (costo-tiempo-compartido-cinta-mc2)
+    (costo-tiempo-compartido-ruta-mc3)
+    (costo-tiempo-compartido-ck)
   ))
+  (* 2 (total-time))
+))
 )
+

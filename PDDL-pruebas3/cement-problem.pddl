@@ -890,9 +890,9 @@
     (= (duracion-llenado t3-clinker-SB Silo3-desde-Pretrit) 7)
     (= (duracion-llenado t2-puzolana-s PS-a-426HO02-por-426HO04) 4)
 
-    (= (tiempo-vaciado t2-puzolana-h) 0.7)
+    (= (tiempo-vaciado t2-puzolana-h) 1.9)
     (= (tiempo-vaciado t2-puzolana-s) 0.8)
-    (= (tiempo-vaciado t3-yeso) 0.1)
+    (= (tiempo-vaciado t3-yeso) 1.3)
     (= (tiempo-vaciado t2-yeso) 1.0)
     (= (tiempo-vaciado t1-puzolana-h) 0.9)
     (= (tiempo-vaciado t1-yeso) 0.0)
@@ -900,7 +900,7 @@
     (= (tiempo-vaciado t2-clinker) 5.4)
     (= (tiempo-vaciado t3-clinker) 4.0)
     (= (tiempo-vaciado t3-clinker-SB) 1.7)
-    (= (tiempo-vaciado t3-puzolana-s) 0.2)
+    (= (tiempo-vaciado t3-puzolana-s) 0.1)
 
     (= (tiempo-acumulado-mc1) 0)
     (= (tiempo-acumulado-mc2) 0)
@@ -913,14 +913,15 @@
     ; (= (costo-tiempo-compartido-ck) 0) 
     ; (= (costo-tiempo-compartido-pz-seca) 0)
   )
+      
   
   (:goal (and
-    (alimentado t1-puzolana-h puzolana-h)
+    ; (alimentado t1-puzolana-h puzolana-h)
     (alimentado t1-yeso yeso)
     (alimentado t2-puzolana-h puzolana-h)
     (alimentado t2-yeso yeso)
     (alimentado t3-yeso yeso)
-    ; (alimentado t3-puzolana-s puzolana-s)
+    (alimentado t3-puzolana-s puzolana-s)
 
     ; (alimentado t1-clinker clinker) 
     ; (alimentado t3-clinker clinker)  
@@ -937,8 +938,8 @@
   (* 0.01 (tiempo-acumulado-ck))
   (* 0.01 (tiempo-acumulado-pz-seca))
   (* 0.01 (costo-tiempo-compartido-mc1))   
-  (* 0.15 (costo-tiempo-compartido-mc2))  
-  (* 0.04 (costo-tiempo-compartido-mc3))   
+  (* 0.04 (costo-tiempo-compartido-mc2))  
+  (* 0.15 (costo-tiempo-compartido-mc3))   
   ; (* 0.15 (costo-tiempo-compartido-ck)) 
   ; (* 0.04 (costo-tiempo-compartido-pz-seca))
   (* 20 (total-time))  

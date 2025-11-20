@@ -1057,17 +1057,30 @@
     (= (duracion-llenado t3-clinker-SB Silo3-desde-Pretrit) 7)
     (= (duracion-llenado t2-puzolana-s PS-a-426HO02-por-426HO04) 4)
 
-    (= (tiempo-vaciado t2-puzolana-h) 1.9)
-    (= (tiempo-vaciado t2-puzolana-s) 0.8)
-    (= (tiempo-vaciado t3-yeso) 0.0)
-    (= (tiempo-vaciado t2-yeso) 1.8)
-    (= (tiempo-vaciado t1-puzolana-h) 0.9)
+    ; (= (tiempo-vaciado t2-puzolana-h) 1.9)
+    ; (= (tiempo-vaciado t2-puzolana-s) 0.8)
+    ; (= (tiempo-vaciado t3-yeso) 0.0)
+    ; (= (tiempo-vaciado t2-yeso) 1.8)
+    ; (= (tiempo-vaciado t1-puzolana-h) 0.9)
+    ; (= (tiempo-vaciado t1-yeso) 0.8)
+    ; (= (tiempo-vaciado t1-clinker) 0.3)
+    ; (= (tiempo-vaciado t2-clinker) 2)
+    ; (= (tiempo-vaciado t3-clinker) 4.0)
+    ; (= (tiempo-vaciado t3-clinker-SB) 1.7)
+    ; (= (tiempo-vaciado t3-puzolana-s) 0.1)
+
+    
+    (= (tiempo-vaciado t1-puzolana-h) 0.7)
     (= (tiempo-vaciado t1-yeso) 0.8)
-    (= (tiempo-vaciado t1-clinker) 0.3)
-    (= (tiempo-vaciado t2-clinker) 2)
-    (= (tiempo-vaciado t3-clinker) 4.0)
-    (= (tiempo-vaciado t3-clinker-SB) 1.7)
+    (= (tiempo-vaciado t2-puzolana-h) 1.7)
+    (= (tiempo-vaciado t2-yeso) 1.8)
+    (= (tiempo-vaciado t2-puzolana-s) 0.8)
     (= (tiempo-vaciado t3-puzolana-s) 0.1)
+    (= (tiempo-vaciado t3-yeso) 0.2)
+    (= (tiempo-vaciado t1-clinker) 0.2)
+    (= (tiempo-vaciado t2-clinker) 0.0)
+    (= (tiempo-vaciado t3-clinker-SB) 0.1)
+
 
     ;; Acumuladores separados
     (= (tiempo-acumulado-cinta-mc2) 0)
@@ -1087,12 +1100,24 @@
     ; (alimentado t2-puzolana-h puzolana-h)
     ; (alimentado t2-yeso yeso)
 
-    (alimentado t3-yeso yeso)
+    ; (alimentado t3-yeso yeso)
+    ; (alimentado t3-puzolana-s puzolana-s)
+    ; (alimentado t1-clinker clinker)
+    ; (alimentado t2-clinker clinker)
+    ; (alimentado t3-clinker-SB clinker)
+    ; (alimentado t3-clinker clinker)
+
+    (alimentado t1-puzolana-h puzolana-h)
+    (alimentado t1-yeso yeso)
+    (alimentado t2-puzolana-h puzolana-h)
+    (alimentado t2-yeso yeso)
+    
+    ;; MC3 (las que tienes en tu goal actual)
     (alimentado t3-puzolana-s puzolana-s)
     (alimentado t1-clinker clinker)
     (alimentado t2-clinker clinker)
     (alimentado t3-clinker-SB clinker)
-    (alimentado t3-clinker clinker)
+
 
   ))
   
@@ -1125,7 +1150,7 @@
     (costo-tiempo-compartido-ruta-mc3)
     (costo-tiempo-compartido-ck)
   ))
-  (* 2 (total-time))
+  (* 1 (total-time))
 ))
 )
 

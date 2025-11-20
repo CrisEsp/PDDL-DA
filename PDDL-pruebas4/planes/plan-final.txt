@@ -1,13 +1,15 @@
 ; Plan Combinado - Planificación Paralela
 ; (Solo acciones únicas, sin repeticiones)
 ; Plan 1: 3 acciones
-; Plan 2: 4 acciones
-; Total: 7 acciones
+; Plan 2: 6 acciones
+; Total: 9 acciones
 
 0.000: (alimentar-clinker-mc2-desde-pretrit t2-clinker)  [5.000]
+0.000: (alimentar-puzolana-h-mc1-por-mc1 t1-puzolana-h)  [8.000]
 0.000: (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s)  [5.000]
 5.001: (alimentar-clinker-silo3-desde-pretrit t3-clinker-sb)  [7.000]
 5.001: (alimentar-yeso-mc3-por-mc2 t3-yeso)  [9.000]
 12.002: (alimentar-clinker-mc1-desde-pretrit t1-clinker)  [7.000]
-14.002: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
-15.003: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [3.000]
+14.002: (alimentar-yeso-mc1-por-mc2 t1-yeso)  [2.000]
+16.003: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
+17.004: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [1.000]

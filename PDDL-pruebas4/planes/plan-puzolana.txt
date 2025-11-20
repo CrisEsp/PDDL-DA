@@ -1,76 +1,95 @@
-Number of literals: 23
+Number of literals: 24
 Constructing lookup tables:
 Post filtering unreachable actions: 
 (tiempo-acumulado-cinta-mc2) has a finite lower bound: [0.000,inf]
 (tiempo-acumulado-ruta-mc3) has a finite lower bound: [0.000,inf]
+(tiempo-acumulado-mc1) has a finite lower bound: [0.000,inf]
 (costo-tiempo-compartido-cinta-mc2) has a finite lower bound: [0.000,inf]
 (costo-tiempo-compartido-ruta-mc3) has a finite lower bound: [0.000,inf]
+(costo-tiempo-compartido-mc1) has a finite lower bound: [0.000,inf]
 Seeing if metric is defined in terms of task vars or a minimal value of makespan
 - Yes it is
-Recognised a monotonic-change-induced limit on -1.000*<special> + -10000.000*var2(costo-tiempo-compartido-cinta-mc2) + -10000.000*var3(costo-tiempo-compartido-ruta-mc3)
+Recognised a monotonic-change-induced limit on -1.000*<special> + -10000.000*var3(costo-tiempo-compartido-cinta-mc2) + -10000.000*var4(costo-tiempo-compartido-ruta-mc3) + -10000.000*var5(costo-tiempo-compartido-mc1)
 - Must be >=  the metric
-[01;31mLooking for achievers for goal index 0, fact (alimentado t2-puzolana-h puzolana-h) with fID 17[00m
+[01;31mLooking for achievers for goal index 0, fact (alimentado t1-puzolana-h puzolana-h) with fID 17[00m
+ (alimentar-puzolana-h-mc1-por-mc1 t1-puzolana-h)
+[01;34mFor limits: literal goal index 0, fact (alimentado t1-puzolana-h puzolana-h), could be achieved by operator (alimentar-puzolana-h-mc1-por-mc1 t1-puzolana-h), which has other interesting effects (including one on (ruta-la-mc1-ph-y-yeso-libre) )[00m
+[01;31mLooking for achievers for goal index 1, fact (alimentado t1-yeso yeso) with fID 18[00m
+ (alimentar-yeso-mc1-por-mc2 t1-yeso)
+[01;34mFor limits: literal goal index 1, fact (alimentado t1-yeso yeso), could be achieved by operator (alimentar-yeso-mc1-por-mc2 t1-yeso), which has other interesting effects (including one on (molino-libre-yeso mc1) )[00m
+[01;31mLooking for achievers for goal index 2, fact (alimentado t2-puzolana-h puzolana-h) with fID 19[00m
  (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)
-[01;34mFor limits: literal goal index 0, fact (alimentado t2-puzolana-h puzolana-h), could be achieved by operator (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h), which has other interesting effects (including one on (molino-libre-pz-humeda mc2) )[00m
-[01;31mLooking for achievers for goal index 1, fact (alimentado t2-yeso yeso) with fID 19[00m
+[01;34mFor limits: literal goal index 2, fact (alimentado t2-puzolana-h puzolana-h), could be achieved by operator (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h), which has other interesting effects (including one on (molino-libre-pz-humeda mc2) )[00m
+[01;31mLooking for achievers for goal index 3, fact (alimentado t2-yeso yeso) with fID 20[00m
  (alimentar-yeso-mc2-por-mc2 t2-yeso)
-[01;34mFor limits: literal goal index 1, fact (alimentado t2-yeso yeso), could be achieved by operator (alimentar-yeso-mc2-por-mc2 t2-yeso), which has other interesting effects (including one on (molino-libre-yeso mc2) )[00m
-[01;31mLooking for achievers for goal index 2, fact (alimentado t3-puzolana-s puzolana-s) with fID 20[00m
+[01;34mFor limits: literal goal index 3, fact (alimentado t2-yeso yeso), could be achieved by operator (alimentar-yeso-mc2-por-mc2 t2-yeso), which has other interesting effects (including one on (molino-libre-yeso mc2) )[00m
+[01;31mLooking for achievers for goal index 4, fact (alimentado t3-puzolana-s puzolana-s) with fID 21[00m
  (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s)
-[01;34mFor limits: literal goal index 2, fact (alimentado t3-puzolana-s puzolana-s), could be achieved by operator (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s), which has other interesting effects (including one on (ruta-mc3-compartida-libre) )[00m
-[01;31mLooking for achievers for goal index 3, fact (alimentado t3-yeso yeso) with fID 21[00m
+[01;34mFor limits: literal goal index 4, fact (alimentado t3-puzolana-s puzolana-s), could be achieved by operator (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s), which has other interesting effects (including one on (ruta-mc3-compartida-libre) )[00m
+[01;31mLooking for achievers for goal index 5, fact (alimentado t3-yeso yeso) with fID 22[00m
  (alimentar-yeso-mc3-por-mc2 t3-yeso)
-[01;34mFor limits: literal goal index 3, fact (alimentado t3-yeso yeso), could be achieved by operator (alimentar-yeso-mc3-por-mc2 t3-yeso), which has other interesting effects (including one on (ruta-mc3-compartida-libre) )[00m
-Numeric effect ((costo-tiempo-compartido-cinta-mc2) +=(tiempo-acumulado-cinta-mc2)) makes effects on 2 be order-dependent
-Numeric effect ((costo-tiempo-compartido-ruta-mc3) +=(tiempo-acumulado-ruta-mc3)) makes effects on 3 be order-dependent
+[01;34mFor limits: literal goal index 5, fact (alimentado t3-yeso yeso), could be achieved by operator (alimentar-yeso-mc3-por-mc2 t3-yeso), which has other interesting effects (including one on (ruta-mc3-compartida-libre) )[00m
+Numeric effect ((costo-tiempo-compartido-mc1) +=(tiempo-acumulado-mc1)) makes effects on 5 be order-dependent
+Numeric effect ((costo-tiempo-compartido-cinta-mc2) +=(tiempo-acumulado-cinta-mc2)) makes effects on 3 be order-dependent
+Numeric effect ((costo-tiempo-compartido-ruta-mc3) +=(tiempo-acumulado-ruta-mc3)) makes effects on 4 be order-dependent
 None of the ground temporal actions in this problem have been recognised as compression-safe
-Initial heuristic = 8.000, admissible cost estimate 9.001
-b (7.000 | 9.000)b (6.000 | 9.000)b (5.000 | 14.000)b (4.000 | 14.000)b (3.000 | 14.000)b (2.000 | 14.000)b (1.000 | 14.000)(G)
+Initial heuristic = 12.000, admissible cost estimate 9.001
+b (11.000 | 9.000)b (10.000 | 9.000)b (9.000 | 9.000)b (8.000 | 9.000)b (7.000 | 14.000)b (6.000 | 14.000)b (5.000 | 14.000)b (4.000 | 14.000)b (3.000 | 14.000)b (2.000 | 14.000)b (1.000 | 14.000)(G)
 ; LP calculated the cost
 
-; Plan found with metric 24014.001
-; Theoretical reachable cost 24014.001
-; States evaluated so far: 9
+; Plan found with metric 48014.001
+; Theoretical reachable cost 48014.001
+; States evaluated so far: 13
 ; States pruned based on pre-heuristic cost lower bound: 0
-; Time 0.00
+; Time 0.01
 0.000: (alimentar-yeso-mc3-por-mc2 t3-yeso)  [9.000]
+0.000: (alimentar-puzolana-h-mc1-por-mc1 t1-puzolana-h)  [8.000]
 9.001: (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s)  [5.000]
-9.001: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [3.000]
-12.002: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
+9.001: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [1.000]
+10.002: (alimentar-yeso-mc1-por-mc2 t1-yeso)  [2.000]
+12.003: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
 
 Resorting to best-first search
 Running WA* with W = 5.000, not restarting with goal states
-b (7.000 | 1.000)b (6.000 | 5.000)b (6.000 | 1.000)b (5.000 | 5.000)b (4.000 | 5.000)b (3.000 | 5.000)b (2.000 | 5.000)b (1.000 | 14.000)(G)
+b (11.000 | 8.000)b (11.000 | 1.000)b (10.000 | 9.000)b (10.000 | 8.000)b (9.000 | 9.000)b (8.000 | 9.000)b (7.000 | 14.000)b (7.000 | 10.000)b (6.000 | 14.000)b (5.000 | 14.000)b (4.000 | 14.000)b (3.000 | 14.000)b (2.000 | 14.001)b (2.000 | 14.000)b (1.000 | 14.000)(G)
 ; LP calculated the cost
 
-; Plan found with metric 23014.001
-; Theoretical reachable cost 23014.001
-; States evaluated so far: 350
-; States pruned based on pre-heuristic cost lower bound: 518
-; Time 0.20
+; Plan found with metric 34014.001
+; Theoretical reachable cost 34014.001
+; States evaluated so far: 477
+; States pruned based on pre-heuristic cost lower bound: 606
+; Time 0.38
+0.000: (alimentar-puzolana-h-mc1-por-mc1 t1-puzolana-h)  [8.000]
 0.000: (alimentar-yeso-mc3-por-mc2 t3-yeso)  [9.000]
 9.001: (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s)  [5.000]
-9.001: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
-11.001: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [3.000]
+9.001: (alimentar-yeso-mc1-por-mc2 t1-yeso)  [2.000]
+11.002: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [1.000]
+13.001: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
 (G)
 ; LP calculated the cost
 
-; Plan found with metric 22018.003
-; Theoretical reachable cost 22018.004
-; States evaluated so far: 889
-; States pruned based on pre-heuristic cost lower bound: 1256
-; Time 0.54
-0.000: (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s)  [5.000]
-5.001: (alimentar-yeso-mc3-por-mc2 t3-yeso)  [9.000]
-14.002: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
-15.003: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [3.000]
+; Plan found with metric 33014.001
+; Theoretical reachable cost 33014.001
+; States evaluated so far: 501
+; States pruned based on pre-heuristic cost lower bound: 636
+; Time 0.40
+0.000: (alimentar-puzolana-h-mc1-por-mc1 t1-puzolana-h)  [8.000]
+0.000: (alimentar-yeso-mc3-por-mc2 t3-yeso)  [9.000]
+9.001: (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s)  [5.000]
+9.001: (alimentar-yeso-mc1-por-mc2 t1-yeso)  [2.000]
+11.002: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
+13.001: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [1.000]
+(G)
+; LP calculated the cost
 
-Problem Unsolvable
-;;;; Solution Found
-; States evaluated: 5583
-; Cost: 22018.003
-; Time 3.89
+; Plan found with metric 32018.004
+; Theoretical reachable cost 32018.005
+; States evaluated so far: 41021
+; States pruned based on pre-heuristic cost lower bound: 46880
+; Time 34.61
+0.000: (alimentar-puzolana-h-mc1-por-mc1 t1-puzolana-h)  [8.000]
 0.000: (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s)  [5.000]
 5.001: (alimentar-yeso-mc3-por-mc2 t3-yeso)  [9.000]
-14.002: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
-15.003: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [3.000]
+14.002: (alimentar-yeso-mc1-por-mc2 t1-yeso)  [2.000]
+16.003: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
+17.004: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [1.000]

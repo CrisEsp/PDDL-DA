@@ -1,0 +1,76 @@
+Number of literals: 23
+Constructing lookup tables:
+Post filtering unreachable actions: 
+(tiempo-acumulado-cinta-mc2) has a finite lower bound: [0.000,inf]
+(tiempo-acumulado-ruta-mc3) has a finite lower bound: [0.000,inf]
+(costo-tiempo-compartido-cinta-mc2) has a finite lower bound: [0.000,inf]
+(costo-tiempo-compartido-ruta-mc3) has a finite lower bound: [0.000,inf]
+Seeing if metric is defined in terms of task vars or a minimal value of makespan
+- Yes it is
+Recognised a monotonic-change-induced limit on -1.000*<special> + -10000.000*var2(costo-tiempo-compartido-cinta-mc2) + -10000.000*var3(costo-tiempo-compartido-ruta-mc3)
+- Must be >=  the metric
+[01;31mLooking for achievers for goal index 0, fact (alimentado t2-puzolana-h puzolana-h) with fID 17[00m
+ (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)
+[01;34mFor limits: literal goal index 0, fact (alimentado t2-puzolana-h puzolana-h), could be achieved by operator (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h), which has other interesting effects (including one on (molino-libre-pz-humeda mc2) )[00m
+[01;31mLooking for achievers for goal index 1, fact (alimentado t2-yeso yeso) with fID 19[00m
+ (alimentar-yeso-mc2-por-mc2 t2-yeso)
+[01;34mFor limits: literal goal index 1, fact (alimentado t2-yeso yeso), could be achieved by operator (alimentar-yeso-mc2-por-mc2 t2-yeso), which has other interesting effects (including one on (molino-libre-yeso mc2) )[00m
+[01;31mLooking for achievers for goal index 2, fact (alimentado t3-puzolana-s puzolana-s) with fID 20[00m
+ (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s)
+[01;34mFor limits: literal goal index 2, fact (alimentado t3-puzolana-s puzolana-s), could be achieved by operator (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s), which has other interesting effects (including one on (ruta-mc3-compartida-libre) )[00m
+[01;31mLooking for achievers for goal index 3, fact (alimentado t3-yeso yeso) with fID 21[00m
+ (alimentar-yeso-mc3-por-mc2 t3-yeso)
+[01;34mFor limits: literal goal index 3, fact (alimentado t3-yeso yeso), could be achieved by operator (alimentar-yeso-mc3-por-mc2 t3-yeso), which has other interesting effects (including one on (ruta-mc3-compartida-libre) )[00m
+Numeric effect ((costo-tiempo-compartido-cinta-mc2) +=(tiempo-acumulado-cinta-mc2)) makes effects on 2 be order-dependent
+Numeric effect ((costo-tiempo-compartido-ruta-mc3) +=(tiempo-acumulado-ruta-mc3)) makes effects on 3 be order-dependent
+None of the ground temporal actions in this problem have been recognised as compression-safe
+Initial heuristic = 8.000, admissible cost estimate 9.001
+b (7.000 | 9.000)b (6.000 | 9.000)b (5.000 | 14.000)b (4.000 | 14.000)b (3.000 | 14.000)b (2.000 | 14.000)b (1.000 | 14.000)(G)
+; LP calculated the cost
+
+; Plan found with metric 24014.001
+; Theoretical reachable cost 24014.001
+; States evaluated so far: 9
+; States pruned based on pre-heuristic cost lower bound: 0
+; Time 0.00
+0.000: (alimentar-yeso-mc3-por-mc2 t3-yeso)  [9.000]
+9.001: (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s)  [5.000]
+9.001: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [3.000]
+12.002: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
+
+Resorting to best-first search
+Running WA* with W = 5.000, not restarting with goal states
+b (7.000 | 1.000)b (6.000 | 5.000)b (6.000 | 1.000)b (5.000 | 5.000)b (4.000 | 5.000)b (3.000 | 5.000)b (2.000 | 5.000)b (1.000 | 14.000)(G)
+; LP calculated the cost
+
+; Plan found with metric 23014.001
+; Theoretical reachable cost 23014.001
+; States evaluated so far: 350
+; States pruned based on pre-heuristic cost lower bound: 518
+; Time 0.20
+0.000: (alimentar-yeso-mc3-por-mc2 t3-yeso)  [9.000]
+9.001: (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s)  [5.000]
+9.001: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
+11.001: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [3.000]
+(G)
+; LP calculated the cost
+
+; Plan found with metric 22018.003
+; Theoretical reachable cost 22018.004
+; States evaluated so far: 889
+; States pruned based on pre-heuristic cost lower bound: 1256
+; Time 0.54
+0.000: (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s)  [5.000]
+5.001: (alimentar-yeso-mc3-por-mc2 t3-yeso)  [9.000]
+14.002: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
+15.003: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [3.000]
+
+Problem Unsolvable
+;;;; Solution Found
+; States evaluated: 5583
+; Cost: 22018.003
+; Time 3.89
+0.000: (alimentar-puzolana-s-mc3-por-mc2 t3-puzolana-s)  [5.000]
+5.001: (alimentar-yeso-mc3-por-mc2 t3-yeso)  [9.000]
+14.002: (alimentar-puzolana-h-426ho04-por-mc2 t2-puzolana-h)  [1.000]
+15.003: (alimentar-yeso-mc2-por-mc2 t2-yeso)  [3.000]

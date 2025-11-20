@@ -1,0 +1,55 @@
+Number of literals: 9
+Constructing lookup tables:
+Post filtering unreachable actions: 
+(tiempo-acumulado-ck) has a finite lower bound: [0.000,inf]
+(costo-tiempo-compartido-ck) has a finite lower bound: [0.000,inf]
+Seeing if metric is defined in terms of task vars or a minimal value of makespan
+- Yes it is
+Recognised a monotonic-change-induced limit on -2.000*<special> + -25.000*var1(costo-tiempo-compartido-ck)
+- Must be >=  the metric
+[01;31mLooking for achievers for goal index 0, fact (alimentado t1-clinker clinker) with fID 6[00m
+ (alimentar-clinker-mc1-desde-pretrit t1-clinker)
+[01;34mFor limits: literal goal index 0, fact (alimentado t1-clinker clinker), could be achieved by operator (alimentar-clinker-mc1-desde-pretrit t1-clinker), which has other interesting effects (including one on (ruta-clinker-libre) )[00m
+[01;31mLooking for achievers for goal index 1, fact (alimentado t2-clinker clinker) with fID 7[00m
+ (alimentar-clinker-mc2-desde-pretrit t2-clinker)
+[01;34mFor limits: literal goal index 1, fact (alimentado t2-clinker clinker), could be achieved by operator (alimentar-clinker-mc2-desde-pretrit t2-clinker), which has other interesting effects (including one on (ruta-clinker-libre) )[00m
+[01;31mLooking for achievers for goal index 2, fact (alimentado t3-clinker-sb clinker) with fID 8[00m
+ (alimentar-clinker-silo3-desde-pretrit t3-clinker-sb)
+[01;34mFor limits: literal goal index 2, fact (alimentado t3-clinker-sb clinker), could be achieved by operator (alimentar-clinker-silo3-desde-pretrit t3-clinker-sb), which has other interesting effects (including one on (ruta-clinker-libre) )[00m
+Numeric effect ((costo-tiempo-compartido-ck) +=(tiempo-acumulado-ck)) makes effects on 1 be order-dependent
+None of the ground temporal actions in this problem have been recognised as compression-safe
+Initial heuristic = 6.000, admissible cost estimate 14.002
+b (5.000 | 7.000)b (4.000 | 7.000)b (3.000 | 12.001)b (2.000 | 12.001)b (1.000 | 19.002)(G)
+; LP calculated the cost
+
+; Plan found with metric 43.004
+; Theoretical reachable cost 43.004
+; States evaluated so far: 7
+; States pruned based on pre-heuristic cost lower bound: 0
+; Time 0.00
+0.000: (alimentar-clinker-silo3-desde-pretrit t3-clinker-sb)  [7.000]
+7.001: (alimentar-clinker-mc2-desde-pretrit t2-clinker)  [5.000]
+12.002: (alimentar-clinker-mc1-desde-pretrit t1-clinker)  [7.000]
+
+Resorting to best-first search
+Running WA* with W = 5.000, not restarting with goal states
+b (5.000 | 7.000)b (5.000 | 5.000)b (4.000 | 7.000)b (3.000 | 12.001)b (2.000 | 12.001)b (1.000 | 19.002)(G)
+; LP calculated the cost
+
+; Plan found with metric 40.504
+; Theoretical reachable cost 40.504
+; States evaluated so far: 34
+; States pruned based on pre-heuristic cost lower bound: 0
+; Time 0.02
+0.000: (alimentar-clinker-mc2-desde-pretrit t2-clinker)  [5.000]
+5.001: (alimentar-clinker-silo3-desde-pretrit t3-clinker-sb)  [7.000]
+12.002: (alimentar-clinker-mc1-desde-pretrit t1-clinker)  [7.000]
+
+Problem Unsolvable
+;;;; Solution Found
+; States evaluated: 40
+; Cost: 40.504
+; Time 0.02
+0.000: (alimentar-clinker-mc2-desde-pretrit t2-clinker)  [5.000]
+5.001: (alimentar-clinker-silo3-desde-pretrit t3-clinker-sb)  [7.000]
+12.002: (alimentar-clinker-mc1-desde-pretrit t1-clinker)  [7.000]

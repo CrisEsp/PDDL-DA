@@ -40,7 +40,7 @@ b (5.000 | 7.000)b (5.000 | 5.000)b (4.000 | 7.000)b (3.000 | 12.001)b (2.000 | 
 ; Theoretical reachable cost 40.504
 ; States evaluated so far: 34
 ; States pruned based on pre-heuristic cost lower bound: 0
-; Time 0.01
+; Time 0.02
 0.000: (alimentar-clinker-mc2-desde-pretrit t2-clinker)  [5.000]
 5.001: (alimentar-clinker-silo3-desde-pretrit t3-clinker-sb)  [7.000]
 12.002: (alimentar-clinker-mc1-desde-pretrit t1-clinker)  [7.000]
@@ -49,7 +49,7 @@ Problem Unsolvable
 ;;;; Solution Found
 ; States evaluated: 40
 ; Cost: 40.504
-; Time 0.01
+; Time 0.02
 0.000: (alimentar-clinker-mc2-desde-pretrit t2-clinker)  [5.000]
 5.001: (alimentar-clinker-silo3-desde-pretrit t3-clinker-sb)  [7.000]
 12.002: (alimentar-clinker-mc1-desde-pretrit t1-clinker)  [7.000]

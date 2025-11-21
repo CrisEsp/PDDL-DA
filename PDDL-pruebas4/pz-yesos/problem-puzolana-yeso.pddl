@@ -59,50 +59,40 @@
     (ruta-disponible mc2 t2-puzolana-s puzolana-s PS-a-426HO02-por-426HO04)
     (ruta-disponible mc3 t3-puzolana-s puzolana-s PS-a-MC3-por-MC2)
     (ruta-disponible mc3 t3-yeso yeso MC3-por-MC2)
+    (ruta-disponible mc3 t3-yeso yeso MC3-por-MC1) 
 
     ;; Duraciones de llenado
   
     (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC1) 8)
     ; (= (duracion-llenado t1-puzolana-h PH-a-MC1-por-MC2) 4)
-    ; (= (duracion-llenado t1-yeso MC1-por-MC1) 3)
-    (= (duracion-llenado t1-yeso MC1-por-MC2) 2)
+    (= (duracion-llenado t1-yeso MC1-por-MC1) 3)
+    ; (= (duracion-llenado t1-yeso MC1-por-MC2) 2)
     (= (duracion-llenado t2-puzolana-h PH-a-426HO04-por-MC2) 1)
     (= (duracion-llenado t2-yeso MC2-por-MC2) 1)
     (= (duracion-llenado t2-puzolana-s PS-a-426HO02-por-426HO04) 4)
-    (= (duracion-llenado t3-puzolana-s PS-a-MC3-por-MC2) 5)
-    (= (duracion-llenado t3-yeso MC3-por-MC2) 9)
-
-    ; (= (tiempo-vaciado t2-puzolana-h) 1.9)
-    ; (= (tiempo-vaciado t2-puzolana-s) 0.8)
-    ; (= (tiempo-vaciado t3-yeso) 0.0)
-    ; (= (tiempo-vaciado t2-yeso) 1.8)
-    ; (= (tiempo-vaciado t1-puzolana-h) 0.9)
-    ; (= (tiempo-vaciado t1-yeso) 0.8)
-    ; (= (tiempo-vaciado t1-clinker) 0.3)
-    ; (= (tiempo-vaciado t2-clinker) 2)
-    ; (= (tiempo-vaciado t3-clinker) 4.0)
-    ; (= (tiempo-vaciado t3-clinker-SB) 1.7)
-    ; (= (tiempo-vaciado t3-puzolana-s) 0.1)
-
+    (= (duracion-llenado t3-puzolana-s PS-a-MC3-por-MC2) 2)
+    (= (duracion-llenado t3-yeso MC3-por-MC2) 1)
+    ; (= (duracion-llenado t3-yeso MC3-por-MC1) 4)
 
     ;; Tiempos de vaciado
-    (= (tiempo-vaciado t1-puzolana-h) 0.5)
-    (= (tiempo-vaciado t1-yeso) 0.4)
+    (= (tiempo-vaciado t1-puzolana-h) 0.1)
+    (= (tiempo-vaciado t1-yeso) 0.2)
     (= (tiempo-vaciado t2-puzolana-h) 1.7)
     (= (tiempo-vaciado t2-yeso) 1.8)
     (= (tiempo-vaciado t2-puzolana-s) 1.8)
     (= (tiempo-vaciado t3-puzolana-s) 0.1)
     (= (tiempo-vaciado t3-yeso) 0.2)
 
-    ;; Acumuladores
+
     (= (tiempo-acumulado-cinta-mc2) 0)
     (= (tiempo-acumulado-ruta-mc3) 0)
     (= (tiempo-acumulado-mc1) 0)
-    (= (costo-tiempo-compartido-cinta-mc2) 0)
+
     (= (costo-tiempo-compartido-cinta-mc1) 0)
-    (= (tiempo-acumulado-cinta-mc1) 0)
+    (= (costo-tiempo-compartido-cinta-mc2) 0)
     (= (costo-tiempo-compartido-ruta-mc3) 0)
-    (= (costo-tiempo-compartido-mc1) 0) 
+    (= (costo-tiempo-compartido-mc1) 0)
+
   )
       
   (:goal (and
@@ -118,12 +108,13 @@
   ))
   
   (:metric minimize (+ 
-    (* 10000 (+ 
+    (* 1000 (+ 
       (costo-tiempo-compartido-mc1)
       (costo-tiempo-compartido-cinta-mc2)
       (costo-tiempo-compartido-ruta-mc3)
     ))
-    (* 1 (total-time))
+    (* 20 (total-time))
   ))
+
 )
 
